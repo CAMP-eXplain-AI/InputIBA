@@ -270,7 +270,8 @@ class IBA(nn.Module):
                  progbar=False,
                  input_or_output="output",
                  relu=False,
-                 reverse_lambda=False):
+                 reverse_lambda=False,
+                 combine_loss=False):
         super().__init__()
         self.relu = relu
         self.beta = beta
@@ -295,6 +296,7 @@ class IBA(nn.Module):
         self._interrupt_execution = False
         self._hook_handle = None
         self.reverse_lambda = reverse_lambda
+        self.combine_loss = combine_loss
 
         # Check if modifying forward hooks are supported by the current torch version
         if layer is not None:
@@ -433,10 +435,14 @@ class IBA(nn.Module):
         self._buffer_capacity = self._kl_div(x, lamb, self._mean, self._std) * self._active_neurons
 
         eps = x.data.new(x.size()).normal_()
-        ε = self._std * eps + self._mean
+        ε = eps#self._std * eps + self._mean
         λ = lamb
         if self.reverse_lambda:
             z = λ * ε + (1 - λ) * x
+        elif self.combine_loss:
+            z_positive =  λ * x + (1 - λ) * ε
+            z_negative = λ * ε + (1 - λ) * x
+            z = torch.cat((z_positive, z_negative))
         else:
             z = λ * x + (1 - λ) * ε
         z *= self._active_neurons
@@ -601,7 +607,7 @@ class IBA(nn.Module):
                 # Taking the mean is equivalent of scaling the sum with 1/K
                 information_loss = self.capacity().mean()
                 if self.reverse_lambda:
-                    loss = -model_loss + beta * information_loss
+                    loss = -model_loss + beta * information_loss            
                 else:
                     loss = model_loss + beta * information_loss
                 loss.backward()

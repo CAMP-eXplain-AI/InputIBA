@@ -32,8 +32,14 @@ class Generator(torch.nn.Module):
             self.feature_map = output
 
         self.model = model.eval()
-        self._hook_handle = getattr(self.model, str(layer))[17].register_forward_hook(store_feature_map)
-
+        # if layer is only accessable in nn module list
+        if "[" in layer:
+          # read the index
+          layer_name = layer.split("[")[0]
+          idx_feature = int(layer.split("[")[1].split("]")[0])
+          self._hook_handle = getattr(self.model, str(layer_name))[idx_feature].register_forward_hook(store_feature_map)
+        else:
+          self._hook_handle = getattr(self.model, str(layer)).register_forward_hook(store_feature_map)
     def forward(self, gaussian):
         noise = self.eps * gaussian + self.mean
         image_mask = self.sigmoid(self.image_mask_param)
@@ -74,10 +80,13 @@ class Discriminator(torch.nn.Module):
             nn.LeakyReLU(0.2, inplace=True))
         # # output of main module --> State (1024x4x4)
 
+        # channels and sizes for fully connected layer
+        self.channels = channels
+        self.size = int(size/4)
         self.output = nn.Sequential(
             # The output of D is no longer a probability, we do not apply sigmoid at the output of D.
             # nn.Conv2d(in_channels=1024, out_channels=1, kernel_size=4, stride=1, padding=0))
-            nn.Linear(int(channels*size*size/16), 512),
+            nn.Linear(self.channels*self.size*self.size, 512),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(512, 256),
             nn.LeakyReLU(0.2, inplace=True),
@@ -85,9 +94,9 @@ class Discriminator(torch.nn.Module):
         )
 
     def forward(self, x):
-        out = self.main_module(x)
-        out_flat = out.view(out.shape[0], -1)
-        return self.output(out_flat)
+      out = self.main_module(x)
+      out_flat = out.view(out.shape[0], -1)
+      return self.output(out_flat)
 
 
 class WGAN_CP(object):

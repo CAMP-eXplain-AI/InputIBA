@@ -6,6 +6,16 @@ from contextlib import contextmanager
 from torchvision.transforms import Normalize, Compose
 from IBA.utils import _to_saliency_map, get_tqdm, ifnone
 
+def to_saliency_map(capacity, shape=None):
+    """
+    Converts the layer capacity (in nats) to a saliency map (in bits) of the given shape .
+
+    Args:
+        capacity (np.ndarray): Capacity in nats.
+        shape (tuple): (height, width) of the image.
+    """
+    return _to_saliency_map(capacity, shape, data_format="channels_first")
+
 
 class _SpatialGaussianKernel(nn.Module):
     """ A simple convolutional layer with fixed gaussian kernels, used to smoothen the input """
@@ -77,12 +87,13 @@ class Image_IBA(nn.Module):
         initial_alpha: Initial value for the parameter.
     """
     def __init__(self,
-                 layer=None,
                  image_mask=None,
                  image=None,
                  sigma=1.,
                  beta=10,
                  min_std=0.01,
+                 img_eps_std=None,
+                 img_eps_mean=None,
                  optimization_steps=10,
                  lr=1,
                  batch_size=10,
@@ -134,7 +145,7 @@ class Image_IBA(nn.Module):
         if self.sigma is not None and self.sigma > 0:
             # Construct static conv layer with gaussian kernel
             kernel_size = int(round(2 * self.sigma)) * 2 + 1  # Cover 2.5 stds in both directions
-            self.smooth = _SpatialGaussianKernel(kernel_size, self.sigma, shape[0]).to(self.device)
+            self.smooth = _SpatialGaussianKernel(kernel_size, self.sigma, shape[1]).to(self.device)
         else:
             self.smooth = None
 
@@ -156,9 +167,22 @@ class Image_IBA(nn.Module):
         return -0.5 * (1 + log_var - mu**2 - log_var.exp())
 
     @staticmethod
-    def _kl_div(r, lambda_, mean_r, std_r):
-        r_norm = (r - mean_r) / std_r
-        var_z = (1 - lambda_) ** 2
+    def _kl_div(x, g, image_mask, img_eps_mean, img_eps_std, lambda_, mean_x, std_x):
+        """
+        x:
+        g:
+        img_eps_mean:
+        img_eps_std:
+        image_mask: mask generated from GAN
+        lambda_: learning parameter, image mask
+        mean_x:
+        std_x:
+
+        """
+        mean_x = 0
+        std_x = 1
+        r_norm = (x - mean_x + image_mask * (mean_x - g)) / ((1 - image_mask * lambda_) * std_x)
+        var_z = (1 - lambda_)**2 / (1 - image_mask * lambda_)**2
 
         log_var_z = torch.log(var_z)
 
@@ -177,17 +201,24 @@ class Image_IBA(nn.Module):
         lamb = lamb.expand(g.shape[0], g.shape[1], -1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
-        self._buffer_capacity = self._kl_div(x, lamb, self._mean, self._std)
-        #TODO sample from random variable x
+        # sample from random variable x
         eps = g.data.new(g.size()).normal_()
         ε_img = self.img_eps_std * eps + self.img_eps_mean
-        x = self.image_mask * g + (1-self.image_mask) * ε_img
+        # x = self.image_mask * g + (1-self.image_mask) * eps 
+        x = g
+        self.x = x
+
+        # calculate kl divergence
+        self._mean = ifnone(self._mean, torch.tensor(0.).to(self.device))
+        self._std = ifnone(self._std, torch.tensor(1.).to(self.device))
+        self._buffer_capacity = self._kl_div(x, g, self.image_mask, self.img_eps_mean, self.img_eps_std, lamb, self._mean, self._std)
 
         # apply mask on sampled x
         eps = x.data.new(x.size()).normal_()
         ε = self._std * eps + self._mean
         λ = lamb
         if self.reverse_lambda:
+            #TODO rewrite
             z = λ * ε + (1 - λ) * x
         elif self.combine_loss:
             z_positive =  λ * x + (1 - λ) * ε
@@ -252,8 +283,10 @@ class Image_IBA(nn.Module):
         self._reset_alpha()
         optimizer = torch.optim.Adam(lr=lr, params=[self.alpha])
 
-        std =
-        self._std = torch.max(std, min_std*torch.ones_like(std))
+        ## TODO no need to load mean and var
+        # self._mean = self.img_eps_mean.clone()
+        # std = self.img_eps_std.clone()
+        # self._std = torch.max(std, min_std*torch.ones_like(std))
 
         self._loss = []
         self._alpha_grads = []
@@ -280,7 +313,7 @@ class Image_IBA(nn.Module):
                     loss = -model_loss + beta * information_loss
                 else:
                     loss = model_loss + beta * information_loss
-                loss.backward()
+                loss.backward(retain_graph=True)
                 optimizer.step()
 
                 self._alpha_grads.append(self.alpha.grad.cpu().numpy())

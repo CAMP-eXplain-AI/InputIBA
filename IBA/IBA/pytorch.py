@@ -435,7 +435,7 @@ class IBA(nn.Module):
         self._buffer_capacity = self._kl_div(x, lamb, self._mean, self._std) * self._active_neurons
 
         eps = x.data.new(x.size()).normal_()
-        ε = eps#self._std * eps + self._mean
+        ε = self._std * eps + self._mean
         λ = lamb
         if self.reverse_lambda:
             z = λ * ε + (1 - λ) * x

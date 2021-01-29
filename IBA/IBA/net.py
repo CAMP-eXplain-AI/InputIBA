@@ -1,6 +1,6 @@
 import torch
 
-from IBA import pytorch
+from IBA.pytorch import tensor_to_np_img
 from IBA.gan import WGAN_CP
 from IBA.pytorch_img_iba import Image_IBA
 import matplotlib.pyplot as plt
@@ -87,6 +87,18 @@ class Net:
         # train image ib
         self.image_ib_heatmap = self.image_ib.analyze(self.image[None], self.model_loss_closure)
 
+    def plot_image(self, label=None):
+        """
+        plot the image for interpretation
+        Returns:
+        """
+        np_img = tensor_to_np_img(self.net.image)
+        if label is not None:
+            plt.title(label)
+        else:
+            plt.title("class {}".format(self.target))
+        plt.imshow(np_img)
+
     def plot_feature_mask(self, upscale=False):
         """
         Plot feature mask from IB either in original size or upscaled to image size
@@ -121,4 +133,9 @@ class Net:
         plt.imshow(img_tensor)
 
     def save_mask_as_img(self):
+        ## TODO save learned mask with proper name in some folder
+        pass
+
+    def plot_generated_image_mask_history(self):
+        ## TODO plot generated image mask during learning (for debug and for evaluation)
         pass

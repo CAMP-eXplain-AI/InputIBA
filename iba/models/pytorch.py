@@ -28,20 +28,7 @@ import torch
 import warnings
 from contextlib import contextmanager
 from torchvision.transforms import Normalize, Compose
-from .utils import _to_saliency_map, get_tqdm, ifnone
-
-# Helper Functions
-
-
-def to_saliency_map(capacity, shape=None):
-    """
-    Converts the layer capacity (in nats) to a saliency map (in bits) of the given shape .
-
-    Args:
-        capacity (np.ndarray): Capacity in nats.
-        shape (tuple): (height, width) of the image.
-    """
-    return _to_saliency_map(capacity, shape, data_format="channels_first")
+from .utils import to_saliency_map, get_tqdm, ifnone
 
 
 def insert_into_sequential(sequential, layer, idx):

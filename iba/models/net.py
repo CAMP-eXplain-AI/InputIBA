@@ -4,6 +4,7 @@ from .pytorch import tensor_to_np_img
 from .gan import WGAN_CP
 from .pytorch_img_iba import Image_IBA
 import matplotlib.pyplot as plt
+from ..utils import get_logger
 
 
 class Net:
@@ -50,12 +51,14 @@ class Net:
         self.ib_heatmap = None
         self.image_ib_heatmap = None
 
-    def train(self):
-        print("\nTraining on IB\n")
+    def train(self, logger=None):
+        if logger is None:
+            logger = get_logger('iba')
+        logger.info("\nTraining on IB\n")
         self.train_ib()
-        print("\nTraining on GAN\n")
+        logger.info("\nTraining on GAN\n")
         self.train_gan()
-        print("\nTraining on image IB\n")
+        logger.info("\nTraining on image IB\n")
         self.train_image_ib()
 
     def train_ib(self):
@@ -107,7 +110,6 @@ class Net:
     def plot_image(self, label=None):
         """
         plot the image for interpretation
-        Returns:
         """
         np_img = tensor_to_np_img(self.net.image)
         if label is not None:

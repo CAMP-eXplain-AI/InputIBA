@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.utils.data as Data
 from .utils import _to_saliency_map
 import random
+from ..utils import get_logger
 
 
 class Generator(torch.nn.Module):
@@ -203,9 +204,11 @@ class WGAN_CP(object):
         self.generator_iters = generator_iters
         self.critic_iter = critic_iter
 
-    def train(self, dev):
-        # TODO rename function name
+    def train(self, dev, logger=None):
+        # TODO add learning rate scheduler
         # Initialize generator and discriminator
+        if logger is None:
+            logger = get_logger('iba')
         generator = self.G.to(dev)
         discriminator = self.D.to(dev)
 
@@ -279,7 +282,7 @@ class WGAN_CP(object):
                     if epoch % 10 == 0:
                         self.image_mask_history.append(generator.image_mask(
                         ).clone().detach().cpu().numpy())
-                    print(
+                    logger.info(
                         "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
                         % (epoch, self.generator_iters,
                            batches_done % len(self.dataloader),

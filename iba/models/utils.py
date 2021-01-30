@@ -124,6 +124,17 @@ class WelfordEstimator:
         self._neuron_nonzero = state['neuron_nonzero']
 
 
+def to_saliency_map(capacity, shape=None):
+    """
+    Converts the layer capacity (in nats) to a saliency map (in bits) of the given shape .
+
+    Args:
+        capacity (np.ndarray): Capacity in nats.
+        shape (tuple): (height, width) of the image.
+    """
+    return _to_saliency_map(capacity, shape, data_format="channels_first")
+
+
 def _to_saliency_map(capacity, shape=None, data_format='channels_last'):
     """
     Converts the layer capacity (in nats) to a saliency map (in bits) of the given shape.

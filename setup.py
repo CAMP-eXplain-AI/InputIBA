@@ -11,7 +11,7 @@ setuptools.setup(
     description="Information Bottlenecks for Attribution (iba)",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=['test', 'notebooks', 'scripts']),
     install_requires=['numpy', 'scikit-image', 'tqdm', 'Pillow<7.0.0'],
     extras_require={
         'dev': [
@@ -26,16 +26,7 @@ setuptools.setup(
         'torch': [
             'torch>=1.1.0',
             'torchvision>=0.3.0',
-        ],
-        'tensorflow-v1': [
-            'tensorflow>=1.12.0, <2.0',
-            'tensorflow-probability<=0.7.0',
-            'keras<2.3.0',
-        ],
-        'tensorflow-gpu': [
-            'tensorflow-gpu>=1.12.0, <2.0'
-            'keras<2.3.0',
-        ],
+        ]
     },
     python_requires='>=3.6',
     keywords=['Deep Learning', 'Attribution', 'XAI'],

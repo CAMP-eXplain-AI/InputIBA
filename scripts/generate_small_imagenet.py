@@ -22,7 +22,7 @@ def argparser():
 
 def small_imagenet(args):
     # open class index dict
-    with open("IBA/notebooks/imagenet_class_index.json") as index_json:
+    with open("iba/notebooks/imagenet_class_index.json") as index_json:
         index_dict = json.load(index_json)
 
     # create subfolders

@@ -2,6 +2,9 @@ tiny-imagenet-200/
 imagenet/
 
 __pycache__/
-iba.egg-info/
+*.egg-info/
 .ipynb_checkpoints
 .idea
+
+workdirs/
+data/

@@ -1,15 +1,23 @@
 import torch
 
-from IBA.pytorch import tensor_to_np_img
-from IBA.gan import WGAN_CP
-from IBA.pytorch_img_iba import Image_IBA
+from .pytorch import tensor_to_np_img
+from .gan import WGAN_CP
+from .pytorch_img_iba import Image_IBA
 import matplotlib.pyplot as plt
 
 
 class Net:
-    def __init__(self, image=None, target=None, model=None, IBA=None, model_loss_closure=None,
+    # TODO rename class
+    def __init__(self,
+                 image=None,
+                 target=None,
+                 model=None,
+                 IBA=None,
+                 model_loss_closure=None,
                  generator_iters=10,
-                 image_ib_beta=10, image_ib_optimization_step=40, image_ib_reverse_mask=False,
+                 image_ib_beta=10,
+                 image_ib_optimization_step=40,
+                 image_ib_reverse_mask=False,
                  dev=None):
         """
         initialize net by create essential parameters
@@ -25,7 +33,8 @@ class Net:
         self.IBA = IBA
         if model_loss_closure is None:
             # use default loss if not given (softmax cross entropy)
-            self.model_loss_closure = lambda x: -torch.log_softmax(self.model(x), 1)[:, target].mean()
+            self.model_loss_closure = lambda x: -torch.log_softmax(
+                self.model(x), 1)[:, target].mean()
 
         # GAN
         self.generator_iters = generator_iters
@@ -50,7 +59,8 @@ class Net:
         self.train_image_ib()
 
     def train_ib(self):
-        self.ib_heatmap = self.IBA.analyze(self.image[None], self.model_loss_closure)
+        self.ib_heatmap = self.IBA.analyze(self.image[None],
+                                           self.model_loss_closure)
 
     def train_gan(self):
         """
@@ -58,9 +68,14 @@ class Net:
         Returns: None
         """
         # initialize GAN every time before training
-        self.gan = WGAN_CP(self.model, "features[17]",
-                image=self.image, feature_mask=self.IBA.capacity(), generator_iters=self.generator_iters,
-                feature_noise_mean=self.IBA.estimator.mean(), feature_noise_std=self.IBA.estimator.std(), dev=self.dev)
+        self.gan = WGAN_CP(self.model,
+                           "features[17]",
+                           image=self.image,
+                           feature_mask=self.IBA.capacity(),
+                           generator_iters=self.generator_iters,
+                           feature_noise_mean=self.IBA.estimator.mean(),
+                           feature_noise_std=self.IBA.estimator.std(),
+                           dev=self.dev)
 
         # train
         self.gan.train(self.dev)
@@ -75,17 +90,19 @@ class Net:
         img_noise_std = self.gan.G.eps
         img_moise_mean = self.gan.G.mean
 
-        # initialize image IBA
-        self.image_ib = Image_IBA(image=self.image.to(self.dev),
-                            image_mask=image_mask,
-                            img_eps_std=img_noise_std,
-                            img_eps_mean=img_moise_mean,
-                            beta=self.image_ib_beta,
-                            optimization_steps=self.image_ib_optimization_step,
-                            reverse_lambda=self.image_ib_reverse_mask).to(self.dev)
+        # initialize image iba
+        self.image_ib = Image_IBA(
+            image=self.image.to(self.dev),
+            image_mask=image_mask,
+            img_eps_std=img_noise_std,
+            img_eps_mean=img_moise_mean,
+            beta=self.image_ib_beta,
+            optimization_steps=self.image_ib_optimization_step,
+            reverse_lambda=self.image_ib_reverse_mask).to(self.dev)
 
         # train image ib
-        self.image_ib_heatmap = self.image_ib.analyze(self.image[None], self.model_loss_closure)
+        self.image_ib_heatmap = self.image_ib.analyze(self.image[None],
+                                                      self.model_loss_closure)
 
     def plot_image(self, label=None):
         """
@@ -120,7 +137,8 @@ class Net:
         Returns: None
         """
         plt.figure()
-        img_tensor = self.image_ib.sigmoid(self.image_ib.alpha).detach().cpu().numpy().mean(0).mean(0)
+        img_tensor = self.image_ib.sigmoid(
+            self.image_ib.alpha).detach().cpu().numpy().mean(0).mean(0)
         plt.imshow(img_tensor)
 
     def plot_generated_image_mask(self):

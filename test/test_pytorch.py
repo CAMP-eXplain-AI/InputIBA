@@ -26,7 +26,7 @@ import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from IBA.pytorch import IBA
+from iba.models.pytorch import IBA
 from packaging import version
 
 
@@ -104,8 +104,8 @@ def test_pytorch():
 def test_pytest_readme():
     # resembles the example in the readme
     # small changes to be fast and run on travis
-    from IBA.pytorch import IBA, tensor_to_np_img
-    from IBA.utils import plot_saliency_map, to_unit_interval
+    from iba.models.pytorch import IBA, tensor_to_np_img
+    from iba.models.utils import plot_saliency_map, to_unit_interval
 
     import torch
     from torch.utils.data import DataLoader

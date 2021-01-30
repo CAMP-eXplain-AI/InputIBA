@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.utils.data as Data
-from iba.models.utils import _to_saliency_map
+from .utils import _to_saliency_map
 import random
 
 

@@ -1,8 +1,8 @@
 import torch
 
-from iba.models.pytorch import tensor_to_np_img
-from iba.models.gan import WGAN_CP
-from iba.models.pytorch_img_iba import Image_IBA
+from .pytorch import tensor_to_np_img
+from .gan import WGAN_CP
+from .pytorch_img_iba import Image_IBA
 import matplotlib.pyplot as plt
 
 

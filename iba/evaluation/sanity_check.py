@@ -1,4 +1,4 @@
-from ..models.net import Net
+from iba.models.net import Net
 import torch
 
 

@@ -41,8 +41,8 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Conv1D, MaxPooling1D
 
-from IBA.tensorflow_v1 import model_wo_softmax, IBACopy, IBACopyInnvestigate
-from IBA.tensorflow_v1 import IBALayer, to_saliency_map
+from iba.tensorflow_v1 import model_wo_softmax, IBACopy, IBACopyInnvestigate
+from iba.tensorflow_v1 import IBALayer, to_saliency_map
 
 
 INPUT_SHAPE = (32, 32, 3)

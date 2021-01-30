@@ -1,6 +1,5 @@
-from IBA.net import Net
+from iba.models.net import Net
 import torch
-from torch.nn import init
 
 
 def perturb_model(model, positions=()):

@@ -3,10 +3,11 @@ import torch.nn as nn
 import torch
 import warnings
 from contextlib import contextmanager
-from torchvision.transforms import Normalize, Compose
-from IBA.utils import _to_saliency_map, get_tqdm, ifnone
+from .utils import _to_saliency_map, get_tqdm, ifnone
+
 
 def to_saliency_map(capacity, shape=None):
+    # TODO duplicated function
     """
     Converts the layer capacity (in nats) to a saliency map (in bits) of the given shape .
 
@@ -18,28 +19,36 @@ def to_saliency_map(capacity, shape=None):
 
 
 class _SpatialGaussianKernel(nn.Module):
+    # TODO duplicated class
     """ A simple convolutional layer with fixed gaussian kernels, used to smoothen the input """
-    def __init__(self, kernel_size, sigma, channels,):
+    def __init__(
+        self,
+        kernel_size,
+        sigma,
+        channels,
+    ):
         super().__init__()
         self.sigma = sigma
         self.kernel_size = kernel_size
         assert kernel_size % 2 == 1, \
             "kernel_size must be an odd number (for padding), {} given".format(self.kernel_size)
-        variance = sigma ** 2.
+        variance = sigma**2.
         x_cord = torch.arange(kernel_size, dtype=torch.float)
         x_grid = x_cord.repeat(kernel_size).view(kernel_size, kernel_size)
         y_grid = x_grid.t()
         xy_grid = torch.stack([x_grid, y_grid], dim=-1)
         mean_xy = (kernel_size - 1) / 2.
-        kernel_2d = (1. / (2. * np.pi * variance)) * torch.exp(
-            -torch.sum((xy_grid - mean_xy) ** 2., dim=-1) /
-            (2 * variance)
-        )
+        kernel_2d = (1. / (2. * np.pi * variance)) * torch.exp(-torch.sum(
+            (xy_grid - mean_xy)**2., dim=-1) / (2 * variance))
         kernel_2d = kernel_2d / kernel_2d.sum()
-        kernel_3d = kernel_2d.expand(channels, 1, -1, -1)  # expand in channel dimension
-        self.conv = nn.Conv2d(in_channels=channels, out_channels=channels,
-                              padding=0, kernel_size=kernel_size,
-                              groups=channels, bias=False)
+        kernel_3d = kernel_2d.expand(channels, 1, -1,
+                                     -1)  # expand in channel dimension
+        self.conv = nn.Conv2d(in_channels=channels,
+                              out_channels=channels,
+                              padding=0,
+                              kernel_size=kernel_size,
+                              groups=channels,
+                              bias=False)
         self.conv.weight.data.copy_(kernel_3d)
         self.conv.weight.requires_grad = False
         self.pad = nn.ReflectionPad2d(int((kernel_size - 1) / 2))
@@ -54,14 +63,14 @@ class _SpatialGaussianKernel(nn.Module):
 
 class Image_IBA(nn.Module):
     """
-    Image IBA finds relevant features of your model by applying noise to
+    Image iba finds relevant features of your model by applying noise to
     image.
 
     Example: ::
         #TODO rewrite
         model = Net()
         # Create the Per-Sample Bottleneck:
-        iba = IBA(model.conv4)
+        iba = iba(model.conv4)
 
         img, target = next(iter(datagen(batch_size=1)))
 
@@ -140,12 +149,16 @@ class Image_IBA(nn.Module):
         We use the estimator to obtain shape and device.
         """
         shape = self.image_mask.shape
-        self.alpha = nn.Parameter(torch.full(shape, self.initial_alpha, device=self.device),
+        self.alpha = nn.Parameter(torch.full(shape,
+                                             self.initial_alpha,
+                                             device=self.device),
                                   requires_grad=True)
         if self.sigma is not None and self.sigma > 0:
             # Construct static conv layer with gaussian kernel
-            kernel_size = int(round(2 * self.sigma)) * 2 + 1  # Cover 2.5 stds in both directions
-            self.smooth = _SpatialGaussianKernel(kernel_size, self.sigma, shape[1]).to(self.device)
+            kernel_size = int(round(
+                2 * self.sigma)) * 2 + 1  # Cover 2.5 stds in both directions
+            self.smooth = _SpatialGaussianKernel(kernel_size, self.sigma,
+                                                 shape[1]).to(self.device)
         else:
             self.smooth = None
 
@@ -153,7 +166,7 @@ class Image_IBA(nn.Module):
         """
         You don't need to call this method manually.
 
-        The IBA acts as a model layer, passing the information in `x` along to the next layer
+        The iba acts as a model layer, passing the information in `x` along to the next layer
         either as-is or by restricting the flow of infomration.
         We use it also to estimate the distribution of `x` passing through the layer.
         """
@@ -167,7 +180,8 @@ class Image_IBA(nn.Module):
         return -0.5 * (1 + log_var - mu**2 - log_var.exp())
 
     @staticmethod
-    def _kl_div(x, g, image_mask, img_eps_mean, img_eps_std, lambda_, mean_x, std_x):
+    def _kl_div(x, g, image_mask, img_eps_mean, img_eps_std, lambda_, mean_x,
+                std_x):
         """
         x:
         g:
@@ -181,7 +195,8 @@ class Image_IBA(nn.Module):
         """
         mean_x = 0
         std_x = 1
-        r_norm = (x - mean_x + image_mask * (mean_x - g)) / ((1 - image_mask * lambda_) * std_x)
+        r_norm = (x - mean_x + image_mask *
+                  (mean_x - g)) / ((1 - image_mask * lambda_) * std_x)
         var_z = (1 - lambda_)**2 / (1 - image_mask * lambda_)**2
 
         log_var_z = torch.log(var_z)
@@ -194,7 +209,9 @@ class Image_IBA(nn.Module):
     def _do_restrict_information(self, g, alpha):
         """ Selectively remove information from x by applying noise """
         if alpha is None:
-            raise RuntimeWarning("Alpha not initialized. Run _init() before using the bottleneck.")
+            raise RuntimeWarning(
+                "Alpha not initialized. Run _init() before using the bottleneck."
+            )
 
         # Smoothen and expand alpha on batch dimension
         lamb = self.sigmoid(alpha)
@@ -204,14 +221,17 @@ class Image_IBA(nn.Module):
         # sample from random variable x
         eps = g.data.new(g.size()).normal_()
         ε_img = self.img_eps_std * eps + self.img_eps_mean
-        # x = self.image_mask * g + (1-self.image_mask) * eps 
+        # x = self.image_mask * g + (1-self.image_mask) * eps
         x = g
         self.x = x
 
         # calculate kl divergence
         self._mean = ifnone(self._mean, torch.tensor(0.).to(self.device))
         self._std = ifnone(self._std, torch.tensor(1.).to(self.device))
-        self._buffer_capacity = self._kl_div(x, g, self.image_mask, self.img_eps_mean, self.img_eps_std, lamb, self._mean, self._std)
+        self._buffer_capacity = self._kl_div(x, g, self.image_mask,
+                                             self.img_eps_mean,
+                                             self.img_eps_std, lamb,
+                                             self._mean, self._std)
 
         # apply mask on sampled x
         eps = x.data.new(x.size()).normal_()
@@ -221,14 +241,13 @@ class Image_IBA(nn.Module):
             #TODO rewrite
             z = λ * ε + (1 - λ) * x
         elif self.combine_loss:
-            z_positive =  λ * x + (1 - λ) * ε
+            z_positive = λ * x + (1 - λ) * ε
             z_negative = λ * ε + (1 - λ) * x
             z = torch.cat((z_positive, z_negative))
         else:
             z = λ * x + (1 - λ) * ε
 
         return z
-
 
     @contextmanager
     def restrict_flow(self):
@@ -248,9 +267,15 @@ class Image_IBA(nn.Module):
         finally:
             self._restrict_flow = False
 
-    def analyze(self, input_t, model_loss_fn, mode="saliency",
-                beta=None, optimization_steps=None, min_std=None,
-                lr=None, batch_size=None):
+    def analyze(self,
+                input_t,
+                model_loss_fn,
+                mode="saliency",
+                beta=None,
+                optimization_steps=None,
+                min_std=None,
+                lr=None,
+                batch_size=None):
         """
         Generates a heatmap for a given sample. Make sure you estimated mean and variance of the
         input distribution.
@@ -272,7 +297,8 @@ class Image_IBA(nn.Module):
 
         # TODO: is None
         beta = ifnone(beta, self.beta)
-        optimization_steps = ifnone(optimization_steps, self.optimization_steps)
+        optimization_steps = ifnone(optimization_steps,
+                                    self.optimization_steps)
         min_std = ifnone(min_std, self.min_std)
         lr = ifnone(lr, self.lr)
         batch_size = ifnone(batch_size, self.batch_size)
@@ -296,7 +322,9 @@ class Image_IBA(nn.Module):
         opt_range = range(optimization_steps)
         try:
             tqdm = get_tqdm()
-            opt_range = tqdm(opt_range, desc="Training Bottleneck", disable=not self.progbar)
+            opt_range = tqdm(opt_range,
+                             desc="Training Bottleneck",
+                             disable=not self.progbar)
         except ImportError:
             if self.progbar:
                 warnings.warn("Cannot load tqdm! Sorry, no progress bar")

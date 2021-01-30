@@ -22,10 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
 import numpy as np
 from skimage.transform import resize
-
 
 # this module should be independent of torch and tensorflow
 assert 'torch' not in globals()
@@ -84,8 +82,8 @@ class WelfordEstimator:
         for xi in x:
             self._neuron_nonzero += (xi != 0.)
             old_m = self.m.copy()
-            self.m = self.m + (xi-self.m) / (self._n_samples + 1)
-            self.s = self.s + (xi-self.m) * (xi-old_m)
+            self.m = self.m + (xi - self.m) / (self._n_samples + 1)
+            self.s = self.s + (xi - self.m) * (xi - old_m)
             self._n_samples += 1
         return x
 
@@ -106,7 +104,8 @@ class WelfordEstimator:
         Returns a mask of all active neurons.
         A neuron is considered active if ``n_nonzero / n_samples  > threshold``
         """
-        return (self._neuron_nonzero.astype(np.float32) / self._n_samples) > threshold
+        return (self._neuron_nonzero.astype(np.float32) /
+                self._n_samples) > threshold
 
     def state_dict(self):
         """ Returns internal state. Useful for saving to disk."""
@@ -145,7 +144,7 @@ def _to_saliency_map(capacity, shape=None, data_format='channels_last'):
         ho, wo = saliency_map.shape
         h, w = shape
         # Scale bits to the pixels
-        saliency_map *= (ho*wo) / (h*w)
+        saliency_map *= (ho * wo) / (h * w)
         return resize(saliency_map, shape, order=1, preserve_range=True)
     else:
         return saliency_map
@@ -183,7 +182,8 @@ def load_monkeys(center_crop=True, size=224, pil=False):
     if size is not None and type(size) == int:
         size = (size, size)
 
-    resp = urlopen("http://farm1.static.flickr.com/95/247213534_e8be5222be.jpg")
+    resp = urlopen(
+        "http://farm1.static.flickr.com/95/247213534_e8be5222be.jpg")
     img_bytes = resp.read()
     img = Image.open(BytesIO(img_bytes))
     target = 382
@@ -199,12 +199,16 @@ def load_monkeys(center_crop=True, size=224, pil=False):
     return np.array(img), target
 
 
-def plot_saliency_map(saliency_map, img=None, ax=None,
+def plot_saliency_map(saliency_map,
+                      img=None,
+                      ax=None,
                       colorbar_label='Bits / Pixel',
                       colorbar_fontsize=14,
-                      min_alpha=0.2, max_alpha=0.7, vmax=None,
-                      colorbar_size=0.3, colorbar_pad=0.08):
-
+                      min_alpha=0.2,
+                      max_alpha=0.7,
+                      vmax=None,
+                      colorbar_size=0.3,
+                      colorbar_pad=0.08):
     """
     Plots the heatmap with an bits/pixel colorbar and optionally overlays the image.
 
@@ -241,7 +245,9 @@ def plot_saliency_map(saliency_map, img=None, ax=None,
         colorbar_size = Fixed(colorbar_size)
     if type(colorbar_pad) == float:
         colorbar_pad = Fixed(colorbar_pad)
-    cax1 = ax1_divider.append_axes("right", size=colorbar_size, pad=colorbar_pad)
+    cax1 = ax1_divider.append_axes("right",
+                                   size=colorbar_size,
+                                   pad=colorbar_pad)
     if vmax is None:
         vmax = saliency_map.max()
     norm = mpl.colors.Normalize(vmin=0, vmax=vmax)
@@ -251,7 +257,7 @@ def plot_saliency_map(saliency_map, img=None, ax=None,
     cmap = mpl.colors.ListedColormap(half_jet_rgba)
     hmap_jet = cmap(norm(saliency_map))
     if img is not None:
-        hmap_jet[:, :, -1] = (max_alpha - min_alpha)*norm(saliency_map) + min_alpha
+        hmap_jet[:, :, -1] = (max_alpha - min_alpha) * norm(saliency_map) + min_alpha
     ax.imshow(hmap_jet, alpha=max_alpha)
     cbar = mpl.colorbar.ColorbarBase(cax1, cmap=cmap, norm=norm)
     cbar.set_label(colorbar_label, fontsize=colorbar_fontsize)

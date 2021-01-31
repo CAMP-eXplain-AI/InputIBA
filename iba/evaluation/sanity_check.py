@@ -1,5 +1,16 @@
 from iba.models.net import Net
 import torch
+from torch.nn import init
+from copy import deepcopy
+
+
+def weights_init(m):
+    if isinstance(m, torch.nn.Conv2d):
+        torch.nn.init.xavier_uniform_(m.weight)
+        torch.nn.init.zeros_(m.bias)
+    elif isinstance(m, torch.nn.Linear):
+        torch.nn.init.normal_(m.weight, mean=0, std=0.05)
+        torch.nn.init.zeros_(m.bias)
 
 
 def perturb_model(model, positions=()):
@@ -13,10 +24,7 @@ def perturb_model(model, positions=()):
             layer = getattr(model, position)
 
         # initialize weights
-        # TODO initialize for sequential
-        if isinstance(layer, torch.nn.Sequential):
-            layer.initialize()
-        torch.nn.init.normal(layer.weight, mean=0, std=1)
+        layer.apply(weights_init)
 
 
 def sanity_check(net=None, net_kwparams={}, positions=None, check_image_ib=False, check_gan=False):
@@ -27,7 +35,6 @@ def sanity_check(net=None, net_kwparams={}, positions=None, check_image_ib=False
     if net is None:
         perturb_net = Net(net_kwparams)
     else:
-        # only copy used model instead of altering directly
         perturb_net = net
 
     # training with perturbed model on required stage

@@ -15,7 +15,7 @@ class Net:
                  model=None,
                  IBA=None,
                  model_loss_closure=None,
-                 generator_iters=10,
+                 epochs=10,
                  image_ib_beta=10,
                  image_ib_optimization_step=40,
                  image_ib_reverse_mask=False,
@@ -24,6 +24,7 @@ class Net:
         initialize net by create essential parameters
         """
         # general setting
+        self.net: None or Net = None
         self.dev = dev
         self.image = image.to(self.dev)
         assert target is not None, "Please give a target label"
@@ -38,7 +39,7 @@ class Net:
                 self.model(x), 1)[:, target].mean()
 
         # GAN
-        self.generator_iters = generator_iters
+        self.gan_epochs = epochs
         self.gan = None
 
         # image level information bottleneck
@@ -75,7 +76,7 @@ class Net:
                            "features[17]",
                            image=self.image,
                            feature_mask=self.IBA.capacity(),
-                           generator_iters=self.generator_iters,
+                           epochs=self.gan_epochs,
                            feature_noise_mean=self.IBA.estimator.mean(),
                            feature_noise_std=self.IBA.estimator.std(),
                            dev=self.dev)

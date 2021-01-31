@@ -138,12 +138,12 @@ class WGAN_CP(object):
                  feature_mask=None,
                  feature_noise_mean=None,
                  feature_noise_std=None,
-                 dataset_size=800,
-                 subdataset_size=50,
+                 dataset_size=200,
+                 subdataset_size=20,
                  lr=0.00005,
                  batch_size=32,
                  weight_cliping_limit=0.01,
-                 generator_iters=200,
+                 epochs=200,
                  critic_iter=5,
                  dev='cpu'):
         # TODO use logging instead of print
@@ -184,7 +184,15 @@ class WGAN_CP(object):
             if dataset is None:
                 dataset = sub_dataset
             else:
-                dataset = torch.cat((dataset, sub_dataset))
+                try:
+                    dataset = torch.cat((dataset, sub_dataset))
+                except RuntimeError as exception:
+                    if "out of memory" in str(exception):
+                        print("WARNING: out of memory")
+                        if hasattr(torch.cuda, 'empty_cache'):
+                            torch.cuda.empty_cache()
+                    else:
+                        raise exception
 
         dataset = dataset.detach()
         torch_dataset = Data.TensorDataset(dataset)
@@ -201,7 +209,7 @@ class WGAN_CP(object):
         self.batch_size = batch_size
         self.weight_cliping_limit = weight_cliping_limit
 
-        self.generator_iters = generator_iters
+        self.epochs = epochs
         self.critic_iter = critic_iter
 
     def train(self, dev, logger=None):
@@ -232,7 +240,7 @@ class WGAN_CP(object):
 
         batches_done = 0
         self.image_mask_history = []
-        for epoch in range(self.generator_iters):
+        for epoch in range(self.epochs):
 
             for i, imgs in enumerate(self.dataloader):
 
@@ -284,7 +292,7 @@ class WGAN_CP(object):
                         ).clone().detach().cpu().numpy())
                     logger.info(
                         "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
-                        % (epoch, self.generator_iters,
+                        % (epoch, self.epochs,
                            batches_done % len(self.dataloader),
                            len(self.dataloader), loss_D.item(), loss_G.item()))
 

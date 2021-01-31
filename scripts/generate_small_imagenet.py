@@ -10,15 +10,27 @@ import argparse
 import random
 from shutil import copyfile
 
-def argparser():
+
+def parse_args():
     parser = argparse.ArgumentParser(description='read imagenet path')
-    parser.add_argument('-p', '--imagenet_path', type=str, default="/home/yang/下载/ILSVRC2012_img_val",
+    parser.add_argument('-p',
+                        '--imagenet_path',
+                        type=str,
+                        default="/home/yang/下载/ILSVRC2012_img_val",
                         help='path of ImageNet folder')
-    parser.add_argument('-np', '--new_path', type=str, default="/home/yang/下载/train",
+    parser.add_argument('-np',
+                        '--new_path',
+                        type=str,
+                        default="/home/yang/下载/train",
                         help='path of ImageNet folder')
-    parser.add_argument('-n', '--number', type=int, default=10,
+    parser.add_argument('-n',
+                        '--number',
+                        type=int,
+                        default=10,
                         help='number of samples per class')
-    return parser
+    args = parser.parse_args()
+    return args
+
 
 def small_imagenet(args):
     # open class index dict
@@ -30,12 +42,16 @@ def small_imagenet(args):
     try:
         os.mkdir(new_imagenet_path)
     except OSError:
-        print("Creation of the directory {} failed, directory may already exist!".format(new_imagenet_path))
+        print(
+            "Creation of the directory {} failed, directory may already exist!"
+            .format(new_imagenet_path))
     for folder_name in index_dict.values():
         try:
             os.mkdir(os.path.join(new_imagenet_path, folder_name[0]))
         except OSError:
-            print("Creation of the directory {} failed, directory may already exist!".format(folder_name[0]))
+            print(
+                "Creation of the directory {} failed, directory may already exist!"
+                .format(folder_name[0]))
 
     # move a small batch of images into new folder
     imagenet_path = args.imagenet_path
@@ -48,9 +64,9 @@ def small_imagenet(args):
                 copyfile(os.path.join(imagenet_path, class_folder, sample),
                          os.path.join(new_imagenet_path, class_folder, sample))
 
+
 if __name__ == "__main__":
     print("Start generate small imagenet")
-    parser = argparser()
-    args = parser.parse_args()
+    args = parse_args()
     small_imagenet(args)
     print("Done!")

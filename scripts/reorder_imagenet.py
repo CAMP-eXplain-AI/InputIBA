@@ -8,13 +8,22 @@ import os
 import json
 import argparse
 
-def argparser():
+
+def parse_args():
     parser = argparse.ArgumentParser(description='read imagenet path')
-    parser.add_argument('-p', '--imagenet_path', type=str, default="/home/yang/下载/ILSVRC2012_img_val",
+    parser.add_argument('-p',
+                        '--imagenet_path',
+                        type=str,
+                        default="/home/yang/下载/ILSVRC2012_img_val",
                         help='path of ImageNet folder')
-    parser.add_argument('-gt', '--ground_truth', type=str, default="/home/yang/下载/val.txt",
+    parser.add_argument('-gt',
+                        '--ground_truth',
+                        type=str,
+                        default="/home/yang/下载/val.txt",
                         help='path of ImageNet folder')
-    return parser
+    args = parser.parse_args()
+    return args
+
 
 def reorder_imagenet(args):
     # open class index dict
@@ -27,7 +36,9 @@ def reorder_imagenet(args):
         try:
             os.mkdir(os.path.join(imagenet_path, folder_name[0]))
         except OSError:
-            print("Creation of the directory {} failed, directory may already exist!".format(folder_name[0]))
+            print(
+                "Creation of the directory {} failed, directory may already exist!"
+                .format(folder_name[0]))
 
     # load ground_truth
     with open(args.ground_truth) as f:
@@ -39,13 +50,14 @@ def reorder_imagenet(args):
         if os.path.isfile(os.path.join(imagenet_path, file)):
             file_name = file.split(".")[0]
             index = int(file_name.split("_")[-1])
-            label = ground_truth[index-1]
+            label = ground_truth[index - 1]
             class_folder = index_dict[label][0]
-            os.rename(os.path.join(imagenet_path, file), os.path.join(imagenet_path, class_folder, file))
+            os.rename(os.path.join(imagenet_path, file),
+                      os.path.join(imagenet_path, class_folder, file))
+
 
 if __name__ == "__main__":
     print("Start reorder imgs")
-    parser = argparser()
-    args = parser.parse_args()
+    args = parse_args()
     reorder_imagenet(args)
     print("Done!")

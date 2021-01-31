@@ -1,14 +1,18 @@
 import torch
-
 from .pytorch import tensor_to_np_img
 from .gan import WGAN_CP
 from .pytorch_img_iba import Image_IBA
 import matplotlib.pyplot as plt
 from ..utils import get_logger
+import os.path as osp
+import mmcv
+import numpy as np
+from PIL import Image
 
 
 class Net:
     # TODO rename class
+    # TODO remove image and device from __init__ to separate them from hyper parameters
     def __init__(self,
                  image=None,
                  target=None,
@@ -17,7 +21,7 @@ class Net:
                  model_loss_closure=None,
                  generator_iters=10,
                  image_ib_beta=10,
-                 image_ib_optimization_step=40,
+                 image_ib_opt_steps=40,
                  image_ib_reverse_mask=False,
                  dev=None):
         """
@@ -43,7 +47,7 @@ class Net:
 
         # image level information bottleneck
         self.image_ib_beta = image_ib_beta
-        self.image_ib_optimization_step = image_ib_optimization_step
+        self.image_ib_opt_steps = image_ib_opt_steps
         self.image_ib_reverse_mask = image_ib_reverse_mask
         self.image_ib = None
 
@@ -54,11 +58,11 @@ class Net:
     def train(self, logger=None):
         if logger is None:
             logger = get_logger('iba')
-        logger.info("\nTraining on IB\n")
+        logger.info("Training on IB")
         self.train_ib()
-        logger.info("\nTraining on GAN\n")
+        logger.info("Training on GAN")
         self.train_gan()
-        logger.info("\nTraining on image IB\n")
+        logger.info("Training on image IB")
         self.train_image_ib()
 
     def train_ib(self):
@@ -100,7 +104,7 @@ class Net:
             img_eps_std=img_noise_std,
             img_eps_mean=img_moise_mean,
             beta=self.image_ib_beta,
-            optimization_steps=self.image_ib_optimization_step,
+            optimization_steps=self.image_ib_opt_steps,
             reverse_lambda=self.image_ib_reverse_mask).to(self.dev)
 
         # train image ib
@@ -118,44 +122,35 @@ class Net:
             plt.title("class {}".format(self.target))
         plt.imshow(np_img)
 
-    def plot_feature_mask(self, upscale=False):
-        """
-        Plot feature mask from IB either in original size or upscaled to image size
-        Returns: None
-        """
+    def show_feat_mask(self, upscale=False, show=False, out_file=None):
         if not upscale:
-            img_tensor_mean = self.IBA.capacity().sum(0)
-            plt.figure()
-            plt.imshow(img_tensor_mean.clone().detach().cpu().numpy())
-            plt.title('Feature Map Mask')
+            mask = self.IBA.capacity().sum(0).clone().detach().cpu().numpy()
         else:
-            plt.figure()
-            plt.imshow(self.ib_heatmap)
-            plt.title('Upscaled Feature Map Mask')
+            mask = self.ib_heatmap
+        mask = (mask - mask.min()) / (mask.max() - mask.min()) * 255
+        mask = mask.astype(np.uint8)
+        self._show_mask(mask, show=show, out_file=out_file)
 
-    def plot_image_mask(self):
-        """
-        Plot image mask learned from image IB
-        Returns: None
-        """
-        plt.figure()
-        img_tensor = self.image_ib.sigmoid(
-            self.image_ib.alpha).detach().cpu().numpy().mean(0).mean(0)
-        plt.imshow(img_tensor)
+    def show_gen_img_mask(self, show=False, out_file=None):
+        mask = self.gan.G.image_mask().clone().detach().cpu().numpy().mean([0, 1])
+        self._show_mask(mask, show=show, out_file=out_file)
 
-    def plot_generated_image_mask(self):
-        """
-        Plot generated image mask learned from GAN
-        Returns: None
-        """
-        img_tensor = self.gan.G.image_mask().clone().detach().cpu().numpy()
-        img_tensor = img_tensor.mean(0).mean(0)
-        plt.imshow(img_tensor)
+    def show_img_mask(self, show=False, out_file=None):
+        mask = self.image_ib.sigmoid(
+            self.image_ib.alpha).detach().cpu().mean([0, 1]).numpy()
+        self._show_mask(mask, show=show, out_file=out_file)
 
-    def save_mask_as_img(self):
-        ## TODO save learned mask with proper name in some folder
-        pass
+    @staticmethod
+    def _show_mask(mask, show=False, out_file=None):
+        plt.imshow(mask)
 
-    def plot_generated_image_mask_history(self):
-        ## TODO plot generated image mask during learning (for debug and for evaluation)
-        pass
+        if out_file is not None:
+            dir_name = osp.abspath(osp.dirname(out_file))
+            mmcv.mkdir_or_exist(dir_name)
+            mask = (mask * 255).astype(np.uint8)
+            mask = Image.fromarray(mask, mode='L')
+            mask.save(out_file)
+            if not show:
+                plt.close()
+        if show:
+            plt.show()

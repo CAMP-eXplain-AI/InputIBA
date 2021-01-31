@@ -236,9 +236,7 @@ class WGAN_CP(object):
 
             for i, imgs in enumerate(self.dataloader):
 
-                # ---------------------
-                #  Train Discriminator
-                # ---------------------
+                # train discriminator
                 imgs = imgs[0]
                 optimizer_D.zero_grad()
 
@@ -266,10 +264,7 @@ class WGAN_CP(object):
 
                 # Train the generator every n_critic iterations
                 if i % self.critic_iter == 0:
-                    # -----------------
-                    #  Train Generator
-                    # -----------------
-
+                    # train generator
                     optimizer_G.zero_grad()
 
                     # Generate a batch of images
@@ -282,11 +277,10 @@ class WGAN_CP(object):
                     if epoch % 10 == 0:
                         self.image_mask_history.append(generator.image_mask(
                         ).clone().detach().cpu().numpy())
-                    logger.info(
-                        "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
-                        % (epoch, self.generator_iters,
-                           batches_done % len(self.dataloader),
-                           len(self.dataloader), loss_D.item(), loss_G.item()))
+                    log_str = f'[Epoch{epoch + 1}/{self.generator_iters}], '
+                    log_str += f'[{batches_done % len(self.dataloader)}/{len(self.dataloader)}], '
+                    log_str += f'D loss: {loss_D.item():.5f}, G loss: {loss_G.item():.5f}'
+                    logger.info(log_str)
 
                 # if batches_done % opt.sample_interval == 0:
                 #     save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)

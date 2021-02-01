@@ -44,7 +44,7 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
     # currently only support VGG
     model = torchvision.models.vgg16(pretrained=True).to(device)
     model.eval()
-    iba = IBA(model.features[17])
+    iba = IBA(model.features[17], **cfg.model['iba'])
     iba.sigma = None
 
     iba.reset_estimate()

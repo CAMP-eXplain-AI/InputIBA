@@ -1,10 +1,12 @@
 _base_ = ['_base_/imagenet.py']
 
 model = dict(
+    iba=dict(
+        beta=20),
     net=dict(
         epochs=10,
-        image_ib_beta=10,
-        image_ib_opt_steps=40)
+        image_ib_beta=20,
+        image_ib_opt_steps=60)
 )
 
 train_cfg = dict(

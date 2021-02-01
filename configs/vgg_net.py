@@ -2,7 +2,7 @@ _base_ = ['_base_/imagenet.py']
 
 model = dict(
     net=dict(
-        generator_iters=10,
+        epochs=10,
         image_ib_beta=10,
         image_ib_opt_steps=40)
 )

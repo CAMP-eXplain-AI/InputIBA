@@ -27,13 +27,13 @@ def perturb_model(model, positions=()):
         layer.apply(weights_init)
 
 
-def sanity_check(net=None, net_kwparams={}, positions=None, check_image_ib=False, check_gan=False):
+def sanity_check(net=None, positions=None, check_image_ib=False, check_gan=False, **kwargs):
     """
     random perturb weights before go through a certain submodule, then evaluate generated heatmap
     Returns:
     """
     if net is None:
-        perturb_net = Net(net_kwparams)
+        perturb_net = Net(**kwargs)
     else:
         perturb_net = net
 

@@ -75,7 +75,6 @@ class Generator(torch.nn.Module):
         _ = self.model(self.image.unsqueeze(0))
         return self.feature_map.squeeze(0)
 
-    @property
     def image_mask(self):
         # TODO check whether to use torch.no_grad()
         return self.sigmoid(self.image_mask_param)
@@ -182,8 +181,8 @@ class WGAN_CP(object):
         self.batch_size = batch_size
         self.weight_cliping_limit = weight_cliping_limit
 
-        self.generator_iters = generator_iters
         self.critic_iter = critic_iter
+        self.epochs = epochs
 
     def _build_data(self):
         dataset = []
@@ -210,13 +209,6 @@ class WGAN_CP(object):
         )
         return dataloader
 
-        self.batch_size = batch_size
-        self.weight_cliping_limit = weight_cliping_limit
-
-        self.epochs = epochs
-        self.critic_iter = critic_iter
-
-    def train(self, dev, logger=None):
     def train(self, device, logger=None, return_mask_history=False):
         # TODO add learning rate scheduler
         # TODO find a better way to save the image mask history
@@ -245,8 +237,6 @@ class WGAN_CP(object):
         batches_done = 0
         self.image_mask_history = []
         for epoch in range(self.epochs):
-        for epoch in range(self.generator_iters):
-
             for i, imgs in enumerate(data_loader):
 
                 # train discriminator
@@ -287,7 +277,7 @@ class WGAN_CP(object):
 
                     loss_G.backward()
                     optimizer_G.step()
-                    log_str = f'[Epoch{epoch + 1}/{self.generator_iters}], '
+                    log_str = f'[Epoch{epoch + 1}/{self.epochs}], '
                     log_str += f'[{batches_done % len(data_loader)}/{len(data_loader)}], '
                     log_str += f'D loss: {loss_D.item():.5f}, G loss: {loss_G.item():.5f}'
                     logger.info(log_str)

@@ -116,7 +116,7 @@ class Net:
         """
         plot the image for interpretation
         """
-        np_img = tensor_to_np_img(self.net.image)
+        np_img = tensor_to_np_img(self.image)
         if label is not None:
             plt.title(label)
         else:

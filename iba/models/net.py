@@ -18,6 +18,7 @@ class Net:
                  image=None,
                  target=None,
                  model=None,
+                 position=None,
                  IBA=None,
                  model_loss_closure=None,
                  epochs=10,
@@ -34,6 +35,7 @@ class Net:
         assert target is not None, "Please give a target label"
         self.target = target
         self.model = model
+        self.position = position
 
         # information bottleneck
         self.IBA = IBA
@@ -77,7 +79,7 @@ class Net:
         """
         # initialize GAN every time before training
         self.gan = WGAN_CP(self.model,
-                           "features[17]",
+                           self.position,
                            image=self.image,
                            feature_mask=self.IBA.capacity(),
                            epochs=self.gan_epochs,
@@ -132,7 +134,7 @@ class Net:
         self._show_mask(mask, show=show, out_file=out_file)
 
     def show_gen_img_mask(self, show=False, out_file=None):
-        mask = self.gan.G.image_mask().clone().detach().cpu().numpy().mean([0, 1])
+        mask = self.gan.G.image_mask().clone().detach().cpu().mean([0, 1]).numpy()
         self._show_mask(mask, show=show, out_file=out_file)
 
     def show_img_mask(self, show=False, out_file=None):

@@ -128,8 +128,7 @@ class Net:
             mask = self.IBA.capacity().sum(0).clone().detach().cpu().numpy()
         else:
             mask = self.ib_heatmap
-        mask = (mask - mask.min()) / (mask.max() - mask.min()) * 255
-        mask = mask.astype(np.uint8)
+        mask = (mask - mask.min()) / (mask.max() - mask.min())
         self._show_mask(mask, show=show, out_file=out_file)
 
     def show_gen_img_mask(self, show=False, out_file=None):

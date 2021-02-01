@@ -143,12 +143,12 @@ class WGAN_CP(object):
                  feature_mask=None,
                  feature_noise_mean=None,
                  feature_noise_std=None,
-                 dataset_size=800,
-                 subdataset_size=50,
+                 dataset_size=200,
+                 subdataset_size=20,
                  lr=0.00005,
                  batch_size=32,
                  weight_cliping_limit=0.01,
-                 generator_iters=200,
+                 epochs=200,
                  critic_iter=5,
                  device='cpu'):
         print("WGAN_CP init model.")
@@ -210,6 +210,13 @@ class WGAN_CP(object):
         )
         return dataloader
 
+        self.batch_size = batch_size
+        self.weight_cliping_limit = weight_cliping_limit
+
+        self.epochs = epochs
+        self.critic_iter = critic_iter
+
+    def train(self, dev, logger=None):
     def train(self, device, logger=None, return_mask_history=False):
         # TODO add learning rate scheduler
         # TODO find a better way to save the image mask history
@@ -236,6 +243,8 @@ class WGAN_CP(object):
 
         # training
         batches_done = 0
+        self.image_mask_history = []
+        for epoch in range(self.epochs):
         for epoch in range(self.generator_iters):
 
             for i, imgs in enumerate(data_loader):

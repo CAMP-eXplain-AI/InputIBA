@@ -1,4 +1,5 @@
 import torch
+
 from .pytorch import tensor_to_np_img
 from .gan import WGAN_CP
 from .pytorch_img_iba import Image_IBA
@@ -19,7 +20,7 @@ class Net:
                  model=None,
                  IBA=None,
                  model_loss_closure=None,
-                 generator_iters=10,
+                 epochs=10,
                  image_ib_beta=10,
                  image_ib_opt_steps=40,
                  image_ib_reverse_mask=False,
@@ -42,7 +43,7 @@ class Net:
                 self.model(x), 1)[:, target].mean()
 
         # GAN
-        self.generator_iters = generator_iters
+        self.gan_epochs = epochs
         self.gan = None
 
         # image level information bottleneck
@@ -79,7 +80,7 @@ class Net:
                            "features[17]",
                            image=self.image,
                            feature_mask=self.IBA.capacity(),
-                           generator_iters=self.generator_iters,
+                           epochs=self.gan_epochs,
                            feature_noise_mean=self.IBA.estimator.mean(),
                            feature_noise_std=self.IBA.estimator.std(),
                            device=self.device)

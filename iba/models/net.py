@@ -23,13 +23,13 @@ class Net:
                  image_ib_beta=10,
                  image_ib_opt_steps=40,
                  image_ib_reverse_mask=False,
-                 dev=None):
+                 device=None):
         """
         initialize net by create essential parameters
         """
         # general setting
-        self.dev = dev
-        self.image = image.to(self.dev)
+        self.device = device
+        self.image = image.to(self.device)
         assert target is not None, "Please give a target label"
         self.target = target
         self.model = model
@@ -82,10 +82,10 @@ class Net:
                            generator_iters=self.generator_iters,
                            feature_noise_mean=self.IBA.estimator.mean(),
                            feature_noise_std=self.IBA.estimator.std(),
-                           dev=self.dev)
+                           device=self.device)
 
         # train
-        self.gan.train(self.dev)
+        self.gan.train(self.device)
 
     def train_image_ib(self):
         """
@@ -99,13 +99,13 @@ class Net:
 
         # initialize image iba
         self.image_ib = Image_IBA(
-            image=self.image.to(self.dev),
+            image=self.image.to(self.device),
             image_mask=image_mask,
             img_eps_std=img_noise_std,
             img_eps_mean=img_moise_mean,
             beta=self.image_ib_beta,
             optimization_steps=self.image_ib_opt_steps,
-            reverse_lambda=self.image_ib_reverse_mask).to(self.dev)
+            reverse_lambda=self.image_ib_reverse_mask).to(self.device)
 
         # train image ib
         self.image_ib_heatmap = self.image_ib.analyze(self.image[None],

@@ -31,15 +31,6 @@ from torchvision.transforms import Normalize, Compose
 from .utils import to_saliency_map, get_tqdm, ifnone
 
 
-def insert_into_sequential(sequential, layer, idx):
-    """
-    Returns a ``nn.Sequential`` with ``layer`` inserted in ``sequential`` at position ``idx``.
-    """
-    children = list(sequential.children())
-    children.insert(idx, layer)
-    return nn.Sequential(*children)
-
-
 def tensor_to_np_img(img_t):
     """
     Convert a torch tensor of shape ``(c, h, w)`` to a numpy array of shape ``(h, w, c)``
@@ -49,34 +40,6 @@ def tensor_to_np_img(img_t):
         Normalize(mean=[0, 0, 0], std=[1 / 0.229, 1 / 0.224, 1 / 0.225]),
         Normalize(std=[1, 1, 1], mean=[-0.485, -0.456, -0.406]),
     ])(img_t).detach().cpu().numpy().transpose(1, 2, 0)
-
-
-def imagenet_transform(resize=256, crop_size=224):
-    """Returns the default torchvision imagenet transform. """
-    from torchvision.transforms import Compose, CenterCrop, ToTensor, Resize, Normalize
-    return Compose([
-        Resize(resize),
-        CenterCrop(crop_size),
-        ToTensor(),
-        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-
-def get_imagenet_folder(path, image_size=224, transform='default'):
-    """
-    Returns a ``torchvision.datasets.ImageFolder`` with the default
-    torchvision preprocessing.
-    """
-    from torchvision.datasets import ImageFolder
-    from torchvision.transforms import Compose, CenterCrop, ToTensor, Resize, Normalize
-    if transform == 'default':
-        transform = Compose([
-            CenterCrop(256),
-            Resize(image_size),
-            ToTensor(),
-            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-    return ImageFolder(path, transform=transform)
 
 
 class _SpatialGaussianKernel(nn.Module):

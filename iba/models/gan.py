@@ -13,33 +13,36 @@ class Generator(torch.nn.Module):
                  model,
                  layer,
                  image,
-                 dev='cpu',
+                 device='cpu',
                  capacity=None,
                  batch_size=None):
         super().__init__()
         self.image = image
         # use image size
+        # TODO make image_mask_param a Parameter
         if capacity is not None:
             image_mask_param = torch.tensor(
                 _to_saliency_map(capacity.cpu().detach().numpy(),
                                  image.shape[1:],
-                                 data_format="channels_first")).to(dev)
+                                 data_format="channels_first")).to(device)
             self.image_mask_param = image_mask_param.expand(
                 image.shape[0], -1, -1).clone().unsqueeze(0)
         else:
             self.image_mask_param = torch.zeros(image.shape,
-                                                dtype=torch.float).to(dev)
+                                                dtype=torch.float).to(device)
         self.image_mask_param.requires_grad = True
         # self.mean = torch.tensor([0.485, 0.456, 0.406]).view(1,-1,1,1).to(dev)
-        self.mean = torch.tensor([0., 0., 0.]).view(1, -1, 1, 1).to(dev)
+        # TODO make mean and eps Parameters.
+        self.mean = torch.tensor([0., 0., 0.]).view(1, -1, 1, 1).to(device)
         self.mean.requires_grad = True
         # self.eps = torch.tensor([0.229, 0.224, 0.225]).view(1,-1,1,1).to(dev)
-        self.eps = torch.tensor([1., 1., 1.]).view(1, -1, 1, 1).to(dev)
+        self.eps = torch.tensor([1., 1., 1.]).view(1, -1, 1, 1).to(device)
         self.eps.requires_grad = True
         self.feature_map = None
 
         self.sigmoid = nn.Sigmoid()
 
+        # TODO use out of place function to avoid setting attributes
         # register hook in trained classification network
         def store_feature_map(model, input, output):
             self.feature_map = output
@@ -68,11 +71,13 @@ class Generator(torch.nn.Module):
         return masked_feature_map
 
     def get_feature_map(self):
+        # TODO check whether to use torch.no_grad()
         _ = self.model(self.image.unsqueeze(0))
         return self.feature_map.squeeze(0)
 
-    # function for retrieve image mask
+    @property
     def image_mask(self):
+        # TODO check whether to use torch.no_grad()
         return self.sigmoid(self.image_mask_param)
 
 
@@ -145,20 +150,19 @@ class WGAN_CP(object):
                  weight_cliping_limit=0.01,
                  generator_iters=200,
                  critic_iter=5,
-                 dev='cpu'):
-        # TODO use logging instead of print
+                 device='cpu'):
         print("WGAN_CP init model.")
         self.image = image
         self.feature_mask = feature_mask
         self.feature_noise_mean = feature_noise_mean
         self.feature_noise_std = feature_noise_std
         self.dataset_size = dataset_size
-        self.dev = dev
+        self.device = device
 
         self.G = Generator(model,
                            layer,
                            image,
-                           dev=self.dev,
+                           device=self.device,
                            capacity=feature_mask,
                            batch_size=batch_size)
         self.feature_map = self.G.get_feature_map()
@@ -170,30 +174,7 @@ class WGAN_CP(object):
         # create dataset from feature mask and feature map
         self.subdataset_size = subdataset_size
         self.num_subdataset = int(dataset_size / self.subdataset_size)
-        dataset = None
-        for idx_subset in range(self.num_subdataset):
-            sub_dataset = torch.unsqueeze(self.feature_map,
-                                          0).expand(self.subdataset_size, -1,
-                                                    -1, -1)
-            noise = torch.zeros_like(sub_dataset).normal_()
-            std = random.uniform(0, 5)
-            mean = random.uniform(-2, 2)
-            noise = std * noise + mean
-            sub_dataset = self.feature_mask * sub_dataset + (
-                1 - self.feature_mask) * noise
-            if dataset is None:
-                dataset = sub_dataset
-            else:
-                dataset = torch.cat((dataset, sub_dataset))
 
-        dataset = dataset.detach()
-        torch_dataset = Data.TensorDataset(dataset)
-        self.dataloader = Data.DataLoader(
-            dataset=torch_dataset,
-            batch_size=batch_size,
-            shuffle=True,
-            num_workers=0,
-        )
 
         # WGAN values from paper: 0.00005
         self.learning_rate = lr
@@ -204,13 +185,40 @@ class WGAN_CP(object):
         self.generator_iters = generator_iters
         self.critic_iter = critic_iter
 
-    def train(self, dev, logger=None):
+    def _build_data(self):
+        dataset = []
+        for idx_subset in range(self.num_subdataset):
+            sub_dataset = torch.unsqueeze(self.feature_map,
+                                          0).expand(self.subdataset_size, -1,
+                                                    -1, -1)
+            noise = torch.zeros_like(sub_dataset).normal_()
+            std = random.uniform(0, 5)
+            mean = random.uniform(-2, 2)
+            noise = std * noise + mean
+            sub_dataset = self.feature_mask * sub_dataset + (
+                    1 - self.feature_mask) * noise
+            dataset.append(sub_dataset)
+
+        dataset = torch.cat(dataset, dim=0)
+        dataset = dataset.detach()
+        torch_dataset = Data.TensorDataset(dataset)
+        dataloader = Data.DataLoader(
+            dataset=torch_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=0,
+        )
+        return dataloader
+
+    def train(self, device, logger=None, return_mask_history=False):
         # TODO add learning rate scheduler
+        # TODO find a better way to save the image mask history
         # Initialize generator and discriminator
         if logger is None:
             logger = get_logger('iba')
-        generator = self.G.to(dev)
-        discriminator = self.D.to(dev)
+        generator = self.G.to(device)
+        discriminator = self.D.to(device)
+        data_loader = self._build_data()
 
         # Optimizers
         optimizer_G = torch.optim.RMSprop([{
@@ -226,15 +234,11 @@ class WGAN_CP(object):
         optimizer_D = torch.optim.RMSprop(discriminator.parameters(),
                                           lr=self.learning_rate)
 
-        # ----------
-        #  Training
-        # ----------
-
+        # training
         batches_done = 0
-        self.image_mask_history = []
         for epoch in range(self.generator_iters):
 
-            for i, imgs in enumerate(self.dataloader):
+            for i, imgs in enumerate(data_loader):
 
                 # train discriminator
                 imgs = imgs[0]
@@ -243,7 +247,7 @@ class WGAN_CP(object):
                 # Sample noise as generator input
                 z = torch.zeros_like(self.image)
                 z = z.unsqueeze(0).expand(imgs.shape[0], -1, -1,
-                                          -1).clone().normal_().to(dev)
+                                          -1).clone().normal_().to(device)
                 # std = random.uniform(0, 5)
                 # mean = random.uniform(-2, 2)
                 # noise = std * noise + mean
@@ -274,14 +278,12 @@ class WGAN_CP(object):
 
                     loss_G.backward()
                     optimizer_G.step()
-                    if epoch % 10 == 0:
-                        self.image_mask_history.append(generator.image_mask(
-                        ).clone().detach().cpu().numpy())
                     log_str = f'[Epoch{epoch + 1}/{self.generator_iters}], '
-                    log_str += f'[{batches_done % len(self.dataloader)}/{len(self.dataloader)}], '
+                    log_str += f'[{batches_done % len(data_loader)}/{len(data_loader)}], '
                     log_str += f'D loss: {loss_D.item():.5f}, G loss: {loss_G.item():.5f}'
                     logger.info(log_str)
 
                 # if batches_done % opt.sample_interval == 0:
                 #     save_image(gen_imgs.data[:25], "images/%d.png" % batches_done, nrow=5, normalize=True)
                 batches_done += 1
+        del data_loader

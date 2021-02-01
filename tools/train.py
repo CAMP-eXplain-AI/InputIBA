@@ -9,6 +9,7 @@ import mmcv
 from iba.models import Net, IBA
 from tqdm import tqdm
 from iba.datasets import build_dataset
+import torch
 
 
 def parse_args():
@@ -51,6 +52,7 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
 
     for imgs, targets, img_names in tqdm(val_loader, total=len(val_loader)):
         for img, target, img_name in zip(imgs, targets, img_names):
+
             target = target.item()
             rel_dir = val_set.get_ind_to_cls()[target]
             feat_mask_file = osp.join(work_dir, 'feat_masks', rel_dir, img_name + '.png')
@@ -60,10 +62,12 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
                       target=target,
                       model=model,
                       IBA=iba,
-                      dev=device, **cfg.model['net'])
+                      device=device, **cfg.model['net'])
             net.train(logger)
             net.show_feat_mask(out_file=feat_mask_file, **cfg.test_cfg.pop('feat_mask', {}))
             net.show_img_mask(out_file=img_mask_file, **cfg.test_cfg.pop('img_mask', {}))
+            del net
+            logger.info(f'allocated memory in MB: {int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
 
 
 def main():

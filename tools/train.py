@@ -44,8 +44,12 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
     # currently only support VGG
     model = torchvision.models.vgg16(pretrained=True).to(device)
     model.eval()
+
+    # initialize information bottleneck with parameters
     iba = IBA(model.features[17])
-    iba.sigma = None
+    iba.sigma = cfg.model.iba['sigma']
+    iba.beta = cfg.model.iba['beta']
+    iba.optimization_steps = cfg.model.iba['opt_steps']
 
     iba.reset_estimate()
     iba.estimate(model, train_loader, device=device, **cfg.train_cfg)
@@ -58,9 +62,11 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
             feat_mask_file = osp.join(work_dir, 'feat_masks', rel_dir, img_name + '.png')
             img_mask_file = osp.join(work_dir, 'img_masks', rel_dir, img_name + '.png')
 
+            #TODO change position to be from parameter
             net = Net(image=img,
                       target=target,
                       model=model,
+                      position="features[17]",
                       IBA=iba,
                       device=device, **cfg.model['net'])
             net.train(logger)

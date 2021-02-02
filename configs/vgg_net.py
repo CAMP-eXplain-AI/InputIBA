@@ -1,6 +1,11 @@
 _base_ = ['_base_/imagenet.py']
 
 model = dict(
+    iba=dict(
+      beta=20,
+      sigma=None,
+      opt_steps=10),
+
     net=dict(
         epochs=10,
         image_ib_beta=10,

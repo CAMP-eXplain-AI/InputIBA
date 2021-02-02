@@ -123,6 +123,7 @@ class Net:
             plt.title(label)
         else:
             plt.title("class {}".format(self.target))
+        plt.axis('off')
         plt.imshow(np_img)
 
     def show_feat_mask(self, upscale=False, show=False, out_file=None):
@@ -149,9 +150,11 @@ class Net:
         if out_file is not None:
             dir_name = osp.abspath(osp.dirname(out_file))
             mmcv.mkdir_or_exist(dir_name)
-            mask = (mask * 255).astype(np.uint8)
-            mask = Image.fromarray(mask, mode='L')
-            mask.save(out_file)
+            # TODO discuss store method
+            # mask = (mask * 255).astype(np.uint8)
+            # mask = Image.fromarray(mask, mode='L')
+            # mask.save(out_file)
+            plt.savefig(out_file, bbox_inches='tight', pad_inches=0)
             if not show:
                 plt.close()
         if show:

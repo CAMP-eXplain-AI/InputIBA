@@ -4,6 +4,8 @@
 - [ ] Allow for selecting different models and different layers.
 - [ ] Refactor `Net`, `IBA`, 'Image_IBA', `WGAN_CP` etc.
 - [ ] Solve the GPU memory issue.
+- [ ] Add Easy to use Jupyter notebooks as demo.
+- [ ] Remove all tensorflow related codes (also in requirements.txt).
 
 ---
 ## Installation

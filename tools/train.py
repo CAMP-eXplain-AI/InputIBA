@@ -58,9 +58,11 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
             feat_mask_file = osp.join(work_dir, 'feat_masks', rel_dir, img_name + '.png')
             img_mask_file = osp.join(work_dir, 'img_masks', rel_dir, img_name + '.png')
 
+            #TODO change position to be from parameter
             net = Net(image=img,
                       target=target,
                       model=model,
+                      position="features[17]",
                       IBA=iba,
                       device=device, **cfg.model['net'])
             net.train(logger)

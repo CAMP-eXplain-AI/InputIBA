@@ -1,4 +1,9 @@
 # Information Bottleneck Attribution (to be renamed)
+<p align="center"> 
+    <img alt="Example GIF" width="300" src="demo.gif"><br>
+    Example Image Mask
+</p>
+
 ---
 ## TODO List
 - [ ] Allow for selecting different models and different layers.

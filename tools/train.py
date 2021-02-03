@@ -10,6 +10,7 @@ from iba.models import Net, IBA
 from tqdm import tqdm
 from iba.datasets import build_dataset
 import torch
+import gc
 
 
 def parse_args():
@@ -44,6 +45,8 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
     # currently only support VGG
     model = torchvision.models.vgg16(pretrained=True).to(device)
     model.eval()
+    for p in model.parameters():
+        p.requires_grad = False
     iba = IBA(model.features[17], **cfg.model['iba'])
     iba.sigma = None
 
@@ -52,24 +55,22 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
 
     for imgs, targets, img_names in tqdm(val_loader, total=len(val_loader)):
         for img, target, img_name in zip(imgs, targets, img_names):
+            logger.info(f'allocated memory in MB: {int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
 
             target = target.item()
             rel_dir = val_set.get_ind_to_cls()[target]
-            feat_mask_file = osp.join(work_dir, 'feat_masks', rel_dir, img_name + '.png')
-            img_mask_file = osp.join(work_dir, 'img_masks', rel_dir, img_name + '.png')
+            feat_mask_file = osp.join(work_dir, 'feat_masks', rel_dir, img_name)
+            img_mask_file = osp.join(work_dir, 'img_masks', rel_dir, img_name)
 
-            #TODO change position to be from parameter
             net = Net(image=img,
                       target=target,
                       model=model,
-                      position="features[17]",
                       IBA=iba,
                       device=device, **cfg.model['net'])
             net.train(logger)
             net.show_feat_mask(out_file=feat_mask_file, **cfg.test_cfg.pop('feat_mask', {}))
             net.show_img_mask(out_file=img_mask_file, **cfg.test_cfg.pop('img_mask', {}))
-            del net
-            logger.info(f'allocated memory in MB: {int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
+            gc.collect()
 
 
 def main():

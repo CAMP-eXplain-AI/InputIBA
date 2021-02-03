@@ -35,6 +35,7 @@ class Net:
         assert target is not None, "Please give a target label"
         self.target = target
         self.model = model
+        # TODO rename position to align with the argument in __init__ of WGAN_CP
         self.position = position
 
         # information bottleneck
@@ -146,15 +147,15 @@ class Net:
     @staticmethod
     def _show_mask(mask, show=False, out_file=None):
         plt.imshow(mask)
+        plt.axis('off')
 
         if out_file is not None:
             dir_name = osp.abspath(osp.dirname(out_file))
             mmcv.mkdir_or_exist(dir_name)
-            # TODO discuss store method
-            # mask = (mask * 255).astype(np.uint8)
-            # mask = Image.fromarray(mask, mode='L')
-            # mask.save(out_file)
-            plt.savefig(out_file, bbox_inches='tight', pad_inches=0)
+            mask = (mask * 255).astype(np.uint8)
+            mask = Image.fromarray(mask, mode='L')
+            mask.save(out_file + '.png')
+            plt.savefig(out_file + '.JPEG', bbox_inches='tight', pad_inches=0)
             if not show:
                 plt.close()
         if show:

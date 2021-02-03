@@ -17,7 +17,7 @@ test_pipeline = [
 
 data = dict(
     data_loader=dict(
-        batch_size=128,
+        batch_size=1,
         shuffle=True,
         num_workers=0),
     train=dict(

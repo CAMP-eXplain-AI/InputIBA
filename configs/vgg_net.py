@@ -4,6 +4,7 @@ model = dict(
     iba=dict(
         beta=20),
     net=dict(
+        position="features[17]",
         epochs=10,
         image_ib_beta=20,
         image_ib_opt_steps=60)

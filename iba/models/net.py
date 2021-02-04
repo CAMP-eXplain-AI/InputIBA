@@ -115,6 +115,13 @@ class Net:
         self.image_ib_heatmap = self.image_ib.analyze(self.image[None],
                                                       self.model_loss_closure)
 
+    @property
+    def attribution_map(self):
+        """
+        get image level attribution map
+        """
+        return self.image_ib.sigmoid(self.image_ib.alpha).squeeze()
+
     def plot_image(self, label=None):
         """
         plot the image for interpretation

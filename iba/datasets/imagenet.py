@@ -9,6 +9,7 @@ from PIL import Image
 
 @DATASETS.register_module()
 class ImageNet(BaseDataset):
+    # TODO Load bbox annotations
     """ImageNet. The folders should be structured as follows:
         root/
             class_folder_1/xxx.JPEG
@@ -55,7 +56,7 @@ class ImageNet(BaseDataset):
         dir_name = osp.basename(osp.dirname(img_path))
         img_name = osp.splitext(osp.basename(img_path))[0]
         target = int(self.dir_to_ind[dir_name])
-        return img, target, img_name
+        return dict(img=img, target=target, img_name=img_name)
 
     def __len__(self):
         return len(self.image_paths)

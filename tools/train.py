@@ -53,7 +53,10 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
     iba.reset_estimate()
     iba.estimate(model, train_loader, device=device, **cfg.train_cfg)
 
-    for imgs, targets, img_names in tqdm(val_loader, total=len(val_loader)):
+    for batch in tqdm(val_loader, total=len(val_loader)):
+        imgs = batch['img']
+        targets = batch['target']
+        img_names = batch['img_names']
         for img, target, img_name in zip(imgs, targets, img_names):
             logger.info(f'allocated memory in MB: {int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
 

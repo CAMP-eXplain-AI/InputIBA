@@ -1,25 +1,42 @@
 from mmcv import Registry, build_from_cfg
 import inspect
-import torchvision
+import albumentations as A
+from albumentations.pytorch import ToTensor, ToTensorV2
+from typing import Union, Dict, List
 
 
 DATASETS = Registry('datasets')
 PIPELINES = Registry('pipelines')
 
 
-def register_vision_transforms():
-    vision_transforms = []
-    for module_name in dir(torchvision.transforms):
-        if module_name.startswith('__'):
+def register_albu_transforms():
+    albu_transforms = []
+    for module_name in dir(A):
+        if module_name.startswith('_'):
             continue
-        _transform = getattr(torchvision.transforms, module_name)
-        if inspect.isclass(_transform):
-            PIPELINES.register_module()(_transform)
-            vision_transforms.append(module_name)
-    return vision_transforms
+        transform = getattr(A, module_name)
+        if inspect.isclass(transform) and issubclass(transform, A.BasicTransform):
+            PIPELINES.register_module()(transform)
+            albu_transforms.append(module_name)
+    return albu_transforms
 
 
-VISION_TRANSFORMERS = register_vision_transforms()
+albu_transforms = register_albu_transforms()
+PIPELINES.register_module(module=ToTensor)
+PIPELINES.register_module(module=ToTensorV2)
+
+
+def build_pipeline(cfg: Union[Dict, List], default_args=None):
+    if isinstance(cfg, Dict):
+        return build_from_cfg(cfg, PIPELINES)
+    else:
+        pipeline = []
+        for transform_cfg in cfg:
+            t = build_pipeline(transform_cfg)
+            pipeline.append(t)
+        if default_args is None:
+            default_args = {}
+        return A.Compose(pipeline, **default_args)
 
 
 def build_dataset(cfg, default_args=None):

@@ -5,14 +5,14 @@ img_norm_cfg = dict(
 
 img_size = 224
 train_pipeline = [
-    dict(type='Resize', size=(img_size, img_size)),
-    dict(type='ToTensor'),
-    dict(type='Normalize', **img_norm_cfg)]
+    dict(type='Resize', height=img_size, width=img_size, always_apply=True),
+    dict(type='Normalize', always_apply=True, **img_norm_cfg),
+    dict(type='ToTensor')]
 
 test_pipeline = [
-    dict(type='Resize', size=(img_size, img_size)),
-    dict(type='ToTensor'),
-    dict(type='Normalize', **img_norm_cfg)]
+    dict(type='Resize', height=img_size, width=img_size, always_apply=True),
+    dict(type='Normalize', always_apply=True, **img_norm_cfg),
+    dict(type='ToTensor')]
 
 
 data = dict(
@@ -22,11 +22,14 @@ data = dict(
         num_workers=0),
     train=dict(
         type=dataset_type,
-        root=data_root + 'imagenet/train/',
+        img_root=data_root + 'imagenet/images/train/',
+        annot_root=data_root + 'imagenet/annotations/train/',
         ind_to_cls_file=data_root + 'imagenet_class_index.json',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        root=data_root + 'imagenet/val/',
+        img_root=data_root + 'imagenet/images/val/',
+        annot_root=data_root + 'imagenet/annotations/val/',
         ind_to_cls_file=data_root + 'imagenet_class_index.json',
-        pipeline=test_pipeline))
+        pipeline=test_pipeline,
+        with_bbox=True))

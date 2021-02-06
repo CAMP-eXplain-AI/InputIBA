@@ -38,12 +38,8 @@ class MultiThresholdRatios(BaseEvaluation):
             bin_mask = heatmap >= t
             total_points = bin_mask.sum()
             heat_in_roi = heatmap[bin_mask * roi_mask].sum()
-            print(f'{i}, t: {t}, '
-                  f'total_points: {total_points}, '
-                  f'heat_in_roi: {heat_in_roi}')
             ratio = heat_in_roi / (total_points + 1e-8)
             ratios[i] = ratio
-        print(ratios)
         val = self.integrate(ratios, self.quantiles)
         return dict(auc=val)
 

@@ -61,9 +61,8 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
             logger.info(f'allocated memory in MB: {int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
 
             target = target.item()
-            rel_dir = val_set.get_ind_to_cls()[target]
-            feat_mask_file = osp.join(work_dir, 'feat_masks', rel_dir, img_name)
-            img_mask_file = osp.join(work_dir, 'img_masks', rel_dir, img_name)
+            feat_mask_file = osp.join(work_dir, 'feat_masks', img_name)
+            img_mask_file = osp.join(work_dir, 'img_masks', img_name)
 
             net = Net(image=img,
                       target=target,

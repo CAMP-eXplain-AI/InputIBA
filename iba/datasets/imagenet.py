@@ -51,14 +51,16 @@ class ImageNet(BaseDataset):
         self.cls_to_ind = {v: k for k, v in self.ind_to_cls.items()}
 
         # use albumentations.Compose
-        self.pipeline = build_pipeline(pipeline,
-                                       default_args=dict(
-                                           bbox_params=BboxParams(format='pascal_voc', label_fields=['labels'])))
         self.image_paths = glob(osp.join(self.img_root, '**/*.JPEG'), recursive=True)
         if self.with_bbox:
             annot_files = glob(osp.join(self.annot_root, '**/*.xml'), recursive=True)
             annot_file_names = list(map(lambda x: osp.splitext(osp.basename(x))[0], annot_files))
             self.image_paths = list(filter(partial(_filter_fn, annot_file_names=annot_file_names), self.image_paths))
+            self.pipeline = build_pipeline(pipeline,
+                                           default_args=dict(
+                                               bbox_params=BboxParams(format='pascal_voc', label_fields=['labels'])))
+        else:
+            self.pipeline = build_pipeline(pipeline)
 
     def __getitem__(self, index):
         """Get a single sample.
@@ -84,6 +86,7 @@ class ImageNet(BaseDataset):
             annot = load_voc_bboxes(annot_file, name_to_ind_dict=self.dir_to_ind, ignore_difficult=False)
             bboxes = annot['bboxes']
             labels = annot['labels']
+            # print(f'xml: {annot_file}, bboxes: {bboxes}')
             # albumentations
             res = self.pipeline(image=img, bboxes=bboxes, labels=labels)
             # only keep the bboxes of a specific class

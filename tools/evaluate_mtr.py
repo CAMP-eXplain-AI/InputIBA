@@ -25,7 +25,8 @@ def parse_args():
                         help='base threshold of the metric')
     parser.add_argument('--roi',
                         type=str,
-                        choices=['bbox', 'mask'],
+                        default='bboxes',
+                        choices=['bboxes', 'masks'],
                         help='region of interest')
     args = parser.parse_args()
     return args
@@ -36,7 +37,7 @@ def evaluate_mtr(cfg,
                  work_dir,
                  file_name,
                  base_threshold=0.1,
-                 roi='bbox'):
+                 roi='bboxes'):
     mmcv.mkdir_or_exist(work_dir)
 
     dataset = build_dataset(cfg.data['val'])
@@ -44,26 +45,25 @@ def evaluate_mtr(cfg,
     assert roi in dataset[0].keys(), f'dataset samples must contain the key: {roi}'
 
     res_dict = {}
-    for sample in tqdm(dataset):
+    for i, sample in tqdm(enumerate(dataset)):
         img_name = sample['img_name']
         target = sample['target']
-        roi = sample[roi]
-        if isinstance(roi, torch.Tensor):
+        roi_array = sample[roi]
+        if isinstance(roi_array, torch.Tensor):
             # semantic masks
-            roi = roi.numpy().astype(int)
+            roi_array = roi_array.numpy().astype(int)
         else:
             # bboxes
-            roi = roi.astype(int)
+            roi_array = roi_array.astype(int)
 
         if not osp.exists(osp.join(heatmap_dir, img_name + '.png')):
             continue
         heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'), cv2.IMREAD_UNCHANGED)
-        res = evaluator.evaluate(heatmap, roi)
+        res = evaluator.evaluate(heatmap, roi_array)
         auc = res['auc']
-        res_dict.update({'img_name': img_name,
-                         'target': target,
-                         'auc': auc})
-
+        res_dict.update({img_name: {'target': target, 'auc': auc}})
+    aucs = np.array([v['auc'] for v in res_dict.values()])
+    print(f'auc: {aucs.mean()} +/- {aucs.std()}')
     file_name = osp.splitext(file_name)[0]
     file_path = osp.join(work_dir, file_name + '.json')
     mmcv.dump(res_dict, file=file_path)

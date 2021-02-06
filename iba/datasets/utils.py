@@ -44,13 +44,13 @@ def load_voc_bboxes(xml_file, name_to_ind_dict, ignore_difficult=False):
         bboxes = np.zeros((0, 4))
         labels = np.zeros((0,))
     else:
-        bboxes = np.array(bboxes, ndmin=2) - 1
+        bboxes = np.array(bboxes, ndmin=2)
         labels = np.array(labels, dtype=int)
     if not bboxes_ignore:
         bboxes_ignore = np.zeros((0, 4))
         labels_ignore = np.zeros((0,), dtype=int)
     else:
-        bboxes_ignore = np.array(bboxes_ignore, ndmin=2) - 1
+        bboxes_ignore = np.array(bboxes_ignore, ndmin=2)
         labels_ignore = np.array(labels_ignore, dtype=int)
     if not ignore_difficult:
         bboxes = np.concatenate([bboxes, bboxes_ignore], axis=0)

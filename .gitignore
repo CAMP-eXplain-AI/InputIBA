@@ -8,3 +8,5 @@ __pycache__/
 
 workdirs/
 data
+.pytest_cache/
+.coverage

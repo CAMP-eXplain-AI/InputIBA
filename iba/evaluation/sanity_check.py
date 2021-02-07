@@ -37,6 +37,9 @@ def sanity_check(net=None, positions=None, check_image_ib=False, check_gan=False
     else:
         perturb_net = net
 
+    # save net's state dict
+    model_state_dict = deepcopy(net.model.state_dict())
+
     # training with perturbed model on required stage
     perturb_net.train_ib()
     if check_gan:
@@ -46,4 +49,7 @@ def sanity_check(net=None, positions=None, check_image_ib=False, check_gan=False
         perturb_model(perturb_net.model, positions)
     perturb_net.train_image_ib()
 
-    perturb_net.plot_image_mask()
+    # reload unperturbed state dict
+    net.model.load_state_dict(model_state_dict)
+
+    perturb_net.show_img_mask()

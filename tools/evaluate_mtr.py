@@ -63,7 +63,7 @@ def evaluate_mtr(cfg,
         auc = res['auc']
         res_dict.update({img_name: {'target': target, 'auc': auc}})
     aucs = np.array([v['auc'] for v in res_dict.values()])
-    print(f'auc: {aucs.mean()} +/- {aucs.std()}')
+    print(f'auc: {aucs.mean():.5f} +/- {aucs.std():.5f}')
     file_name = osp.splitext(file_name)[0]
     file_path = osp.join(work_dir, file_name + '.json')
     mmcv.dump(res_dict, file=file_path)

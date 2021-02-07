@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.integrate import trapezoid
 from .base import BaseEvaluation
+import warnings
 
 
 class MultiThresholdRatios(BaseEvaluation):
@@ -8,7 +9,7 @@ class MultiThresholdRatios(BaseEvaluation):
         self.base_threshold = base_threshold
         self.quantiles = np.linspace(0, 1.0, 11)
 
-    def evaluate(self, heatmap, roi):   # noqa
+    def evaluate(self, heatmap, roi, return_curve=False):   # noqa
         if heatmap.ndim == 3:
             heatmap = heatmap.mean(0)
         roi_mask = np.zeros_like(heatmap).astype(bool)
@@ -25,6 +26,9 @@ class MultiThresholdRatios(BaseEvaluation):
             roi_mask = roi.astype(bool)
 
         if heatmap.max() > 1.0:
+            if heatmap.dtype == float:
+                warnings.warn("Maximal value of heatmap is larger than 1, and dtype of heatmap is float. "
+                              "Please normalize the heatmap to range [0, 1] first.")
             heatmap = heatmap.astype(float) / 255.0
         poi_mask = heatmap >= self.base_threshold
         heatmap[~poi_mask] = 0.0
@@ -41,7 +45,10 @@ class MultiThresholdRatios(BaseEvaluation):
             ratio = heat_in_roi / (total_points + 1e-8)
             ratios[i] = ratio
         val = self.integrate(ratios, self.quantiles)
-        return dict(auc=val)
+        if return_curve:
+            return dict(auc=val, quantiles=self.quantiles, ratios=ratios)
+        else:
+            return dict(auc=val)
 
     @staticmethod
     def integrate(ratios, quantiles):

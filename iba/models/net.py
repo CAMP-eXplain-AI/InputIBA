@@ -139,9 +139,6 @@ class Net:
             mask = self.IBA.capacity().sum(0).clone().detach().cpu().numpy()
         else:
             mask = self.ib_heatmap
-        print(mask.shape)
-        # TODO fix the bug: In the first iteration, mask has shape (224, 224),
-        # TODO but in the subsequent iterations, the shape becomes (28, 28).
         mask = (mask - mask.min()) / (mask.max() - mask.min())
         self._show_mask(mask, show=show, out_file=out_file)
 

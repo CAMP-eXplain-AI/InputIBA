@@ -185,7 +185,7 @@ def to_unit_interval(x):
 
 
 def load_monkeys(center_crop=True, size=224, pil=False):
-    """Returns the monkey test image."""
+    """Returns the monkey tests image."""
     from urllib.request import urlopen
     from io import BytesIO
     from PIL import Image

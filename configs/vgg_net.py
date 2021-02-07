@@ -1,7 +1,11 @@
 _base_ = ['_base_/imagenet.py']
 
 model = dict(
+    classifier=dict(
+        type='vgg16',
+        pretrained=True),
     iba=dict(
+        layer='features.17',
         beta=20),
     net=dict(
         position="features[17]",

@@ -481,7 +481,10 @@ class IBA(nn.Module):
         if reset:
             self.reset_estimate()
         for batch in dataloader:
-            imgs = batch[0]
+            if isinstance(batch, tuple):
+                imgs = batch[0]
+            else:
+                imgs = batch['img']
             if self.estimator.n_samples() > n_samples:
                 break
             with torch.no_grad(), self.interrupt_execution(

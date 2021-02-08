@@ -8,7 +8,7 @@ class Perturber:
         raise NotImplementedError
 
     def get_current(self) -> np.ndarray:
-        """ get current image with some perturbations """
+        """ get current img with some perturbations """
         raise NotImplementedError
 
     def get_idxes(self, hmap: np.ndarray, reverse=False) -> list:

@@ -29,6 +29,7 @@ import warnings
 from contextlib import contextmanager
 from torchvision.transforms import Normalize, Compose
 from .utils import to_saliency_map, get_tqdm, ifnone
+from .model_zoo import get_module
 
 
 def tensor_to_np_img(img_t):
@@ -196,34 +197,27 @@ class IBA(nn.Module):
         # Closure that returns the loss for one batch
         model_loss_closure = lambda x: F.nll_loss(F.log_softmax(model(x), target)
 
-        # Explain class target for the given image
+        # Explain class target for the given img
         saliency_map = iba.analyze(img.to(dev), model_loss_closure)
         plot_saliency_map(img.to(dev))
 
 
     Args:
-        layer: The layer after which to inject the bottleneck
+        context (Attributer): the Attributer object which has a classifer(nn.Module) and a layer(
+            str). If context is not None, register a forward hook for the context's classifier.
+        layer (nn.Module, optional): The layer after which to inject the bottleneck. If layer is
+            not None, register a forward hook for the layer.
         sigma: The standard deviation of the gaussian kernel to smooth
             the mask, or None for no smoothing
-        beta: Weighting of model loss and mean information loss.
-        min_std: Minimum std of the features
-        lr: Optimizer learning rate. default: 1. As we are optimizing
-            over very few iterations, a relatively high learning rate
-            can be used compared to the training of the model itself.
-        batch_size: Number of samples to use per iteration
         input_or_output: Select either ``"output"`` or ``"input"``.
         initial_alpha: Initial value for the parameter.
     """
     def __init__(self,
                  layer=None,
+                 context=None,
                  sigma=1.,
-                 beta=10,
-                 min_std=0.01,
-                 optimization_steps=10,
-                 lr=1,
-                 batch_size=10,
-                 initial_alpha=5.0,
                  active_neurons_threshold=0.01,
+                 initial_alpha=5.0,
                  feature_mean=None,
                  feature_std=None,
                  estimator=None,
@@ -233,12 +227,11 @@ class IBA(nn.Module):
                  reverse_lambda=False,
                  combine_loss=False):
         super().__init__()
+        assert (layer is None) ^ (context is None)
+        self.layer = layer
+        self.context = context
+        self.active_neuron_threshold = active_neurons_threshold
         self.relu = relu
-        self.beta = beta
-        self.min_std = min_std
-        self.optimization_steps = optimization_steps
-        self.lr = lr
-        self.batch_size = batch_size
         self.initial_alpha = initial_alpha
         self.alpha = None  # Initialized on first forward pass
         self.progbar = progbar
@@ -251,40 +244,22 @@ class IBA(nn.Module):
         self._mean = feature_mean
         self._std = feature_std
         self._active_neurons = None
-        self._active_neurons_threshold = active_neurons_threshold
         self._restrict_flow = False
         self._interrupt_execution = False
         self._hook_handle = None
         self.reverse_lambda = reverse_lambda
         self.combine_loss = combine_loss
 
-        # Check if modifying forward hooks are supported by the current torch version
-        if layer is not None:
-            try:
-                from packaging import version
-                if version.parse(torch.__version__) < version.parse("1.2"):
-                    raise RuntimeWarning(
-                        "iba has to be manually injected into the model with your "
-                        "version of torch: Forward hooks are only allowed to modify "
-                        "the output in torch >= 1.2. Please upgrade torch or resort to "
-                        "adding the iba layer into the model directly as: model.any_layer = "
-                        "nn.Sequential(model.any_layer, iba)")
-            finally:
-                pass  # Do not complain if packaging is not installed
-
-            # self._hook_handle = layer.register_forward_hook(lambda m, x, y: self(y))
-
-            # for handle, hooks in layer._forward_hooks.items():
-            #     if type(hooks) == _IBAForwardHook:
-            #         raise ValueError("Another iba object is already attacted to the layer. "
-            #                          "Remove it by calling `detach()`")
-
-            # Attach the bottleneck after the model layer as forward hook
-            self._hook_handle = layer.register_forward_hook(
+        # Attach the bottleneck after the model layer as forward hook
+        if self.context is not None:
+            self._hook_handle = get_module(self.context.classifier,
+                                           self.context.layer).register_forward_hook(
                 _IBAForwardHook(self, input_or_output))
-
+        elif self.layer is not None:
+            self._hook_handle = self.layer.register_forward_hook(
+                _IBAForwardHook(self, input_or_output))
         else:
-            pass
+            raise ValueError('context and layer cannot be None at the same time')
 
     def _reset_alpha(self):
         """ Used to reset the mask to train on another sample """
@@ -457,7 +432,7 @@ class IBA(nn.Module):
             Args:
                 model: the model containing the bottleneck layer
                 dataloader: yielding ``batch``'s where the first sample
-                    ``batch[0]`` is the image batch.
+                    ``batch[0]`` is the img batch.
                 device: images will be transfered to the device. If ``None``, it uses the device
                     of the first model parameter.
                 n_samples (int): run the estimate on that many samples
@@ -527,41 +502,28 @@ class IBA(nn.Module):
                 input_t,
                 model_loss_fn,
                 mode="saliency",
-                beta=None,
-                optimization_steps=None,
-                min_std=None,
-                lr=None,
-                batch_size=None,
-                active_neurons_threshold=0.01):
+                beta=10.0,
+                opt_steps=10,
+                min_std=0.01,
+                lr=1.0,
+                batch_size=10):
         """
         Generates a heatmap for a given sample. Make sure you estimated mean and variance of the
         input distribution.
 
         Args:
-            input_t: input image of shape (1, C, H W)
+            input_t: input img of shape (1, C, H W)
             model_loss_fn: closure evaluating the model
             mode: how to post-process the resulting map: 'saliency' (default) or 'capacity'
-            beta: if not None, overrides the bottleneck beta value
-            optimization_steps: if not None, overrides the bottleneck optimization_steps value
-            min_std: if not None, overrides the bottleneck min_std value
-            lr: if not None, overrides the bottleneck lr value
-            batch_size: if not None, overrides the bottleneck batch_size value
-            active_neurons_threshold: used threshold to determine if a neuron is active
-
+            beta: beta of the combined loss.
+            opt_steps: optimization steps.
+            min_std: minimal standard deviation.
+            lr: learning rate.
+            batch_size: batch size.
         Returns:
             The heatmap of the same shape as the ``input_t``.
         """
         assert input_t.shape[0] == 1, "We can only fit one sample a time"
-
-        # TODO: is None
-        beta = ifnone(beta, self.beta)
-        optimization_steps = ifnone(optimization_steps,
-                                    self.optimization_steps)
-        min_std = ifnone(min_std, self.min_std)
-        lr = ifnone(lr, self.lr)
-        batch_size = ifnone(batch_size, self.batch_size)
-        active_neurons_threshold = ifnone(active_neurons_threshold,
-                                          self._active_neurons_threshold)
 
         batch = input_t.expand(batch_size, -1, -1, -1)
 
@@ -575,7 +537,7 @@ class IBA(nn.Module):
                 f"samples. Might not be enough! We recommend 10.000 samples.")
         std = self.estimator.std()
         self._active_neurons = self.estimator.active_neurons(
-            active_neurons_threshold).float()
+            self.active_neurons_threshold).float()
         self._std = torch.max(std, min_std * torch.ones_like(std))
 
         self._loss = []
@@ -583,7 +545,7 @@ class IBA(nn.Module):
         self._model_loss = []
         self._information_loss = []
 
-        opt_range = range(optimization_steps)
+        opt_range = range(opt_steps)
         try:
             tqdm = get_tqdm()
             opt_range = tqdm(opt_range,

@@ -45,7 +45,7 @@ class InsertionDeletion(Evaluation):
             for pixel in range(batch):
                 perturb_index = (indices[0][replaced_pixels + pixel], indices[1][replaced_pixels + pixel])
 
-                # perturb image using given pixels
+                # perturb img using given pixels
                 perturber.perturb(perturb_index[0], perturb_index[1])
 
             # get score after perturb

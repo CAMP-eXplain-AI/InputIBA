@@ -130,7 +130,7 @@ def to_saliency_map(capacity, shape=None):
 
     Args:
         capacity (np.ndarray): Capacity in nats.
-        shape (tuple): (height, width) of the image.
+        shape (tuple): (height, width) of the img.
     """
     return _to_saliency_map(capacity, shape, data_format="channels_first")
 
@@ -185,7 +185,7 @@ def to_unit_interval(x):
 
 
 def load_monkeys(center_crop=True, size=224, pil=False):
-    """Returns the monkey tests image."""
+    """Returns the monkey tests img."""
     from urllib.request import urlopen
     from io import BytesIO
     from PIL import Image
@@ -221,11 +221,11 @@ def plot_saliency_map(saliency_map,
                       colorbar_size=0.3,
                       colorbar_pad=0.08):
     """
-    Plots the heatmap with an bits/pixel colorbar and optionally overlays the image.
+    Plots the heatmap with an bits/pixel colorbar and optionally overlays the img.
 
     Args:
         saliency_map (np.ndarray): the saliency_map.
-        img (np.ndarray):  show this image under the saliency_map.
+        img (np.ndarray):  show this img under the saliency_map.
         ax: matplotlib axis. If ``None``, a new plot is created.
         colorbar_label (str): label for the colorbar.
         colorbar_fontsize (int): fontsize of the colorbar label.
@@ -247,7 +247,7 @@ def plot_saliency_map(saliency_map,
         fig, ax = plt.subplots(1, 1, figsize=(5.5, 4.0))
 
     if img is not None:
-        # Underlay the image as greyscale
+        # Underlay the img as greyscale
         grey = grey2rgb(rgb2grey(img))
         ax.imshow(grey)
 

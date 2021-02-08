@@ -70,9 +70,9 @@ class ImageNet(BaseDataset):
 
         Returns:
             A tuple of:
-                img (Tensor): image tensor with shape (3, H, W).
+                img (Tensor): img tensor with shape (3, H, W).
                 target (int): class index.
-                img_name (int): base name of the image file.
+                img_name (int): base name of the img file.
         """
         img_path = self.image_paths[index]
         img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
@@ -95,7 +95,7 @@ class ImageNet(BaseDataset):
             res['bboxes'] = bboxes[labels == target]
         else:
             res = self.pipeline(image=img)
-        img = res['image']
+        img = res['img']
 
         if self.with_bbox:
             bboxes = res['bboxes']

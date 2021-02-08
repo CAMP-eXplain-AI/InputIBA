@@ -2,153 +2,115 @@ import torch
 
 from .pytorch import tensor_to_np_img
 from .gan import WGAN_CP
-from .pytorch_img_iba import Image_IBA
+from .pytorch_img_iba import ImageIBA
 import matplotlib.pyplot as plt
 from ..utils import get_logger
 import os.path as osp
 import mmcv
 import numpy as np
 from PIL import Image
+from .model_zoo import build_classifiers
+from .pytorch import IBA
+from copy import deepcopy
 
 
-class Net:
-    # TODO rename class
-    # TODO remove image and device from __init__ to separate them from hyper parameters
+class Attributer:
     def __init__(self,
-                 image=None,
-                 target=None,
-                 model=None,
-                 position=None,
-                 IBA=None,
-                 model_loss_closure=None,
-                 epochs=10,
-                 image_ib_beta=10,
-                 image_ib_opt_steps=40,
-                 image_ib_reverse_mask=False,
-                 device=None):
-        """
-        initialize net by create essential parameters
-        """
-        # general setting
+                 cfg: dict,
+                 device='cuda:0'):
+        self.cfg = deepcopy(cfg)
         self.device = device
-        self.image = image.to(self.device)
-        assert target is not None, "Please give a target label"
-        self.target = target
-        self.model = model
-        # TODO rename position to align with the argument in __init__ of WGAN_CP
-        self.position = position
+        self.classifier = build_classifiers(self.cfg['classifier']).to(self.device)
+        self.classifier.eval()
+        for p in self.classifier.parameters():
+            p.requires_grad = False
 
-        # information bottleneck
-        self.IBA = IBA
-        if model_loss_closure is None:
-            # use default loss if not given (softmax cross entropy)
-            self.model_loss_closure = lambda x: -torch.log_softmax(
-                self.model(x), 1)[:, target].mean()
+        self.layer = self.cfg['layer']
+        self.iba = IBA(context=self, **self.cfg['iba'])
 
-        # GAN
-        self.gan_epochs = epochs
-        self.gan = None
+        self.buffer = {}
 
-        # image level information bottleneck
-        self.image_ib_beta = image_ib_beta
-        self.image_ib_opt_steps = image_ib_opt_steps
-        self.image_ib_reverse_mask = image_ib_reverse_mask
-        self.image_ib = None
+    def clear_buffer(self):
+        self.buffer.clear()
 
-        # results
-        self.ib_heatmap = None
-        self.image_ib_heatmap = None
+    def estimate(self, data_loader, estimation_cfg):
+        self.iba.sigma = None
+        self.iba.reset_estimate()
+        self.iba.estimate(self.classifier,
+                          data_loader,
+                          device=self.device,
+                          **estimation_cfg)
 
-    def train(self, logger=None):
+    def train_iba(self, img, closure, attr_cfg):
+        iba_heatmap = self.iba.analyze(input_t=img,
+                                       model_loss_fn=closure,
+                                       **attr_cfg)
+        return iba_heatmap
+
+    def train_gan(self, img, attr_cfg):
+        gan = WGAN_CP(context=self,
+                      img=img,
+                      feature_mask=self.iba.capacity(),
+                      feature_noise_mean=self.iba.estimator.mean(),
+                      feature_noise_std=self.iba.estimator.std(),
+                      device=self.device)
+        gan.train(**attr_cfg)
+        gen_img_mask = gan.generator.image_mask().clone().detach().cpu().mean([0, 1]).numpy()
+        return gen_img_mask
+
+    def train_img_iba(self, img_iba_cfg, img, closure, attr_cfg):
+        img_iba = ImageIBA(
+            img_eps_mean=0.0,
+            img_eps_std=1.0,
+            **img_iba_cfg)
+        img_iba_heatmap = img_iba.analyze(img.unsqueeze(0), closure, **attr_cfg)
+        img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean([0, 1]).numpy()
+        return img_mask, img_iba_heatmap
+
+    def make_attribution(self,
+                         img,
+                         target,
+                         attribution_cfg,
+                         logger=None):
+        attr_cfg = deepcopy(attribution_cfg)
+        closure = lambda x: -torch.log_softmax(
+            self.classifier(x), 1)[:, target].mean()
         if logger is None:
             logger = get_logger('iba')
-        logger.info("Training on IB")
-        self.train_ib()
-        logger.info("Training on GAN")
-        self.train_gan()
-        logger.info("Training on image IB")
-        self.train_image_ib()
 
-    def train_ib(self):
-        self.ib_heatmap = self.IBA.analyze(self.image[None],
-                                           self.model_loss_closure)
+        logger.info('Training Information Bottleneck')
+        iba_heatmap = self.train_iba(img, closure, attr_cfg['iba'])
 
-    def train_gan(self):
-        """
-        Train a GAN to get generated image mask
-        Returns: None
-        """
-        # initialize GAN every time before training
-        self.gan = WGAN_CP(self.model,
-                           self.position,
-                           image=self.image,
-                           feature_mask=self.IBA.capacity(),
-                           epochs=self.gan_epochs,
-                           feature_noise_mean=self.IBA.estimator.mean(),
-                           feature_noise_std=self.IBA.estimator.std(),
-                           device=self.device)
+        logger.info('Training GAN')
+        gen_img_mask = self.train_gan(img, attr_cfg['gan'])
 
-        # train
-        self.gan.train(self.device)
+        logger.info('Training Image Information Bottleneck')
+        img_mask, img_iba_heatmap = self.train_img_iba(self.cfg['img_iba'],
+                                                       img,
+                                                       closure,
+                                                       attr_cfg['img_iba'])
 
-    def train_image_ib(self):
-        """
-        Train image information bottleneck based on result from GAN
-        Returns: None
-        """
-        # get learned parameters from GAN
-        image_mask = self.gan.G.image_mask().clone().detach()
-        img_noise_std = self.gan.G.eps
-        img_moise_mean = self.gan.G.mean
-
-        # initialize image iba
-        self.image_ib = Image_IBA(
-            image=self.image.to(self.device),
-            image_mask=image_mask,
-            img_eps_std=img_noise_std,
-            img_eps_mean=img_moise_mean,
-            beta=self.image_ib_beta,
-            optimization_steps=self.image_ib_opt_steps,
-            reverse_lambda=self.image_ib_reverse_mask).to(self.device)
-
-        # train image ib
-        self.image_ib_heatmap = self.image_ib.analyze(self.image[None],
-                                                      self.model_loss_closure)
-
-    @property
-    def attribution_map(self):
-        """
-        get image level attribution map
-        """
-        return self.image_ib.sigmoid(self.image_ib.alpha).squeeze()
-
-    def plot_image(self, label=None):
-        """
-        plot the image for interpretation
-        """
-        np_img = tensor_to_np_img(self.image)
-        if label is not None:
-            plt.title(label)
-        else:
-            plt.title("class {}".format(self.target))
-        plt.axis('off')
-        plt.imshow(np_img)
+        iba_capacity = self.iba.capacity().sum(0).clone().detach().cpu().numpy()
+        self.buffer.update(iba_heatmap=iba_heatmap,
+                           img_iba_heatmap=img_iba_heatmap,
+                           img_mask=img_mask,
+                           gen_img_mask=gen_img_mask,
+                           iba_capacity=iba_capacity)
 
     def show_feat_mask(self, upscale=False, show=False, out_file=None):
         if not upscale:
-            mask = self.IBA.capacity().sum(0).clone().detach().cpu().numpy()
+            mask = self.buffer['iba_capacity']
         else:
-            mask = self.ib_heatmap
-        mask = (mask - mask.min()) / (mask.max() - mask.min())
+            mask = self.buffer['iba_heatmap']
+        mask = mask / mask.max()
         self._show_mask(mask, show=show, out_file=out_file)
 
     def show_gen_img_mask(self, show=False, out_file=None):
-        mask = self.gan.G.image_mask().clone().detach().cpu().mean([0, 1]).numpy()
+        mask = self.buffer['gen_img_mask']
         self._show_mask(mask, show=show, out_file=out_file)
 
     def show_img_mask(self, show=False, out_file=None):
-        mask = self.image_ib.sigmoid(
-            self.image_ib.alpha).detach().cpu().mean([0, 1]).numpy()
+        mask = self.buffer['img_mask']
         self._show_mask(mask, show=show, out_file=out_file)
 
     @staticmethod

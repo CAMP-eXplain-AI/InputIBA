@@ -7,10 +7,10 @@ from .utils import to_saliency_map, get_tqdm, ifnone
 from .pytorch import _SpatialGaussianKernel
 
 
-class Image_IBA(nn.Module):
+class ImageIBA(nn.Module):
     """
     Image iba finds relevant features of your model by applying noise to
-    image.
+    img.
 
     Example: ::
         #TODO rewrite
@@ -23,7 +23,7 @@ class Image_IBA(nn.Module):
         # Closure that returns the loss for one batch
         model_loss_closure = lambda x: F.nll_loss(F.log_softmax(model(x), target)
 
-        # Explain class target for the given image
+        # Explain class target for the given img
         saliency_map = iba.analyze(img.to(dev), model_loss_closure)
         plot_saliency_map(img.to(dev))
 
@@ -32,12 +32,7 @@ class Image_IBA(nn.Module):
         layer: The layer after which to inject the bottleneck
         sigma: The standard deviation of the gaussian kernel to smooth
             the mask, or None for no smoothing
-        beta: Weighting of model loss and mean information loss.
         min_std: Minimum std of the features
-        lr: Optimizer learning rate. default: 1. As we are optimizing
-            over very few iterations, a relatively high learning rate
-            can be used compared to the training of the model itself.
-        batch_size: Number of samples to use per iteration
         input_or_output: Select either ``"output"`` or ``"input"``.
         initial_alpha: Initial value for the parameter.
     """
@@ -45,13 +40,8 @@ class Image_IBA(nn.Module):
                  image_mask=None,
                  image=None,
                  sigma=1.,
-                 beta=10,
-                 min_std=0.01,
                  img_eps_std=None,
                  img_eps_mean=None,
-                 optimization_steps=10,
-                 lr=1,
-                 batch_size=10,
                  initial_alpha=5.0,
                  feature_mean=None,
                  feature_std=None,
@@ -59,11 +49,6 @@ class Image_IBA(nn.Module):
                  reverse_lambda=False,
                  combine_loss=False):
         super().__init__()
-        self.beta = beta
-        self.min_std = min_std
-        self.optimization_steps = optimization_steps
-        self.lr = lr
-        self.batch_size = batch_size
         self.initial_alpha = initial_alpha
         self.alpha = None  # Initialized on first forward pass
         self.image_mask = image_mask
@@ -134,7 +119,7 @@ class Image_IBA(nn.Module):
         img_eps_mean:
         img_eps_std:
         image_mask: mask generated from GAN
-        lambda_: learning parameter, image mask
+        lambda_: learning parameter, img mask
         mean_x:
         std_x:
 
@@ -217,55 +202,39 @@ class Image_IBA(nn.Module):
                 input_t,
                 model_loss_fn,
                 mode="saliency",
-                beta=None,
-                optimization_steps=None,
-                min_std=None,
-                lr=None,
-                batch_size=None):
+                beta=10.0,
+                opt_steps=10,
+                lr=1.0,
+                batch_size=10):
         """
         Generates a heatmap for a given sample. Make sure you estimated mean and variance of the
         input distribution.
 
         Args:
-            input_t: input image of shape (1, C, H W)
+            input_t: input img of shape (1, C, H W)
             model_loss_fn: closure evaluating the model
             mode: how to post-process the resulting map: 'saliency' (default) or 'capacity'
-            beta: if not None, overrides the bottleneck beta value
-            optimization_steps: if not None, overrides the bottleneck optimization_steps value
-            min_std: if not None, overrides the bottleneck min_std value
-            lr: if not None, overrides the bottleneck lr value
-            batch_size: if not None, overrides the bottleneck batch_size value
+            beta: beta of the combined loss.
+            opt_steps: optimization steps.
+            lr: learning rate
+            batch_size: batch size
 
         Returns:
             The heatmap of the same shape as the ``input_t``.
         """
         assert input_t.shape[0] == 1, "We can only fit one sample a time"
-
-        # TODO: is None
-        beta = ifnone(beta, self.beta)
-        optimization_steps = ifnone(optimization_steps,
-                                    self.optimization_steps)
-        min_std = ifnone(min_std, self.min_std)
-        lr = ifnone(lr, self.lr)
-        batch_size = ifnone(batch_size, self.batch_size)
-
         batch = input_t.expand(batch_size, -1, -1, -1)
 
         # Reset from previous run or modifications
         self._reset_alpha()
         optimizer = torch.optim.Adam(lr=lr, params=[self.alpha])
 
-        ## TODO no need to load mean and var
-        # self._mean = self.img_eps_mean.clone()
-        # std = self.img_eps_std.clone()
-        # self._std = torch.max(std, min_std*torch.ones_like(std))
-
         self._loss = []
         self._alpha_grads = []
         self._model_loss = []
         self._information_loss = []
 
-        opt_range = range(optimization_steps)
+        opt_range = range(opt_steps)
         try:
             tqdm = get_tqdm()
             opt_range = tqdm(opt_range,

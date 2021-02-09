@@ -12,30 +12,26 @@ class Generator(torch.nn.Module):
     # masked img (with noise added) go through the original network and generate masked feature map
     def __init__(self,
                  img,
-                 context=None,
-                 layer=None,
+                 context,
                  device='cuda:0',
                  capacity=None):
         super().__init__()
         self.img = img
-
-        assert (context is None) ^ (layer is None)
         self.context = context
-        self.layer = layer
 
         # use img size
-        # TODO make image_mask_param a Parameter
+        # TODO make img_mask_param a Parameter
         if capacity is not None:
             image_mask_param = torch.tensor(
                 _to_saliency_map(capacity.cpu().detach().numpy(),
                                  img.shape[1:],
                                  data_format="channels_first")).to(device)
-            self.image_mask_param = image_mask_param.expand(
+            self.img_mask_param = image_mask_param.expand(
                 img.shape[0], -1, -1).clone().unsqueeze(0)
         else:
-            self.image_mask_param = torch.zeros(img.shape,
-                                                dtype=torch.float).to(device)
-        self.image_mask_param.requires_grad = True
+            self.img_mask_param = torch.zeros(img.shape,
+                                              dtype=torch.float).to(device)
+        self.img_mask_param.requires_grad = True
         # self.mean = torch.tensor([0.485, 0.456, 0.406]).view(1,-1,1,1).to(dev)
         # TODO make mean and eps Parameters.
         self.mean = torch.tensor([0., 0., 0.]).view(1, -1, 1, 1).to(device)
@@ -52,29 +48,24 @@ class Generator(torch.nn.Module):
         def store_feature_map(model, input, output):
             self.feature_map = output
 
-        if self.context is not None:
-            self._hook_handle = get_module(self.context.classifier, self.context.layer
-                                           ).register_forward_hook(store_feature_map)
-        elif self.layer is not None:
-            self._hook_handle = self.layer.register_forward_hook(store_feature_map)
-        else:
-            raise ValueError('context and layer cannot be Non at the same time')
+        self._hook_handle = get_module(self.context.classifier, self.context.layer
+                                       ).register_forward_hook(store_feature_map)
 
     def forward(self, gaussian):
         noise = self.eps * gaussian + self.mean
-        image_mask = self.sigmoid(self.image_mask_param)
+        image_mask = self.sigmoid(self.img_mask_param)
         masked_image = image_mask * self.img + (1 - image_mask) * noise
-        _ = self.model(masked_image)
+        _ = self.context.classifier(masked_image)
         masked_feature_map = self.feature_map
         return masked_feature_map
 
     @torch.no_grad()
     def get_feature_map(self):
-        _ = self.model(self.img.unsqueeze(0))
+        _ = self.context.classifier(self.img.unsqueeze(0))
         return self.feature_map.squeeze(0)
 
-    def image_mask(self):
-        return self.sigmoid(self.image_mask_param)
+    def img_mask(self):
+        return self.sigmoid(self.img_mask_param)
 
     def clear(self):
         del self.feature_map
@@ -147,7 +138,6 @@ class Discriminator(torch.nn.Module):
 class WGAN_CP(object):
     def __init__(self,
                  context=None,
-                 layer=None,
                  img=None,
                  feature_mask=None,
                  feature_noise_mean=None,
@@ -162,7 +152,6 @@ class WGAN_CP(object):
 
         self.generator = Generator(img=img,
                                    context=context,
-                                   layer=layer,
                                    device=self.device,
                                    capacity=feature_mask).to(self.device)
         self.feature_map = self.generator.get_feature_map()
@@ -219,7 +208,7 @@ class WGAN_CP(object):
             "params": self.generator.eps,
             "lr": 0.05
         }, {
-            "params": self.generator.image_mask_param,
+            "params": self.generator.img_mask_param,
             "lr": 0.003
         }])
         optimizer_D = torch.optim.RMSprop(self.discriminator.parameters(), lr=lr)

@@ -1,6 +1,4 @@
 import torch
-
-from .pytorch import tensor_to_np_img
 from .gan import WGAN_CP
 from .pytorch_img_iba import ImageIBA
 import matplotlib.pyplot as plt
@@ -42,26 +40,31 @@ class Attributer:
                           **estimation_cfg)
 
     def train_iba(self, img, closure, attr_cfg):
+        if img.dim() == 3:
+            img = img.unsqueeze(0)
         iba_heatmap = self.iba.analyze(input_t=img,
                                        model_loss_fn=closure,
                                        **attr_cfg)
         return iba_heatmap
 
-    def train_gan(self, img, attr_cfg):
+    def train_gan(self, img, attr_cfg, logger=None):
         gan = WGAN_CP(context=self,
                       img=img,
                       feature_mask=self.iba.capacity(),
                       feature_noise_mean=self.iba.estimator.mean(),
                       feature_noise_std=self.iba.estimator.std(),
                       device=self.device)
-        gan.train(**attr_cfg)
-        gen_img_mask = gan.generator.image_mask().clone().detach().cpu().mean([0, 1]).numpy()
+        gan.train(logger=logger, **attr_cfg)
+        gen_img_mask = gan.generator.img_mask().clone().detach()
         return gen_img_mask
 
-    def train_img_iba(self, img_iba_cfg, img, closure, attr_cfg):
+    def train_img_iba(self, img_iba_cfg, img, gen_img_mask, closure, attr_cfg):
         img_iba = ImageIBA(
+            img=img,
+            img_mask=gen_img_mask,
             img_eps_mean=0.0,
             img_eps_std=1.0,
+            device=self.device,
             **img_iba_cfg)
         img_iba_heatmap = img_iba.analyze(img.unsqueeze(0), closure, **attr_cfg)
         img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean([0, 1]).numpy()
@@ -82,15 +85,17 @@ class Attributer:
         iba_heatmap = self.train_iba(img, closure, attr_cfg['iba'])
 
         logger.info('Training GAN')
-        gen_img_mask = self.train_gan(img, attr_cfg['gan'])
+        gen_img_mask = self.train_gan(img, attr_cfg['gan'], logger=logger)
 
         logger.info('Training Image Information Bottleneck')
         img_mask, img_iba_heatmap = self.train_img_iba(self.cfg['img_iba'],
                                                        img,
+                                                       gen_img_mask,
                                                        closure,
                                                        attr_cfg['img_iba'])
 
         iba_capacity = self.iba.capacity().sum(0).clone().detach().cpu().numpy()
+        gen_img_mask = gen_img_mask.cpu().mean([0, 1]).numpy()
         self.buffer.update(iba_heatmap=iba_heatmap,
                            img_iba_heatmap=img_iba_heatmap,
                            img_mask=img_mask,

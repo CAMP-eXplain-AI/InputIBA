@@ -230,7 +230,7 @@ class IBA(nn.Module):
         assert (layer is None) ^ (context is None)
         self.layer = layer
         self.context = context
-        self.active_neuron_threshold = active_neurons_threshold
+        self._active_neurons_threshold = active_neurons_threshold
         self.relu = relu
         self.initial_alpha = initial_alpha
         self.alpha = None  # Initialized on first forward pass
@@ -537,7 +537,7 @@ class IBA(nn.Module):
                 f"samples. Might not be enough! We recommend 10.000 samples.")
         std = self.estimator.std()
         self._active_neurons = self.estimator.active_neurons(
-            self.active_neurons_threshold).float()
+            self._active_neurons_threshold).float()
         self._std = torch.max(std, min_std * torch.ones_like(std))
 
         self._loss = []

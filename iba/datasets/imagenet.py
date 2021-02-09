@@ -95,7 +95,7 @@ class ImageNet(BaseDataset):
             res['bboxes'] = bboxes[labels == target]
         else:
             res = self.pipeline(image=img)
-        img = res['img']
+        img = res['image']
 
         if self.with_bbox:
             bboxes = res['bboxes']

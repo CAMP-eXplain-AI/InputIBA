@@ -1,4 +1,3 @@
-import torchvision
 from torch.utils.data import DataLoader
 import os
 import os.path as osp
@@ -9,7 +8,6 @@ import mmcv
 from iba.models import Attributer
 from tqdm import tqdm
 from iba.datasets import build_dataset
-from iba.models import build_classifiers, get_module
 import torch
 import gc
 

@@ -8,37 +8,9 @@ from .pytorch import _SpatialGaussianKernel
 
 
 class ImageIBA(nn.Module):
-    """
-    Image iba finds relevant features of your model by applying noise to
-    img.
-
-    Example: ::
-        #TODO rewrite
-        model = Net()
-        # Create the Per-Sample Bottleneck:
-        iba = iba(model.conv4)
-
-        img, target = next(iter(datagen(batch_size=1)))
-
-        # Closure that returns the loss for one batch
-        model_loss_closure = lambda x: F.nll_loss(F.log_softmax(model(x), target)
-
-        # Explain class target for the given img
-        saliency_map = iba.analyze(img.to(dev), model_loss_closure)
-        plot_saliency_map(img.to(dev))
-
-
-    Args:
-        layer: The layer after which to inject the bottleneck
-        sigma: The standard deviation of the gaussian kernel to smooth
-            the mask, or None for no smoothing
-        min_std: Minimum std of the features
-        input_or_output: Select either ``"output"`` or ``"input"``.
-        initial_alpha: Initial value for the parameter.
-    """
     def __init__(self,
-                 image_mask=None,
-                 image=None,
+                 img,
+                 img_mask,
                  sigma=1.,
                  img_eps_std=None,
                  img_eps_mean=None,
@@ -47,19 +19,20 @@ class ImageIBA(nn.Module):
                  feature_std=None,
                  progbar=False,
                  reverse_lambda=False,
-                 combine_loss=False):
+                 combine_loss=False,
+                 device='cuda:0'):
         super().__init__()
         self.initial_alpha = initial_alpha
         self.alpha = None  # Initialized on first forward pass
-        self.image_mask = image_mask
-        self.image = image
+        self.img_mask = img_mask
+        self.img = img
         self.img_eps_std = img_eps_std
         self.img_eps_mean = img_eps_mean
         self.progbar = progbar
         self.sigmoid = nn.Sigmoid()
         self._buffer_capacity = None  # Filled on forward pass, used for loss
         self.sigma = sigma
-        self.device = None
+        self.device = device
         self._mean = feature_mean
         self._std = feature_std
         self._restrict_flow = False
@@ -79,7 +52,7 @@ class ImageIBA(nn.Module):
         Initialize alpha with the same shape as the features.
         We use the estimator to obtain shape and device.
         """
-        shape = self.image_mask.shape
+        shape = self.img_mask.shape
         self.alpha = nn.Parameter(torch.full(shape,
                                              self.initial_alpha,
                                              device=self.device),
@@ -118,7 +91,7 @@ class ImageIBA(nn.Module):
         g:
         img_eps_mean:
         img_eps_std:
-        image_mask: mask generated from GAN
+        img_mask: mask generated from GAN
         lambda_: learning parameter, img mask
         mean_x:
         std_x:
@@ -152,14 +125,14 @@ class ImageIBA(nn.Module):
         # sample from random variable x
         eps = g.data.new(g.size()).normal_()
         ε_img = self.img_eps_std * eps + self.img_eps_mean
-        # x = self.image_mask * g + (1-self.image_mask) * eps
+        # x = self.img_mask * g + (1-self.img_mask) * eps
         x = g
         self.x = x
 
         # calculate kl divergence
         self._mean = ifnone(self._mean, torch.tensor(0.).to(self.device))
         self._std = ifnone(self._std, torch.tensor(1.).to(self.device))
-        self._buffer_capacity = self._kl_div(x, g, self.image_mask,
+        self._buffer_capacity = self._kl_div(x, g, self.img_mask,
                                              self.img_eps_mean,
                                              self.img_eps_std, lamb,
                                              self._mean, self._std)

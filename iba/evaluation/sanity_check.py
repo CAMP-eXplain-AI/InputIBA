@@ -1,4 +1,4 @@
-from iba.models.net import Net
+from iba.models.net import Attributer
 import torch
 from torch.nn import init
 from copy import deepcopy
@@ -28,28 +28,30 @@ def perturb_model(model, positions=()):
 
 
 def sanity_check(net=None, positions=None, check_image_ib=False, check_gan=False, **kwargs):
-    """
-    random perturb weights before go through a certain submodule, then evaluate generated heatmap
-    Returns:
-    """
-    if net is None:
-        perturb_net = Net(**kwargs)
-    else:
-        perturb_net = net
-
-    # save net's state dict
-    model_state_dict = deepcopy(net.model.state_dict())
-
-    # training with perturbed model on required stage
-    perturb_net.train_ib()
-    if check_gan:
-        perturb_model(perturb_net.model, positions)
-    perturb_net.train_gan()
-    if check_image_ib:
-        perturb_model(perturb_net.model, positions)
-    perturb_net.train_image_ib()
-
-    # reload unperturbed state dict
-    net.model.load_state_dict(model_state_dict)
-
-    perturb_net.show_img_mask()
+    # TODO to rewrite
+    pass
+#     """
+#     random perturb weights before go through a certain submodule, then evaluate generated heatmap
+#     Returns:
+#     """
+#     if net is None:
+#         perturb_net = Attributer(**kwargs)
+#     else:
+#         perturb_net = net
+#
+#     # save net's state dict
+#     model_state_dict = deepcopy(net.model.state_dict())
+#
+#     # training with perturbed model on required stage
+#     perturb_net.train_ib()
+#     if check_gan:
+#         perturb_model(perturb_net.model, positions)
+#     perturb_net.train_gan()
+#     if check_image_ib:
+#         perturb_model(perturb_net.model, positions)
+#     perturb_net.train_image_ib()
+#
+#     # reload unperturbed state dict
+#     net.model.load_state_dict(model_state_dict)
+#
+#     perturb_net.show_img_mask()

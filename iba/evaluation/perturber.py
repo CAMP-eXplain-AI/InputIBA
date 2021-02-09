@@ -18,7 +18,7 @@ class Perturber:
         raise NotImplementedError
 
     def get_grid_shape(self) -> tuple:
-        """ return the shapeof the grid, i.e. the max r, c values """
+        """ return the shape of the grid, i.e. the max r, c values """
         raise NotImplementedError
 
 

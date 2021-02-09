@@ -1,8 +1,8 @@
 import torch
-from iba.evaluation.base import Evaluation
+from iba.evaluation.base import BaseEvaluation
 
 
-class SensitivityN(Evaluation):
+class SensitivityN(BaseEvaluation):
     def __init__(self, n=None):
         self.n = n
 

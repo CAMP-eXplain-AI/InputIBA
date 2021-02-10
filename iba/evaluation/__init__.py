@@ -1,2 +1,2 @@
-from .sanity_check import perturb_model, sanity_check
+from .sanity_check import SanityCheck
 from .multi_threshold import MultiThresholdRatios

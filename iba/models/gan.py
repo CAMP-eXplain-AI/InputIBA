@@ -43,7 +43,6 @@ class Generator(torch.nn.Module):
 
         self.sigmoid = nn.Sigmoid()
 
-        # TODO use out of place function to avoid setting attributes
         # register hook in trained classification network
         def store_feature_map(model, input, output):
             self.feature_map = output

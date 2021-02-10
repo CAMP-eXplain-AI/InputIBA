@@ -42,3 +42,14 @@ attribution_cfg = dict(
     img_mask=dict(
         show=False)
 )
+
+
+sanity_check = dict(
+    perturb_layers=[
+        'classifier.6',
+        'classifier.0',
+        'features.21',
+        'features.17',
+        'features.7',
+        'features.0'],
+    check='gan')

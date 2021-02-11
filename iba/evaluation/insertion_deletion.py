@@ -17,6 +17,8 @@ class InsertionDeletion(BaseEvaluation):
         self.gaussian_blurr = torchvision.transforms.GaussianBlur(int(2*gaussian_sigma-1),gaussian_sigma)
 
     def eval(self, hmap: torch.Tensor, image: torch.Tensor) -> dict:
+        self.model.eval()
+
         # compress heatmap to 2D if needed
         if hmap.ndim == 3:
             hmap = hmap.mean(0)

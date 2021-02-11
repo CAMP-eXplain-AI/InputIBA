@@ -3,6 +3,13 @@ import torch
 import numpy as np
 
 
+__all__ = [
+    'Perturber',
+    'PixelPerturber',
+    'GridPerturber',
+]
+
+
 class GridView:
     """ access something by 2D-tile indices """
     def __init__(self, orig_dim: tuple, tile_dim: tuple):
@@ -39,6 +46,7 @@ class GridView:
             slice_c = slice(c, c + self.tile_w)
 
         return slice_r, slice_c
+
 
 class Perturber:
     def perturb(self, r: int, c: int):

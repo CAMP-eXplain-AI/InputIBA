@@ -3,14 +3,14 @@ import torch
 import mmcv
 import os.path as osp
 from tqdm import tqdm
-from iba.evaluation import MultiThresholdRatios
+from iba.evaluation import EffectiveHeatRatios
 from iba.datasets import build_dataset
 import cv2
 from argparse import ArgumentParser
 
 
 def parse_args():
-    parser = ArgumentParser('Evaluate the heatmaps with MultiThresholdRatios')
+    parser = ArgumentParser('Evaluate the heatmaps with EffectiveHeatRatios')
     parser.add_argument('config',
                         help='config file of the attribution method')
     parser.add_argument('heatmap_dir',
@@ -28,6 +28,9 @@ def parse_args():
                         default='bboxes',
                         choices=['bboxes', 'masks'],
                         help='region of interest')
+    parser.add_argument('--weight',
+                        action='store_true',
+                        help='weight the pixels by the heat')
     args = parser.parse_args()
     return args
 
@@ -37,11 +40,12 @@ def evaluate_mtr(cfg,
                  work_dir,
                  file_name,
                  base_threshold=0.1,
-                 roi='bboxes'):
+                 roi='bboxes',
+                 weight=True):
     mmcv.mkdir_or_exist(work_dir)
 
     dataset = build_dataset(cfg.data['val'])
-    evaluator = MultiThresholdRatios(base_threshold=base_threshold)
+    evaluator = EffectiveHeatRatios(base_threshold=base_threshold)
     assert roi in dataset[0].keys(), f'dataset samples must contain the key: {roi}'
 
     res_dict = {}
@@ -59,7 +63,7 @@ def evaluate_mtr(cfg,
         if not osp.exists(osp.join(heatmap_dir, img_name + '.png')):
             continue
         heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'), cv2.IMREAD_UNCHANGED)
-        res = evaluator.evaluate(heatmap, roi_array)
+        res = evaluator.evaluate(heatmap, roi_array, weight_by_heat=weight)
         auc = res['auc']
         res_dict.update({img_name: {'target': target, 'auc': auc}})
     aucs = np.array([v['auc'] for v in res_dict.values()])
@@ -77,7 +81,8 @@ def main():
                  work_dir=args.work_dir,
                  file_name=args.file_name,
                  base_threshold=args.base_threshold,
-                 roi=args.roi)
+                 roi=args.roi,
+                 weight=args.weight)
 
 
 if __name__ == '__main__':

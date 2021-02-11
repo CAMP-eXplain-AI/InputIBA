@@ -120,13 +120,15 @@ class Attributer:
 
     @staticmethod
     def show_mask(mask, show=False, out_file=None):
+        if mask.dtype in (float, np.float32, np.float16, np.float128):
+            assert mask.max() <= 1.0
+            mask = (mask * 255).astype(np.uint8)
         plt.imshow(mask)
         plt.axis('off')
 
         if out_file is not None:
             dir_name = osp.abspath(osp.dirname(out_file))
             mmcv.mkdir_or_exist(dir_name)
-            mask = (mask * 255).astype(np.uint8)
             mask = Image.fromarray(mask, mode='L')
             mask.save(out_file + '.png')
             plt.savefig(out_file + '.JPEG', bbox_inches='tight', pad_inches=0)

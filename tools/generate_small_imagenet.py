@@ -1,72 +1,46 @@
-############################################################
-# This Python script generates folder structure for torchvision.datasets.DatasetFolder
-# Each subfolder contains all images of same class (label)
-# usage python reorder_imagenet.py -p $imagenet_path -gt $ground_truth
-############################################################
-
+import numpy as np
 import os
-import json
-import argparse
-import random
-from shutil import copyfile
+import os.path as osp
+import mmcv
+import shutil
+from argparse import ArgumentParser
+from tqdm import tqdm
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='read imagenet path')
-    parser.add_argument('-p',
-                        '--imagenet_path',
+    parser = ArgumentParser(description='generate a smaller imagenet dataset from the original one')
+    parser.add_argument('src_root',
                         type=str,
-                        default="/home/yang/下载/ILSVRC2012_img_val",
-                        help='path of ImageNet folder')
-    parser.add_argument('-np',
-                        '--new_path',
+                        help='root of image folders of original imagenet')
+    parser.add_argument('dst_root',
                         type=str,
-                        default="/home/yang/下载/train",
-                        help='path of ImageNet folder')
-    parser.add_argument('-n',
-                        '--number',
+                        help='root for saving the new generated image folders')
+    parser.add_argument('--n',
                         type=int,
                         default=10,
-                        help='number of samples per class')
+                        help='number of samples per class to keep')
     args = parser.parse_args()
     return args
 
 
-def small_imagenet(args):
-    # open class index dict
-    with open("iba/notebooks/imagenet_class_index.json") as index_json:
-        index_dict = json.load(index_json)
+def small_imagenet(src_root, dst_root, n=10):
+    src_dirs = os.listdir(src_root)
+    for src_dir in tqdm(src_dirs):
+        imgs = os.listdir(osp.join(src_root, src_dir))
+        mmcv.mkdir_or_exist(osp.join(dst_root, src_dir))
+        imgs = np.random.choice(imgs, n, replace=False)
+        for img in imgs:
+            src_file = osp.join(src_root, src_dir, img)
+            dst_file = osp.join(dst_root, src_dir, img)
+            shutil.copy(src_file, dst_file)
 
-    # create subfolders
-    new_imagenet_path = args.new_path
-    try:
-        os.mkdir(new_imagenet_path)
-    except OSError:
-        print(
-            "Creation of the directory {} failed, directory may already exist!"
-            .format(new_imagenet_path))
-    for folder_name in index_dict.values():
-        try:
-            os.mkdir(os.path.join(new_imagenet_path, folder_name[0]))
-        except OSError:
-            print(
-                "Creation of the directory {} failed, directory may already exist!"
-                .format(folder_name[0]))
 
-    # move a small batch of images into new folder
-    imagenet_path = args.imagenet_path
-    for file in os.listdir(imagenet_path):
-        if os.path.isdir(os.path.join(imagenet_path, file)):
-            class_folder = file
-            image_files = os.listdir(os.path.join(imagenet_path, file))
-            sampled_image_files = random.sample(image_files, args.number)
-            for sample in sampled_image_files:
-                copyfile(os.path.join(imagenet_path, class_folder, sample),
-                         os.path.join(new_imagenet_path, class_folder, sample))
+def main():
+    args = parse_args()
+    small_imagenet(src_root=args.src_root,
+                   dst_root=args.dst_root,
+                   n=args.n)
 
 
 if __name__ == "__main__":
-    print("Start generate small imagenet")
-    args = parse_args()
-    small_imagenet(args)
-    print("Done!")
+    main()

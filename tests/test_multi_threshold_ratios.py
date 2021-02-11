@@ -1,4 +1,4 @@
-from iba.evaluation import MultiThresholdRatios
+from iba.evaluation import EffectiveHeatRatios
 import numpy as np
 from time import time
 
@@ -9,7 +9,7 @@ class TestMultiThresholdRatios:
         bbox = np.array([100, 100, 350, 350])
         heatmap = np.zeros((h, w))
         heatmap[bbox[1]: bbox[3], bbox[0]: bbox[2]] = 1.0
-        metric = MultiThresholdRatios(base_threshold=0.1)
+        metric = EffectiveHeatRatios(base_threshold=0.1)
         ts = time()
         res = metric.evaluate(heatmap, bbox)
         print(f'time elapsed: {time() - ts}')
@@ -20,7 +20,7 @@ class TestMultiThresholdRatios:
         bbox = np.array([100, 100, 350, 350])
         heatmap = np.zeros((h, w))
         heatmap[bbox[1]: bbox[3] - 50, bbox[0]: bbox[2] - 50] = 1.0
-        metric = MultiThresholdRatios(base_threshold=0.1)
+        metric = EffectiveHeatRatios(base_threshold=0.1)
         ts = time()
         res = metric.evaluate(heatmap, bbox)
         print(f'time elapsed: {time() - ts}')
@@ -32,7 +32,7 @@ class TestMultiThresholdRatios:
         heatmap = np.zeros((h, w))
         heatmap[bbox[1] - 20: bbox[3] + 20, bbox[0] - 20: bbox[2] + 20] = 0.90
         heatmap[bbox[1]: bbox[3], bbox[0]: bbox[2]] = 1.0
-        metric = MultiThresholdRatios(base_threshold=0.1)
+        metric = EffectiveHeatRatios(base_threshold=0.1)
         ts = time()
         res = metric.evaluate(heatmap, bbox)
         print(f'time elapsed: {time() - ts}')

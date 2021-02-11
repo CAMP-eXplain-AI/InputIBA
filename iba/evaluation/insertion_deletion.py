@@ -8,7 +8,7 @@ from iba.evaluation.perturber import PixelPerturber
 
 
 class InsertionDeletion(BaseEvaluation):
-    def __init__(self, model, target, batch=10, gaussian_sigma = 5.):
+    def __init__(self, model, target, batch=10, gaussian_sigma=5.):
         self.model = model
         self.target = target
         self.deletion_scores = []
@@ -16,17 +16,17 @@ class InsertionDeletion(BaseEvaluation):
         self.batch = batch
         self.gaussian_blurr = torchvision.transforms.GaussianBlur(int(2*gaussian_sigma-1),gaussian_sigma)
 
-    def eval(self, hmap: torch.Tensor, image: torch.Tensor) -> dict:
+    def evaluate(self, heatmap: torch.Tensor, image: torch.Tensor): # noqa
         self.model.eval()
 
         # compress heatmap to 2D if needed
-        if hmap.ndim == 3:
-            hmap = hmap.mean(0)
+        if heatmap.ndim == 3:
+            heatmap = heatmap.mean(0)
 
         # sort pixel in attribution
-        num_pixels = torch.numel(hmap)
-        _, indices = torch.topk(hmap.flatten(), num_pixels)
-        indices = np.unravel_index(indices.cpu().numpy(), hmap.size())
+        num_pixels = torch.numel(heatmap)
+        _, indices = torch.topk(heatmap.flatten(), num_pixels)
+        indices = np.unravel_index(indices.cpu().numpy(), heatmap.size())
 
         # apply deletion game
         print("deletion game")
@@ -49,28 +49,28 @@ class InsertionDeletion(BaseEvaluation):
          "insertion_auc":insertion_auc, "deletion_auc":deletion_auc}
 
     def _procedure_perturb(self, perturber: PixelPerturber, num_pixels, indices):
-      scores_after_perturb = []
-      replaced_pixels = 0
-      softmax = torch.nn.Softmax()
-      while replaced_pixels < num_pixels:
-          perturbed_imgs = []
-          for i in range(8):
-              batch = min(num_pixels - replaced_pixels, self.batch)
+        scores_after_perturb = []
+        replaced_pixels = 0
+        softmax = torch.nn.Softmax()
+        while replaced_pixels < num_pixels:
+            perturbed_imgs = []
+            for i in range(8):
+                batch = min(num_pixels - replaced_pixels, self.batch)
 
-              # perturb # of batch pixels
-              for pixel in range(batch):
-                  perturb_index = (indices[0][replaced_pixels + pixel], indices[1][replaced_pixels + pixel])
+                # perturb # of batch pixels
+                for pixel in range(batch):
+                    perturb_index = (indices[0][replaced_pixels + pixel], indices[1][replaced_pixels + pixel])
 
-                  # perturb image using given pixels
-                  perturber.perturb(perturb_index[0], perturb_index[1])
-              perturbed_imgs.append(perturber.get_current())
-              replaced_pixels += batch
-              if replaced_pixels == num_pixels:
-                  break
+                    # perturb image using given pixels
+                    perturber.perturb(perturb_index[0], perturb_index[1])
+                perturbed_imgs.append(perturber.get_current())
+                replaced_pixels += batch
+                if replaced_pixels == num_pixels:
+                    break
 
-          # get score after perturb
-          device = next(self.model.parameters()).device
-          perturbed_imgs = torch.stack(perturbed_imgs)
-          score_after = softmax(self.model(perturbed_imgs.to(device)))[:, self.target]
-          scores_after_perturb = np.concatenate((scores_after_perturb, score_after.detach().cpu().numpy()))
-      return scores_after_perturb
+            # get score after perturb
+            device = next(self.model.parameters()).device
+            perturbed_imgs = torch.stack(perturbed_imgs)
+            score_after = softmax(self.model(perturbed_imgs.to(device)))[:, self.target]
+            scores_after_perturb = np.concatenate((scores_after_perturb, score_after.detach().cpu().numpy()))
+        return scores_after_perturb

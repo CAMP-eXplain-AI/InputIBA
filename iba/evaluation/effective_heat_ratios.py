@@ -4,12 +4,12 @@ from .base import BaseEvaluation
 import warnings
 
 
-class MultiThresholdRatios(BaseEvaluation):
+class EffectiveHeatRatios(BaseEvaluation):
     def __init__(self, base_threshold=0.1):
         self.base_threshold = base_threshold
         self.quantiles = np.linspace(0, 1.0, 11)
 
-    def evaluate(self, heatmap, roi, return_curve=False):   # noqa
+    def evaluate(self, heatmap, roi, return_curve=False, weight_by_heat=True):   # noqa
         if heatmap.ndim == 3:
             heatmap = heatmap.mean(0)
         roi_mask = np.zeros_like(heatmap).astype(bool)
@@ -41,7 +41,10 @@ class MultiThresholdRatios(BaseEvaluation):
 
             bin_mask = heatmap >= t
             total_points = bin_mask.sum()
-            heat_in_roi = heatmap[bin_mask * roi_mask].sum()
+            if weight_by_heat:
+                heat_in_roi = heatmap[bin_mask * roi_mask].sum()
+            else:
+                heat_in_roi = (bin_mask * roi_mask).sum()
             ratio = heat_in_roi / (total_points + 1e-8)
             ratios[i] = ratio
         val = self.integrate(ratios, self.quantiles)

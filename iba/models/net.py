@@ -108,18 +108,18 @@ class Attributer:
         else:
             mask = self.buffer['iba_heatmap']
         mask = mask / mask.max()
-        self._show_mask(mask, show=show, out_file=out_file)
+        self.show_mask(mask, show=show, out_file=out_file)
 
     def show_gen_img_mask(self, show=False, out_file=None):
         mask = self.buffer['gen_img_mask']
-        self._show_mask(mask, show=show, out_file=out_file)
+        self.show_mask(mask, show=show, out_file=out_file)
 
     def show_img_mask(self, show=False, out_file=None):
         mask = self.buffer['img_mask']
-        self._show_mask(mask, show=show, out_file=out_file)
+        self.show_mask(mask, show=show, out_file=out_file)
 
     @staticmethod
-    def _show_mask(mask, show=False, out_file=None):
+    def show_mask(mask, show=False, out_file=None):
         plt.imshow(mask)
         plt.axis('off')
 

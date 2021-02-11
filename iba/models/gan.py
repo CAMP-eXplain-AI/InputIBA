@@ -142,7 +142,6 @@ class WGAN_CP(object):
                  feature_noise_mean=None,
                  feature_noise_std=None,
                  device='cuda:0'):
-        print("WGAN_CP init model.")
         self.img = img
         self.feature_mask = feature_mask
         self.feature_noise_mean = feature_noise_mean

@@ -52,4 +52,4 @@ sanity_check = dict(
         'features.17',
         'features.7',
         'features.0'],
-    check='gan')
+    check='img_iba')

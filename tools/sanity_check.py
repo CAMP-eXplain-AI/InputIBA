@@ -21,6 +21,10 @@ def parse_args():
                         help='directory to save the result file')
     parser.add_argument('file_name',
                         help='file name fo saving the results')
+    parser.add_argument('--save-heatmaps',
+                        action='store_true',
+                        default=False,
+                        help='Whether to save the heatmaps produced by the perturbed models')
     parser.add_argument('--gpu-id',
                         type=int,
                         default=0,
@@ -33,6 +37,7 @@ def sanity_check(cfg,
                  heatmap_dir,
                  work_dir,
                  file_name,
+                 save_heatmaps=False,
                  device='cuda:0'):
     mmcv.mkdir_or_exist(work_dir)
     train_set = build_dataset(cfg.data['train'])
@@ -63,7 +68,9 @@ def sanity_check(cfg,
                                                target=target,
                                                attribution_cfg=cfg.attribution_cfg,
                                                perturb_layers=cfg.sanity_check['perturb_layers'],
-                                               check=cfg.sanity_check['check'])
+                                               check=cfg.sanity_check['check'],
+                                               save_dir=osp.join(work_dir, img_name),
+                                               save_heatmaps=save_heatmaps)
                 results.update({img_name: ssim_dict['ssim_all']})
                 gc.collect()
     except KeyboardInterrupt:
@@ -80,6 +87,7 @@ def main():
                  heatmap_dir=args.heatmap_dir,
                  work_dir=args.work_dir,
                  file_name=args.file_name,
+                 save_heatmaps=args.save_heatmaps,
                  device=f'cuda:{args.gpu_id}')
 
 

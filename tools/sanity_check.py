@@ -1,4 +1,4 @@
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import os.path as osp
 from argparse import ArgumentParser
 from copy import deepcopy
@@ -9,6 +9,7 @@ from iba.evaluation import SanityCheck
 import cv2
 import gc
 from tqdm import tqdm
+import numpy as np
 
 
 def parse_args():
@@ -21,6 +22,10 @@ def parse_args():
                         help='directory to save the result file')
     parser.add_argument('file_name',
                         help='file name fo saving the results')
+    parser.add_argument('--num-samples',
+                        type=int,
+                        default=0,
+                        help='Number of samples to check, 0 means checking all the samples')
     parser.add_argument('--save-heatmaps',
                         action='store_true',
                         default=False,
@@ -37,11 +42,15 @@ def sanity_check(cfg,
                  heatmap_dir,
                  work_dir,
                  file_name,
+                 num_samples=0,
                  save_heatmaps=False,
                  device='cuda:0'):
     mmcv.mkdir_or_exist(work_dir)
     train_set = build_dataset(cfg.data['train'])
     val_set = build_dataset(cfg.data['val'])
+    if num_samples > 0:
+        inds = np.arange(num_samples)
+        val_set = Subset(val_set, inds)
     train_loader = DataLoader(train_set, **cfg.data['data_loader'])
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})
@@ -87,6 +96,7 @@ def main():
                  heatmap_dir=args.heatmap_dir,
                  work_dir=args.work_dir,
                  file_name=args.file_name,
+                 num_samples=args.num_samples,
                  save_heatmaps=args.save_heatmaps,
                  device=f'cuda:{args.gpu_id}')
 

@@ -71,10 +71,11 @@ class SanityCheck(BaseEvaluation):
         Returns:
             ssim_all (dict): key 'ssim_val'. ssim values under all the perturbation settings.
         """
-        assert save_heatmaps and (save_dir is not None), "if save_masks, save_dir must not be None"
         assert check in ['gan', 'img_iba'], f"check must be one of 'gan' or 'img_iba', but got {check}"
-        if save_dir is not None:
-            mmcv.mkdir_or_exist(save_dir)
+        if save_heatmaps:
+            assert save_dir is not None, "if save_masks, save_dir must not be None"
+            if save_dir is not None:
+                mmcv.mkdir_or_exist(save_dir)
         attr_cfg = deepcopy(attribution_cfg)
         model_layers = deepcopy(self.model_layers)
         # start from the last layer

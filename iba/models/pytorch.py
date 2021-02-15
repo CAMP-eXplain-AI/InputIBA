@@ -456,7 +456,7 @@ class IBA(nn.Module):
         if reset:
             self.reset_estimate()
         for batch in dataloader:
-            if isinstance(batch, tuple):
+            if isinstance(batch, tuple) or isinstance(batch, list):
                 imgs = batch[0]
             else:
                 imgs = batch['img']

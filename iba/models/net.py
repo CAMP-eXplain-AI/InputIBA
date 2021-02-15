@@ -119,6 +119,26 @@ class Attributer:
         self.show_mask(mask, show=show, out_file=out_file)
 
     @staticmethod
+    def show_img(img,
+                 mean=(0.485, 0.456, 0.406),
+                 std=(0.229, 0.224, 0.225),
+                 show=False,
+                 out_file=None):
+        if isinstance(img, torch.Tensor):
+            assert img.max().item() < 1
+            mean = torch.tensor(mean).to(img)
+            std = torch.tensor(std).to(img)
+        else:
+            assert img.max() < 1
+            mean = np.array(mean)
+            std = np.array(std)
+        img = img * std + mean
+        if isinstance(img, torch.Tensor):
+            img = img.cpu().numpy()
+        Attributer.show_mask(img , show=show,out_file=out_file)
+
+
+    @staticmethod
     def show_mask(mask, show=False, out_file=None):
         if mask.dtype in (float, np.float32, np.float16, np.float128):
             assert mask.max() <= 1.0

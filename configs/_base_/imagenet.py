@@ -1,5 +1,5 @@
 dataset_type = 'ImageNet'
-data_root = 'data/'
+data_root = 'data/imagenet/'
 img_norm_cfg = dict(
     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
@@ -22,14 +22,14 @@ data = dict(
         num_workers=0),
     train=dict(
         type=dataset_type,
-        img_root=data_root + 'imagenet/images/train/',
-        annot_root=data_root + 'imagenet/annotations/train/',
+        img_root=data_root + 'images/train/',
+        annot_root=data_root + 'annotations/train/',
         ind_to_cls_file=data_root + 'imagenet_class_index.json',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        img_root=data_root + 'imagenet/images/val/',
-        annot_root=data_root + 'imagenet/annotations/val/',
+        img_root=data_root + 'images/val/',
+        annot_root=data_root + 'annotations/val/',
         ind_to_cls_file=data_root + 'imagenet_class_index.json',
         pipeline=test_pipeline,
         with_bbox=True))

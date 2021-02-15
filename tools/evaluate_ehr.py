@@ -35,7 +35,7 @@ def parse_args():
     return args
 
 
-def evaluate_mtr(cfg,
+def evaluate_ehr(cfg,
                  heatmap_dir,
                  work_dir,
                  file_name,
@@ -76,7 +76,7 @@ def evaluate_mtr(cfg,
 def main():
     args = parse_args()
     cfg = mmcv.Config.fromfile(args.config)
-    evaluate_mtr(cfg=cfg,
+    evaluate_ehr(cfg=cfg,
                  heatmap_dir=args.heatmap_dir,
                  work_dir=args.work_dir,
                  file_name=args.file_name,

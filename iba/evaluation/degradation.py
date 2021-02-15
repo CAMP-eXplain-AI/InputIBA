@@ -19,19 +19,19 @@ class Degradation(BaseEvaluation):
         self.img_history_lerf = [] if store_imgs else None
 
     @torch.no_grad()
-    def eval(self, hmap: torch.Tensor, image: torch.Tensor) -> dict:
+    def evaluate(self, heatmap: torch.Tensor, image: torch.Tensor) -> dict:
         self.model.eval()
 
         # compress heatmap to 2D if needed
-        if hmap.ndim == 3:
-            hmap = hmap.mean(0)
+        if heatmap.ndim == 3:
+            heatmap = heatmap.mean(0)
 
         # get 2d tile attribution
         perturber = GridPerturber(image, torch.zeros_like(image), self.tile_size)
         grid_heatmap = torch.zeros(perturber.get_grid_shape())
         for r in range(grid_heatmap.shape[0]):
             for c in range(grid_heatmap.shape[1]):
-                grid_heatmap[r][c] = hmap[perturber.view.tile_slice(r, c)].sum()
+                grid_heatmap[r][c] = heatmap[perturber.view.tile_slice(r, c)].sum()
 
         # sort tile in attribution
         num_pixels = torch.numel(grid_heatmap)

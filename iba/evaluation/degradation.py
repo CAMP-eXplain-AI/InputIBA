@@ -12,21 +12,19 @@ class Degradation(BaseEvaluation):
         self.model = model
         self.batch = batch
         self.target = target
-        self.MoRF_scores = []
-        self.LeRF_scores = []
+        self.morf_scores = []
+        self.lerf_scores = []
         self.tile_size = tile_size
-        self.img_history_MoRF = [] if store_imgs else None
-        self.img_history_LeRF = [] if store_imgs else None
+        self.img_history_morf = [] if store_imgs else None
+        self.img_history_lerf = [] if store_imgs else None
 
+    @torch.no_grad()
     def eval(self, hmap: torch.Tensor, image: torch.Tensor) -> dict:
         self.model.eval()
 
         # compress heatmap to 2D if needed
         if hmap.ndim == 3:
             hmap = hmap.mean(0)
-
-        # construct perturbed img and get baseline score
-        # TODO implement
 
         # get 2d tile attribution
         perturber = GridPerturber(image, torch.zeros_like(image), self.tile_size)
@@ -38,33 +36,41 @@ class Degradation(BaseEvaluation):
         # sort tile in attribution
         num_pixels = torch.numel(grid_heatmap)
         _, indices = torch.topk(grid_heatmap.flatten(), num_pixels)
-        indices = np.unravel_index(indices.cpu().numpy(), hmap.size())
+        indices = np.unravel_index(indices.cpu().numpy(), grid_heatmap.size())
         _, reverse_indices = torch.topk(grid_heatmap.flatten(), num_pixels, largest=False)
-        reverse_indices = np.unravel_index(reverse_indices.cpu().numpy(), hmap.size())
+        reverse_indices = np.unravel_index(reverse_indices.cpu().numpy(), grid_heatmap.size())
+        
+        # get baseline score
+        self.baseline_score = torch.nn.functional.softmax(self.model(image.unsqueeze(0).to(next(self.model.parameters()).device)))[:, self.target]
+        self.baseline_score = self.baseline_score.detach().cpu().numpy()
 
         # apply deletion game using MoRF
         print("MoRF deletion")
-        self.deletion_scores = self._procedure_perturb(perturber, num_pixels, indices, self.img_history_MoRF)
+        self.morf_scores = self._procedure_perturb(perturber, num_pixels, indices, self.img_history_morf)
         MoRF_img = perturber.get_current()
 
         # apply deletion game using LeRF
         perturber = GridPerturber(image, torch.zeros_like(image), self.tile_size)
         print("LeRF deletion")
-        self.insertion_scores = self._procedure_perturb(perturber, num_pixels, reverse_indices, self.img_history_LeRF)
+        self.lerf_scores = self._procedure_perturb(perturber, num_pixels, reverse_indices, self.img_history_lerf)
         LeRF_img = perturber.get_current()
 
+        #remove bias
+        self.lerf_scores = self.lerf_scores - self.baseline_score
+        self.morf_scores = self.morf_scores - self.baseline_score
+
         # calculate AUC
-        insertion_auc = trapezoid(self.insertion_scores, dx=1. / float(len(self.insertion_scores)))
-        deletion_auc = trapezoid(self.deletion_scores, dx=1. / float(len(self.deletion_scores)))
+        lerf_auc = trapezoid(self.lerf_scores, dx=1. / float(len(self.lerf_scores)))
+        morf_auc = trapezoid(self.morf_scores, dx=1. / float(len(self.morf_scores)))
 
         # deletion_img and insertion_img are final results, they are only used for debug purpose
-        return {"deletion_scores": self.deletion_scores, "insertion_scores": self.insertion_scores,
+        return {"MoRF_scores": self.morf_scores, "LeRF_scores": self.lerf_scores,
                 "MoRF_img": MoRF_img, "LeRF_img": LeRF_img,
-                "insertion_auc": insertion_auc, "deletion_auc": deletion_auc,
-                "MoRF_img_history":self.img_history_MoRF, "LeRF_img_history":self.img_history_LeRF}
+                "LeRF_auc": lerf_auc, "MoRF_auc": morf_auc,
+                "MoRF_img_history":self.img_history_morf, "LeRF_img_history":self.img_history_lerf}
 
     def _procedure_perturb(self, perturber: GridPerturber, num_pixels, indices, img_history=None):
-        scores_after_perturb = []
+        scores_after_perturb = [self.baseline_score.item()]
         replaced_pixels = 0
         softmax = torch.nn.Softmax()
         while replaced_pixels < num_pixels:

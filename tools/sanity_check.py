@@ -14,26 +14,21 @@ import numpy as np
 
 def parse_args():
     parser = ArgumentParser('Sanity check')
-    parser.add_argument('config',
-                        help='config file of the attribution method')
-    parser.add_argument('heatmap_dir',
-                        help='directory of the heatmaps')
-    parser.add_argument('work_dir',
-                        help='directory to save the result file')
-    parser.add_argument('file_name',
-                        help='file name fo saving the results')
-    parser.add_argument('--num-samples',
-                        type=int,
-                        default=0,
-                        help='Number of samples to check, 0 means checking all the samples')
-    parser.add_argument('--save-heatmaps',
-                        action='store_true',
-                        default=False,
-                        help='Whether to save the heatmaps produced by the perturbed models')
-    parser.add_argument('--gpu-id',
-                        type=int,
-                        default=0,
-                        help='GPU id')
+    parser.add_argument('config', help='config file of the attribution method')
+    parser.add_argument('heatmap_dir', help='directory of the heatmaps')
+    parser.add_argument('work_dir', help='directory to save the result file')
+    parser.add_argument('file_name', help='file name fo saving the results')
+    parser.add_argument(
+        '--num-samples',
+        type=int,
+        default=0,
+        help='Number of samples to check, 0 means checking all the samples')
+    parser.add_argument(
+        '--save-heatmaps',
+        action='store_true',
+        default=False,
+        help='Whether to save the heatmaps produced by the perturbed models')
+    parser.add_argument('--gpu-id', type=int, default=0, help='GPU id')
     args = parser.parse_args()
     return args
 
@@ -70,16 +65,18 @@ def sanity_check(cfg,
             for img, target, img_name in zip(imgs, targets, img_names):
                 img = img.to(device)
                 target = target.item()
-                heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'), cv2.IMREAD_UNCHANGED)
+                heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'),
+                                     cv2.IMREAD_UNCHANGED)
 
-                ssim_dict = evaluator.evaluate(heatmap=heatmap,
-                                               img=img,
-                                               target=target,
-                                               attribution_cfg=cfg.attribution_cfg,
-                                               perturb_layers=cfg.sanity_check['perturb_layers'],
-                                               check=cfg.sanity_check['check'],
-                                               save_dir=osp.join(work_dir, img_name),
-                                               save_heatmaps=save_heatmaps)
+                ssim_dict = evaluator.evaluate(
+                    heatmap=heatmap,
+                    img=img,
+                    target=target,
+                    attribution_cfg=cfg.attribution_cfg,
+                    perturb_layers=cfg.sanity_check['perturb_layers'],
+                    check=cfg.sanity_check['check'],
+                    save_dir=osp.join(work_dir, img_name),
+                    save_heatmaps=save_heatmaps)
                 results.update({img_name: ssim_dict['ssim_all']})
                 gc.collect()
     except KeyboardInterrupt:

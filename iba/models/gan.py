@@ -10,11 +10,7 @@ from .model_zoo import get_module
 class Generator(torch.nn.Module):
     # generate takes random noise as input, learnable parameter is the img mask.
     # masked img (with noise added) go through the original network and generate masked feature map
-    def __init__(self,
-                 img,
-                 context,
-                 device='cuda:0',
-                 capacity=None):
+    def __init__(self, img, context, device='cuda:0', capacity=None):
         super().__init__()
         self.img = img
         self.context = context
@@ -47,8 +43,9 @@ class Generator(torch.nn.Module):
         def store_feature_map(model, input, output):
             self.feature_map = output
 
-        self._hook_handle = get_module(self.context.classifier, self.context.layer
-                                       ).register_forward_hook(store_feature_map)
+        self._hook_handle = get_module(
+            self.context.classifier,
+            self.context.layer).register_forward_hook(store_feature_map)
 
     def forward(self, gaussian):
         noise = self.eps * gaussian + self.mean
@@ -77,10 +74,12 @@ class Generator(torch.nn.Module):
             self._hook_handle = None
         else:
             raise ValueError(
-                "Cannot detach hock. Either you never attached or already detached.")
+                "Cannot detach hock. Either you never attached or already detached."
+            )
 
 
 class Discriminator(torch.nn.Module):
+
     def __init__(self, channels, size):
         super().__init__()
         # Filters [256, 512, 1024]
@@ -135,6 +134,7 @@ class Discriminator(torch.nn.Module):
 
 
 class WGAN_CP(object):
+
     def __init__(self,
                  context=None,
                  img=None,
@@ -156,20 +156,22 @@ class WGAN_CP(object):
 
         # channel is determined from feature map
         self.discriminator = Discriminator(self.feature_map.shape[0],
-                                           self.feature_map.shape[1]).to(self.device)
+                                           self.feature_map.shape[1]).to(
+                                               self.device)
 
     def _build_data(self, dataset_size, sub_dataset_size, batch_size):
         # create dataset from feature mask and feature map
         num_sub_dataset = int(dataset_size / sub_dataset_size)
         dataset = []
         for idx_subset in range(num_sub_dataset):
-            sub_dataset = self.feature_map.unsqueeze(0).expand(sub_dataset_size, -1, -1, -1)
+            sub_dataset = self.feature_map.unsqueeze(0).expand(
+                sub_dataset_size, -1, -1, -1)
             noise = torch.zeros_like(sub_dataset).normal_()
             std = random.uniform(0, 5)
             mean = random.uniform(-2, 2)
             noise = std * noise + mean
             sub_dataset = self.feature_mask * sub_dataset + (
-                    1 - self.feature_mask) * noise
+                1 - self.feature_mask) * noise
             dataset.append(sub_dataset)
 
         dataset = torch.cat(dataset, dim=0)
@@ -196,7 +198,8 @@ class WGAN_CP(object):
         # Initialize generator and discriminator
         if logger is None:
             logger = get_logger('iba')
-        data_loader = self._build_data(dataset_size, sub_dataset_size, batch_size)
+        data_loader = self._build_data(dataset_size, sub_dataset_size,
+                                       batch_size)
 
         # Optimizers
         optimizer_G = torch.optim.RMSprop([{
@@ -209,7 +212,8 @@ class WGAN_CP(object):
             "params": self.generator.img_mask_param,
             "lr": 0.003
         }])
-        optimizer_D = torch.optim.RMSprop(self.discriminator.parameters(), lr=lr)
+        optimizer_D = torch.optim.RMSprop(self.discriminator.parameters(),
+                                          lr=lr)
 
         # training
         batches_done = 0

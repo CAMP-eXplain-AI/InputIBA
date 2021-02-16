@@ -11,12 +11,9 @@ from argparse import ArgumentParser
 
 def parse_args():
     parser = ArgumentParser('Evaluate the heatmaps with EffectiveHeatRatios')
-    parser.add_argument('config',
-                        help='config file of the attribution method')
-    parser.add_argument('heatmap_dir',
-                        help='directory of the heatmaps')
-    parser.add_argument('work_dir',
-                        help='directory to save the result file')
+    parser.add_argument('config', help='config file of the attribution method')
+    parser.add_argument('heatmap_dir', help='directory of the heatmaps')
+    parser.add_argument('work_dir', help='directory to save the result file')
     parser.add_argument('file_name',
                         help='file name for saving the result file')
     parser.add_argument('--base-threshold',
@@ -46,7 +43,8 @@ def evaluate_ehr(cfg,
 
     dataset = build_dataset(cfg.data['val'])
     evaluator = EffectiveHeatRatios(base_threshold=base_threshold)
-    assert roi in dataset[0].keys(), f'dataset samples must contain the key: {roi}'
+    assert roi in dataset[0].keys(
+    ), f'dataset samples must contain the key: {roi}'
 
     res_dict = {}
     for i, sample in tqdm(enumerate(dataset)):
@@ -62,7 +60,8 @@ def evaluate_ehr(cfg,
 
         if not osp.exists(osp.join(heatmap_dir, img_name + '.png')):
             continue
-        heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'), cv2.IMREAD_UNCHANGED)
+        heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'),
+                             cv2.IMREAD_UNCHANGED)
         res = evaluator.evaluate(heatmap, roi_array, weight_by_heat=weight)
         auc = res['auc']
         res_dict.update({img_name: {'target': target, 'auc': auc}})

@@ -8,6 +8,7 @@ from .pytorch import _SpatialGaussianKernel
 
 
 class ImageIBA(nn.Module):
+
     def __init__(self,
                  img,
                  img_mask,
@@ -134,8 +135,8 @@ class ImageIBA(nn.Module):
         self._std = ifnone(self._std, torch.tensor(1.).to(self.device))
         self._buffer_capacity = self._kl_div(x, g, self.img_mask,
                                              self.img_eps_mean,
-                                             self.img_eps_std, lamb,
-                                             self._mean, self._std)
+                                             self.img_eps_std, lamb, self._mean,
+                                             self._std)
 
         # apply mask on sampled x
         eps = x.data.new(x.size()).normal_()

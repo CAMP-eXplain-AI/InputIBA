@@ -13,12 +13,12 @@ from copy import deepcopy
 
 
 class Attributer:
-    def __init__(self,
-                 cfg: dict,
-                 device='cuda:0'):
+
+    def __init__(self, cfg: dict, device='cuda:0'):
         self.cfg = deepcopy(cfg)
         self.device = device
-        self.classifier = build_classifiers(self.cfg['classifier']).to(self.device)
+        self.classifier = build_classifiers(self.cfg['classifier']).to(
+            self.device)
         self.classifier.eval()
         for p in self.classifier.parameters():
             p.requires_grad = False
@@ -59,25 +59,21 @@ class Attributer:
         return gen_img_mask
 
     def train_img_iba(self, img_iba_cfg, img, gen_img_mask, closure, attr_cfg):
-        img_iba = ImageIBA(
-            img=img,
-            img_mask=gen_img_mask,
-            img_eps_mean=0.0,
-            img_eps_std=1.0,
-            device=self.device,
-            **img_iba_cfg)
+        img_iba = ImageIBA(img=img,
+                           img_mask=gen_img_mask,
+                           img_eps_mean=0.0,
+                           img_eps_std=1.0,
+                           device=self.device,
+                           **img_iba_cfg)
         img_iba_heatmap = img_iba.analyze(img.unsqueeze(0), closure, **attr_cfg)
-        img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean([0, 1]).numpy()
+        img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean(
+            [0, 1]).numpy()
         return img_mask, img_iba_heatmap
 
-    def make_attribution(self,
-                         img,
-                         target,
-                         attribution_cfg,
-                         logger=None):
+    def make_attribution(self, img, target, attribution_cfg, logger=None):
         attr_cfg = deepcopy(attribution_cfg)
-        closure = lambda x: -torch.log_softmax(
-            self.classifier(x), 1)[:, target].mean()
+        closure = lambda x: -torch.log_softmax(self.classifier(x), 1)[:, target
+                                                                     ].mean()
         if logger is None:
             logger = get_logger('iba')
 
@@ -88,10 +84,8 @@ class Attributer:
         gen_img_mask = self.train_gan(img, attr_cfg['gan'], logger=logger)
 
         logger.info('Training Image Information Bottleneck')
-        img_mask, img_iba_heatmap = self.train_img_iba(self.cfg['img_iba'],
-                                                       img,
-                                                       gen_img_mask,
-                                                       closure,
+        img_mask, img_iba_heatmap = self.train_img_iba(self.cfg['img_iba'], img,
+                                                       gen_img_mask, closure,
                                                        attr_cfg['img_iba'])
 
         iba_capacity = self.iba.capacity().sum(0).clone().detach().cpu().numpy()
@@ -135,8 +129,7 @@ class Attributer:
         img = img * std + mean
         if isinstance(img, torch.Tensor):
             img = img.cpu().numpy()
-        Attributer.show_mask(img , show=show,out_file=out_file)
-
+        Attributer.show_mask(img, show=show, out_file=out_file)
 
     @staticmethod
     def show_mask(mask, show=False, out_file=None):

@@ -8,7 +8,8 @@ from tqdm import tqdm
 
 
 def parse_args():
-    parser = ArgumentParser(description='generate a smaller imagenet dataset from the original one')
+    parser = ArgumentParser(
+        description='generate a smaller imagenet dataset from the original one')
     parser.add_argument('src_root',
                         type=str,
                         help='root of image folders of original imagenet')
@@ -37,9 +38,7 @@ def small_imagenet(src_root, dst_root, n=10):
 
 def main():
     args = parse_args()
-    small_imagenet(src_root=args.src_root,
-                   dst_root=args.dst_root,
-                   n=args.n)
+    small_imagenet(src_root=args.src_root, dst_root=args.dst_root, n=args.n)
 
 
 if __name__ == "__main__":

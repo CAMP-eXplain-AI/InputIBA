@@ -60,6 +60,7 @@ class WelfordEstimator:
             # returns a mask with active neurons
             estim.active_neurons()
     """
+
     def __init__(self):
         super().__init__()
         self.reset()
@@ -193,8 +194,7 @@ def load_monkeys(center_crop=True, size=224, pil=False):
     if size is not None and type(size) == int:
         size = (size, size)
 
-    resp = urlopen(
-        "http://farm1.static.flickr.com/95/247213534_e8be5222be.jpg")
+    resp = urlopen("http://farm1.static.flickr.com/95/247213534_e8be5222be.jpg")
     img_bytes = resp.read()
     img = Image.open(BytesIO(img_bytes))
     target = 382
@@ -268,7 +268,8 @@ def plot_saliency_map(saliency_map,
     cmap = mpl.colors.ListedColormap(half_jet_rgba)
     hmap_jet = cmap(norm(saliency_map))
     if img is not None:
-        hmap_jet[:, :, -1] = (max_alpha - min_alpha) * norm(saliency_map) + min_alpha
+        hmap_jet[:, :,
+                 -1] = (max_alpha - min_alpha) * norm(saliency_map) + min_alpha
     ax.imshow(hmap_jet, alpha=max_alpha)
     cbar = mpl.colorbar.ColorbarBase(cax1, cmap=cmap, norm=norm)
     cbar.set_label(colorbar_label, fontsize=colorbar_fontsize)

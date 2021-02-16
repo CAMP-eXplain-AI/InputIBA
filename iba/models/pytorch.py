@@ -45,6 +45,7 @@ def tensor_to_np_img(img_t):
 
 class _SpatialGaussianKernel(nn.Module):
     """ A simple convolutional layer with fixed gaussian kernels, used to smoothen the input """
+
     def __init__(
         self,
         kernel_size,
@@ -113,6 +114,7 @@ class TorchWelfordEstimator(nn.Module):
             # returns a mask with active neurons
             estim.active_neurons()
     """
+
     def __init__(self):
         super().__init__()
         self.device = None  # Defined on first forward pass
@@ -167,6 +169,7 @@ class _InterruptExecution(Exception):
 
 
 class _IBAForwardHook:
+
     def __init__(self, iba, input_or_output="output"):
         self.iba = iba
         self.input_or_output = input_or_output
@@ -212,6 +215,7 @@ class IBA(nn.Module):
         input_or_output: Select either ``"output"`` or ``"input"``.
         initial_alpha: Initial value for the parameter.
     """
+
     def __init__(self,
                  layer=None,
                  context=None,
@@ -252,14 +256,16 @@ class IBA(nn.Module):
 
         # Attach the bottleneck after the model layer as forward hook
         if self.context is not None:
-            self._hook_handle = get_module(self.context.classifier,
-                                           self.context.layer).register_forward_hook(
-                _IBAForwardHook(self, input_or_output))
+            self._hook_handle = get_module(
+                self.context.classifier,
+                self.context.layer).register_forward_hook(
+                    _IBAForwardHook(self, input_or_output))
         elif self.layer is not None:
             self._hook_handle = self.layer.register_forward_hook(
                 _IBAForwardHook(self, input_or_output))
         else:
-            raise ValueError('context and layer cannot be None at the same time')
+            raise ValueError(
+                'context and layer cannot be None at the same time')
 
     def _reset_alpha(self):
         """ Used to reset the mask to train on another sample """
@@ -272,9 +278,8 @@ class IBA(nn.Module):
         We use the estimator to obtain shape and device.
         """
         if self.estimator.n_samples() <= 0:
-            raise RuntimeWarning(
-                "You need to estimate the feature distribution"
-                " before using the bottleneck.")
+            raise RuntimeWarning("You need to estimate the feature distribution"
+                                 " before using the bottleneck.")
         shape = self.estimator.shape
         device = self.estimator.device
         self.alpha = nn.Parameter(torch.full(shape,

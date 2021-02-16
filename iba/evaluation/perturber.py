@@ -2,7 +2,6 @@
 import torch
 import numpy as np
 
-
 __all__ = [
     'Perturber',
     'PixelPerturber',
@@ -12,6 +11,7 @@ __all__ = [
 
 class GridView:
     """ access something by 2D-tile indices """
+
     def __init__(self, orig_dim: tuple, tile_dim: tuple):
         self.orig_r = orig_dim[0]
         self.orig_c = orig_dim[1]
@@ -49,6 +49,7 @@ class GridView:
 
 
 class Perturber:
+
     def perturb(self, r: int, c: int):
         """ perturb a tile or pixel """
         raise NotImplementedError
@@ -69,6 +70,7 @@ class Perturber:
 
 
 class PixelPerturber(Perturber):
+
     def __init__(self, inp: torch.Tensor, baseline: torch.Tensor):
         self.current = inp.clone()
         self.baseline = baseline
@@ -84,6 +86,7 @@ class PixelPerturber(Perturber):
 
 
 class GridPerturber(Perturber):
+
     def __init__(self, inp: torch.Tensor, baseline: torch.Tensor, tile_dim):
         assert len(tile_dim) == 2
         self.view = GridView(tuple(inp.shape[-2:]), tile_dim)

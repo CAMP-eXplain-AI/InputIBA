@@ -83,6 +83,5 @@ def print_log(msg, logger=None, level=logging.INFO):
         _logger = get_logger(logger)
         _logger.log(level, msg)
     else:
-        raise TypeError(
-            'logger should be either a logging.Logger object, str, '
-            f'"silent" or None, but got {type(logger)}')
+        raise TypeError('logger should be either a logging.Logger object, str, '
+                        f'"silent" or None, but got {type(logger)}')

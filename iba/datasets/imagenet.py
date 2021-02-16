@@ -33,6 +33,7 @@ class ImageNet(BaseDataset):
         pipeline (list): pipeline to transform the images.
         with_bbox (bool): if True, load the bounding boxes.
     """
+
     def __init__(self,
                  img_root,
                  annot_root,
@@ -51,14 +52,20 @@ class ImageNet(BaseDataset):
         self.cls_to_ind = {v: k for k, v in self.ind_to_cls.items()}
 
         # use albumentations.Compose
-        self.image_paths = glob(osp.join(self.img_root, '**/*.JPEG'), recursive=True)
+        self.image_paths = glob(osp.join(self.img_root, '**/*.JPEG'),
+                                recursive=True)
         if self.with_bbox:
-            annot_files = glob(osp.join(self.annot_root, '**/*.xml'), recursive=True)
-            annot_file_names = list(map(lambda x: osp.splitext(osp.basename(x))[0], annot_files))
-            self.image_paths = list(filter(partial(_filter_fn, annot_file_names=annot_file_names), self.image_paths))
-            self.pipeline = build_pipeline(pipeline,
-                                           default_args=dict(
-                                               bbox_params=BboxParams(format='pascal_voc', label_fields=['labels'])))
+            annot_files = glob(osp.join(self.annot_root, '**/*.xml'),
+                               recursive=True)
+            annot_file_names = list(
+                map(lambda x: osp.splitext(osp.basename(x))[0], annot_files))
+            self.image_paths = list(
+                filter(partial(_filter_fn, annot_file_names=annot_file_names),
+                       self.image_paths))
+            self.pipeline = build_pipeline(
+                pipeline,
+                default_args=dict(bbox_params=BboxParams(
+                    format='pascal_voc', label_fields=['labels'])))
         else:
             self.pipeline = build_pipeline(pipeline)
 
@@ -83,7 +90,9 @@ class ImageNet(BaseDataset):
 
         if self.with_bbox:
             annot_file = osp.join(self.annot_root, img_name + '.xml')
-            annot = load_voc_bboxes(annot_file, name_to_ind_dict=self.dir_to_ind, ignore_difficult=False)
+            annot = load_voc_bboxes(annot_file,
+                                    name_to_ind_dict=self.dir_to_ind,
+                                    ignore_difficult=False)
             bboxes = annot['bboxes']
             labels = annot['labels']
             # print(f'xml: {annot_file}, bboxes: {bboxes}')
@@ -99,7 +108,10 @@ class ImageNet(BaseDataset):
 
         if self.with_bbox:
             bboxes = res['bboxes']
-            return dict(img=img, target=target, img_name=img_name, bboxes=bboxes)
+            return dict(img=img,
+                        target=target,
+                        img_name=img_name,
+                        bboxes=bboxes)
         else:
             return dict(img=img, target=target, img_name=img_name)
 

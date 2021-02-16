@@ -15,7 +15,9 @@ import gc
 def parse_args():
     parser = ArgumentParser('train a model')
     parser.add_argument('config', help='configuration file')
-    parser.add_argument('--work-dir', help='working directory', default=os.getcwd())
+    parser.add_argument('--work-dir',
+                        help='working directory',
+                        default=os.getcwd())
     parser.add_argument('--gpu-id', help='gpu id', type=int, default=0)
     args = parser.parse_args()
     return args
@@ -49,8 +51,9 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
         targets = batch['target']
         img_names = batch['img_name']
         for img, target, img_name in zip(imgs, targets, img_names):
-            logger.info(f'allocated memory in MB: '
-                        f'{int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
+            logger.info(
+                f'allocated memory in MB: '
+                f'{int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
             img = img.to(device)
             target = target.item()
             feat_mask_file = osp.join(work_dir, 'feat_masks', img_name)
@@ -61,7 +64,8 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
                                         attribution_cfg=cfg.attribution_cfg,
                                         logger=logger)
             attributer.show_feat_mask(out_file=feat_mask_file,
-                                      **cfg.attribution_cfg.get('feat_mask', {}))
+                                      **cfg.attribution_cfg.get(
+                                          'feat_mask', {}))
             attributer.show_img_mask(out_file=img_mask_file,
                                      **cfg.attribution_cfg.get('img_mask', {}))
             gc.collect()
@@ -69,9 +73,7 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
 
 def main():
     args = parse_args()
-    train(config=args.config,
-          work_dir=args.work_dir,
-          gpu_id=args.gpu_id)
+    train(config=args.config, work_dir=args.work_dir, gpu_id=args.gpu_id)
 
 
 if __name__ == '__main__':

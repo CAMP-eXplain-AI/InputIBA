@@ -4,7 +4,6 @@ import albumentations as A
 from albumentations.pytorch import ToTensor, ToTensorV2
 from typing import Union, Dict, List
 
-
 DATASETS = Registry('datasets')
 PIPELINES = Registry('pipelines')
 
@@ -15,7 +14,8 @@ def register_albu_transforms():
         if module_name.startswith('_'):
             continue
         transform = getattr(A, module_name)
-        if inspect.isclass(transform) and issubclass(transform, A.BasicTransform):
+        if inspect.isclass(transform) and issubclass(transform,
+                                                     A.BasicTransform):
             PIPELINES.register_module()(transform)
             albu_transforms.append(module_name)
     return albu_transforms

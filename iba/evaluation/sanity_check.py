@@ -26,11 +26,12 @@ def perturb_model(model, layers):
 
 
 class SanityCheck(BaseEvaluation):
-    def __init__(self,
-                 attributer: Attributer):
+
+    def __init__(self, attributer: Attributer):
         self.attributer = attributer
         self.ori_state_dict = deepcopy(self.attributer.classifier.state_dict())
-        self.model_layers = self.filter_names([n[0] for n in self.attributer.classifier.named_modules()])
+        self.model_layers = self.filter_names(
+            [n[0] for n in self.attributer.classifier.named_modules()])
         self.logger = get_logger('iba')
 
     def reload(self):
@@ -41,15 +42,16 @@ class SanityCheck(BaseEvaluation):
         for p in self.attributer.classifier.parameters():
             p.requires_grad = False
 
-    def evaluate(self, # noqa
-                 heatmap,
-                 img,
-                 target,
-                 attribution_cfg,
-                 perturb_layers,
-                 check='gan',
-                 save_dir=None,
-                 save_heatmaps=False):
+    def evaluate(  # noqa
+            self,
+            heatmap,
+            img,
+            target,
+            attribution_cfg,
+            perturb_layers,
+            check='gan',
+            save_dir=None,
+            save_heatmaps=False):
         """Apply sanity check to the attribution method with a single image. Given a list `perturb_layers = ['a', 'b',
          'c']`. There will be `len(perturb_layers)` perturbation settings. First, 'a' and all the subsequent layers
          will be perturbed. Next, 'b' and all the subsequent layers will be perturbed. Then, the similar for 'c'.
@@ -71,7 +73,9 @@ class SanityCheck(BaseEvaluation):
         Returns:
             ssim_all (dict): key 'ssim_val'. ssim values under all the perturbation settings.
         """
-        assert check in ['gan', 'img_iba'], f"check must be one of 'gan' or 'img_iba', but got {check}"
+        assert check in [
+            'gan', 'img_iba'
+        ], f"check must be one of 'gan' or 'img_iba', but got {check}"
         if save_heatmaps:
             assert save_dir is not None, "if save_masks, save_dir must not be None"
             if save_dir is not None:
@@ -92,7 +96,8 @@ class SanityCheck(BaseEvaluation):
                 else:
                     break
             p_layers.append(l)
-            self.logger.info(f"Following layers will be perturbed: [{', '.join(p_layers)}]")
+            self.logger.info(
+                f"Following layers will be perturbed: [{', '.join(p_layers)}]")
             ssim_val = self.sanity_check_single(img=img,
                                                 target=target,
                                                 attr_cfg=attr_cfg,
@@ -104,7 +109,9 @@ class SanityCheck(BaseEvaluation):
             self.logger.info(f'ssim_val: {ssim_val}')
             ssim_all.append(ssim_val)
         if save_heatmaps:
-            self.attributer.show_mask(heatmap, out_file=osp.join(save_dir, 'ori_img_mask'))
+            self.attributer.show_mask(heatmap,
+                                      out_file=osp.join(save_dir,
+                                                        'ori_img_mask'))
         return dict(ssim_all=ssim_all)
 
     def sanity_check_single(self,
@@ -116,8 +123,8 @@ class SanityCheck(BaseEvaluation):
                             check='img_iba',
                             save_dir=None,
                             save_heatmaps=False):
-        closure = lambda x: -torch.log_softmax(
-            self.attributer.classifier(x), 1)[:, target].mean()
+        closure = lambda x: -torch.log_softmax(self.attributer.classifier(x), 1
+                                              )[:, target].mean()
 
         _ = self.attributer.train_iba(img, closure, attr_cfg['iba'])
         if check == 'gan':
@@ -126,15 +133,19 @@ class SanityCheck(BaseEvaluation):
         else:
             gen_img_mask = self.attributer.train_gan(img, attr_cfg['gan'])
             perturb_model(self.attributer.classifier, perturb_layers)
-        img_mask, _ = self.attributer.train_img_iba(self.attributer.cfg['img_iba'],
-                                                    img,
-                                                    gen_img_mask=gen_img_mask,
-                                                    closure=closure,
-                                                    attr_cfg=attr_cfg['img_iba'])
+        img_mask, _ = self.attributer.train_img_iba(
+            self.attributer.cfg['img_iba'],
+            img,
+            gen_img_mask=gen_img_mask,
+            closure=closure,
+            attr_cfg=attr_cfg['img_iba'])
         ssim_val = self.ssim(ori_img_mask, img_mask)
         if save_heatmaps:
             img_mask = (img_mask * 255).astype(np.uint8)
-            self.attributer.show_mask(img_mask, out_file=osp.join(save_dir, f"{perturb_layers[-1]}_{ssim_val:.3f}"))
+            self.attributer.show_mask(
+                img_mask,
+                out_file=osp.join(save_dir,
+                                  f"{perturb_layers[-1]}_{ssim_val:.3f}"))
         return ssim_val
 
     @staticmethod

@@ -123,8 +123,9 @@ class SanityCheck(BaseEvaluation):
                             check='img_iba',
                             save_dir=None,
                             save_heatmaps=False):
-        closure = lambda x: -torch.log_softmax(self.attributer.classifier(x), 1
-                                              )[:, target].mean()
+        closure = self.attributer.get_closure(self.attributer.classifier,
+                                              target,
+                                              self.attributer.use_softmax)
 
         _ = self.attributer.train_iba(img, closure, attr_cfg['iba'])
         if check == 'gan':

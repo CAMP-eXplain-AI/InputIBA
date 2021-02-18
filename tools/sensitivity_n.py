@@ -54,7 +54,8 @@ def sensitivity_n(cfg,
     mmcv.mkdir_or_exist(work_dir)
     val_set = build_dataset(cfg.data['val'])
     if num_samples > 0:
-        inds = np.arange(num_samples)
+        # random select num_sample samples
+        inds = np.random.choice(len(val_set), num_samples, replace=False)
         val_set = Subset(val_set, inds)
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})

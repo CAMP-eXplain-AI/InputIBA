@@ -2,6 +2,7 @@ _base_ = ['_base_/imagenet.py']
 
 attributer = dict(
     layer='features.17',
+    use_softmax=True,
     classifier=dict(
         type='vgg16',
         pretrained=True),

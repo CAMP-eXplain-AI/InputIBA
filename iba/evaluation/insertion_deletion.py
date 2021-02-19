@@ -87,7 +87,7 @@ class InsertionDeletion(BaseEvaluation):
         replaced_pixels = 0
         while replaced_pixels < num_pixels:
             perturbed_imgs = []
-            for i in range(8):
+            for i in range(80):
                 batch = min(num_pixels - replaced_pixels, self.pixel_batch_size)
 
                 # perturb # of pixel_batch_size pixels

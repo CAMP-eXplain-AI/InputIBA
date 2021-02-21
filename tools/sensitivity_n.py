@@ -10,7 +10,7 @@ from iba.evaluation import SensitivityN
 import cv2
 from tqdm import tqdm
 import numpy as np
-from iba.utils import get_logger
+from iba.utils import get_logger, get_valid_set
 
 
 def parse_args():
@@ -19,6 +19,12 @@ def parse_args():
     parser.add_argument('heatmap_dir', help='directory of the heatmaps')
     parser.add_argument('work_dir', help='directory to save the result file')
     parser.add_argument('file_name', help='file name fo saving the results')
+    parser.add_argument('--scores-file',
+                        help='File that records the predicted probability of corresponding target class')
+    parser.add_argument('--scores-threshold',
+                        type=float,
+                        default=0.6,
+                        help='Threshold for filtering the samples with low predicted target probabilities')
     parser.add_argument('--log-n-max',
                         type=float,
                         default=5,
@@ -44,6 +50,8 @@ def sensitivity_n(cfg,
                   heatmap_dir,
                   work_dir,
                   file_name,
+                  scores_file=None,
+                  scores_threshold=0.6,
                   log_n_max=5.0,
                   log_n_ticks=0.1,
                   num_masks=100,
@@ -53,10 +61,11 @@ def sensitivity_n(cfg,
     logger = get_logger('iba')
     mmcv.mkdir_or_exist(work_dir)
     val_set = build_dataset(cfg.data['val'])
-    if num_samples > 0:
-        # random select num_sample samples
-        inds = np.random.choice(len(val_set), num_samples, replace=False)
-        val_set = Subset(val_set, inds)
+    val_set = get_valid_set(val_set,
+                            scores_file=scores_file,
+                            scores_threshold=scores_threshold,
+                            num_samples=num_samples)
+
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
@@ -67,8 +76,7 @@ def sensitivity_n(cfg,
     results = {}
 
     try:
-        log_n_list = np.arange(0, log_n_max + log_n_ticks, log_n_ticks)
-        n_list = (10 ** log_n_list).astype(int)
+        n_list = np.logspace(0, log_n_max, int(log_n_max / log_n_ticks), base=10.0, dtype=int)
         # to eliminate the duplicate elements caused by rounding
         n_list = np.unique(n_list)
         logger.info(f"n_list: [{', '.join(map(str,n_list))}]")
@@ -116,6 +124,8 @@ def main():
                   heatmap_dir=args.heatmap_dir,
                   work_dir=args.work_dir,
                   file_name=args.file_name,
+                  scores_file=args.scores_file,
+                  scores_threshold=args.scores_threshold,
                   log_n_max=args.log_n_max,
                   log_n_ticks=args.log_n_ticks,
                   num_masks=args.num_masks,

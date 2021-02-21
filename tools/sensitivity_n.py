@@ -4,6 +4,7 @@ import os.path as osp
 from argparse import ArgumentParser
 from copy import deepcopy
 import mmcv
+from mmcv.runner.utils import set_random_seed
 from iba.models import build_classifiers
 from iba.datasets import build_dataset
 from iba.evaluation import SensitivityN
@@ -41,7 +42,14 @@ def parse_args():
                         type=int,
                         default=0,
                         help='Number of samples to evaluate, 0 means checking all the samples')
-    parser.add_argument('--gpu-id', type=int, default=0, help='GPU id')
+    parser.add_argument('--gpu-id',
+                        type=int,
+                        default=0,
+                        help='GPU id')
+    parser.add_argument('--seed',
+                        type=int,
+                        default=2021,
+                        help='random seed')
     args = parser.parse_args()
     return args
 
@@ -125,6 +133,7 @@ def sensitivity_n(cfg,
 def main():
     args = parse_args()
     cfg = mmcv.Config.fromfile(args.config)
+    set_random_seed(args.seed)
     sensitivity_n(cfg=cfg,
                   heatmap_dir=args.heatmap_dir,
                   work_dir=args.work_dir,

@@ -27,7 +27,7 @@ def parse_args():
                         help='Threshold for filtering the samples with low predicted target probabilities')
     parser.add_argument('--log-n-max',
                         type=float,
-                        default=5,
+                        default=4.5,
                         help='maximal N of Sensitivity-N')
     parser.add_argument('--log-n-ticks',
                         type=float,
@@ -52,15 +52,20 @@ def sensitivity_n(cfg,
                   file_name,
                   scores_file=None,
                   scores_threshold=0.6,
-                  log_n_max=5.0,
+                  log_n_max=4.5,
                   log_n_ticks=0.1,
                   num_masks=100,
                   num_samples=0,
                   device='cuda:0'):
-    assert log_n_max > 1.0, f"log_n_max must be larger than 1.0, but got {log_n_max}"
     logger = get_logger('iba')
     mmcv.mkdir_or_exist(work_dir)
     val_set = build_dataset(cfg.data['val'])
+    # check if n is valid
+    img_h, img_w = val_set[0]['img'].shape[-2:]
+    max_allowed_n = np.log(img_h * img_w)
+    assert log_n_max < max_allowed_n, f"log_n_max must smaller than {max_allowed_n}, but got {log_n_max}"
+
+
     val_set = get_valid_set(val_set,
                             scores_file=scores_file,
                             scores_threshold=scores_threshold,

@@ -81,6 +81,7 @@ def sensitivity_n(cfg,
 
             score_diffs_all = []
             sum_attrs_all = []
+            corr_all = []
 
             for batch in val_loader:
                 imgs = batch['img']
@@ -94,16 +95,21 @@ def sensitivity_n(cfg,
                                          cv2.IMREAD_UNCHANGED)
                     heatmap = torch.from_numpy(heatmap).to(img) / 255.0
 
-                    res_single = evaluator.evaluate(heatmap, img, target)
+                    res_single = evaluator.evaluate(heatmap, img, target, calculate_corr=True)
                     score_diffs = res_single['score_diffs']
                     sum_attrs = res_single['sum_attributions']
+                    corr = res_single['correlation'][1, 0]
                     score_diffs_all.append(score_diffs)
                     sum_attrs_all.append(sum_attrs)
+                    corr_all.append(np.array([corr]))
                 pbar.update(1)
             score_diffs_all = np.concatenate(score_diffs_all, 0)
             sum_attrs_all = np.concatenate(sum_attrs_all, 0)
+            corr_all = np.concatenate(corr_all, 0).flatten()
+
+            # TODO leave here?
             corr_matrix = np.corrcoef(score_diffs_all, sum_attrs_all)
-            results.update({int(n): corr_matrix[1, 0]})
+            results.update({int(n): corr_all.mean()})
     except KeyboardInterrupt:
         mmcv.dump(results, file=osp.join(work_dir, file_name))
     mmcv.dump(results, file=osp.join(work_dir, file_name))

@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 import os.path as osp
 from argparse import ArgumentParser
 from copy import deepcopy
@@ -73,7 +73,6 @@ def sensitivity_n(cfg,
     max_allowed_n = np.log(img_h * img_w)
     assert log_n_max < max_allowed_n, f"log_n_max must smaller than {max_allowed_n}, but got {log_n_max}"
 
-
     val_set = get_valid_set(val_set,
                             scores_file=scores_file,
                             scores_threshold=scores_threshold,
@@ -100,10 +99,7 @@ def sensitivity_n(cfg,
                                      n=n,
                                      num_masks=num_masks)
 
-            score_diffs_all = []
-            sum_attrs_all = []
             corr_all = []
-
             for batch in val_loader:
                 imgs = batch['img']
                 targets = batch['target']
@@ -117,20 +113,10 @@ def sensitivity_n(cfg,
                     heatmap = torch.from_numpy(heatmap).to(img) / 255.0
 
                     res_single = evaluator.evaluate(heatmap, img, target, calculate_corr=True)
-                    score_diffs = res_single['score_diffs']
-                    sum_attrs = res_single['sum_attributions']
                     corr = res_single['correlation'][1, 0]
-                    score_diffs_all.append(score_diffs)
-                    sum_attrs_all.append(sum_attrs)
-                    corr_all.append(np.array([corr]))
+                    corr_all.append(corr)
                 pbar.update(1)
-            score_diffs_all = np.concatenate(score_diffs_all, 0)
-            sum_attrs_all = np.concatenate(sum_attrs_all, 0)
-            corr_all = np.concatenate(corr_all, 0).flatten()
-
-            # TODO leave here?
-            corr_matrix = np.corrcoef(score_diffs_all, sum_attrs_all)
-            results.update({int(n): corr_all.mean()})
+            results.update({int(n): np.mean(corr_all)})
     except KeyboardInterrupt:
         mmcv.dump(results, file=osp.join(work_dir, file_name))
     mmcv.dump(results, file=osp.join(work_dir, file_name))

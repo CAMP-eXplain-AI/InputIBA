@@ -17,6 +17,10 @@ def parse_args():
     parser.add_argument('config', help='config file')
     parser.add_argument('work_dir', help='working directory')
     parser.add_argument('method', type=str, help='baseline method')
+    parser.add_argument('--saliency-layer',
+                        type=str,
+                        default='features.30',
+                        help='Saliency layer of Grad-Cam, only useful when method is grad_cam')
     parser.add_argument('--gpu-id',
                         type=int,
                         default=0,
@@ -65,7 +69,7 @@ class Baseline:
         return self.attribute(img, target)
 
 
-def train_baseline(cfg, work_dir, method, device='cuda:0'):
+def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
     val_set = build_dataset(cfg.data['val'])
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})
@@ -73,11 +77,6 @@ def train_baseline(cfg, work_dir, method, device='cuda:0'):
 
     classifier = build_classifiers(cfg.attributer['classifier']).to(device)
     classifier.eval()
-
-    saliency_layer = None
-    if method == 'grad_cam':
-        saliency_layer = get_module(classifier, cfg.attributer['layer'])
-
     baseline = Baseline(classifier, method, saliency_layer)
 
     for batch in tqdm(val_loader, total=len(val_loader)):
@@ -102,6 +101,7 @@ def main():
     train_baseline(cfg=cfg,
                    work_dir=args.work_dir,
                    method=args.method,
+                   saliency_layer=args.saliency_layer,
                    device=f'cuda:{args.gpu_id}')
 
 

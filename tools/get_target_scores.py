@@ -26,13 +26,13 @@ def parse_args():
 
 
 def get_target_scores(cfg, work_dir, file_name, device='cuda:0'):
-    assert cfg.attribute.get('use_softmax', True), "Currently only support multi-class classification settings," \
+    assert cfg.attributer.get('use_softmax', True), "Currently only support multi-class classification settings," \
                                                     "so use_softmax must be True."
     mmcv.mkdir_or_exist(work_dir)
     val_set = build_dataset(cfg.data['val'])
     val_loader = DataLoader(val_set, **cfg.data['data_loader'])
 
-    classifer = build_classifiers(cfg.attribute['classifier']).to(device)
+    classifer = build_classifiers(cfg.attributer['classifier']).to(device)
     classifer.eval()
 
     res = {}

@@ -67,7 +67,7 @@ def sanity_check(cfg,
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
 
-    attibuter = Attributer(cfg.attribute, device=device)
+    attibuter = Attributer(cfg.attributer, device=device)
     attibuter.estimate(train_loader, cfg.estimation_cfg)
     evaluator = SanityCheck(attibuter)
 

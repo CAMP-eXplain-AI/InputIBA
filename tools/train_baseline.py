@@ -65,8 +65,8 @@ class Baseline:
         else:
             raise ValueError(f'Invalid method: {method}')
 
-    def make_attribution(self, img, target):
-        return self.attribute(img, target)
+    def make_attribution(self, img, target, **kwargs):
+        return self.attribute(img, target=target, **kwargs)
 
 
 def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
@@ -86,7 +86,13 @@ def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
         for img, target, img_name in zip(imgs, targets, img_names):
             img = img.to(device).unsqueeze(0)
             target = target.item()
-            attr_map = baseline.make_attribution(img, target).detach().cpu().numpy()
+            if method == 'deep_shap':
+                # TODO to define a proper base distribution
+                base_distribution = img.new_zeros((10, ) + img.shape[1:])
+                attr_map = baseline.make_attribution(img, target, baselines=base_distribution)
+                attr_map = attr_map.detach().cpu().numpy()
+            else:
+                attr_map = baseline.make_attribution(img, target).detach().cpu().numpy()
             attr_map = attr_map.mean((0, 1))
             attr_map = attr_map / attr_map.max()
 

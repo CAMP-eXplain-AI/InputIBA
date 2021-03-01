@@ -75,7 +75,7 @@ def insertion_deletion(cfg,
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
 
-    classifer = build_classifiers(cfg.attribute['classifier']).to(device)
+    classifer = build_classifiers(cfg.attributer['classifier']).to(device)
     evaluator = InsertionDeletion(classifer,
                                   pixel_batch_size=pixel_batch_size,
                                   sigma=sigma)

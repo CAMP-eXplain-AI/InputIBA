@@ -81,7 +81,7 @@ def sensitivity_n(cfg,
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
-    classifier = build_classifiers(cfg.attribute['classifier']).to(device)
+    classifier = build_classifiers(cfg.attributer['classifier']).to(device)
 
     sample = val_set[0]['img']
     h, w = sample.shape[1:]

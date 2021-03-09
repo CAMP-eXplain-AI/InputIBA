@@ -73,8 +73,7 @@ class Attributer:
                            device=self.device,
                            **img_iba_cfg)
         img_iba_heatmap = img_iba.analyze(img.unsqueeze(0), closure, **attr_cfg)
-        img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean(
-            [0, 1]).numpy()
+        img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean([0, 1]).numpy()
         return img_mask, img_iba_heatmap
 
     @staticmethod
@@ -84,7 +83,7 @@ class Attributer:
         else:
             # target is binary encoded and it is for a single sample
             assert isinstance(target, torch.Tensor) and target.max() <= 1 and target.dim() == 1
-            closure = lambda x: - F.binary_cross_entropy_with_logits(classifier(x), target)
+            closure = lambda x: - F.binary_cross_entropy_with_logits(classifier(x), target.to(torch.float32))
         return closure
 
     def make_attribution(self, img, target, attribution_cfg, logger=None):

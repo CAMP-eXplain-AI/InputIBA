@@ -11,7 +11,7 @@ from iba.evaluation import SensitivityN
 import cv2
 from tqdm import tqdm
 import numpy as np
-from iba.utils import get_logger, get_valid_set
+from iba.utils import get_valid_set
 
 
 def parse_args():
@@ -65,7 +65,7 @@ def sensitivity_n(cfg,
                   num_masks=100,
                   num_samples=0,
                   device='cuda:0'):
-    logger = get_logger('iba')
+    logger = mmcv.get_logger('iba')
     mmcv.mkdir_or_exist(work_dir)
     val_set = build_dataset(cfg.data['val'])
     # check if n is valid

@@ -55,7 +55,10 @@ def train_net(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
                 f'allocated memory in MB: '
                 f'{int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
             img = img.to(device)
-            target = target.item()
+            if target.nelement() == 1:
+                target = target.item()
+            else:
+                target = target.to(device)
             feat_mask_file = osp.join(work_dir, 'feat_masks', img_name)
             img_mask_file = osp.join(work_dir, 'img_masks', img_name)
 

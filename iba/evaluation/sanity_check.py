@@ -5,7 +5,7 @@ from skimage.metrics import structural_similarity
 from copy import deepcopy
 from iba.models import get_module
 from .base import BaseEvaluation
-from ..utils import get_logger
+from mmcv import get_logger
 import os.path as osp
 import mmcv
 

@@ -23,6 +23,7 @@ estimation_cfg = dict(
 
 attribution_cfg = dict(
     iba=dict(
+        batch_size=10,
         beta=20),
     gan=dict(
         dataset_size=200,

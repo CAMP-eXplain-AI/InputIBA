@@ -83,9 +83,7 @@ class Attributer:
             assert batch_size is not None
             # target is binary encoded and it is for a single sample
             assert isinstance(target, torch.Tensor) and target.max() <= 1 and target.dim() == 1
-            closure = lambda x: - F.binary_cross_entropy_with_logits(
-                classifier(x),
-                target.expand((batch_size, -1)).to(torch.float32))
+            raise NotImplementedError('Currently only support softmax')
         return closure
 
     def make_attribution(self, img, target, attribution_cfg, logger=None):

@@ -87,20 +87,21 @@ class PascalVOC(BaseDataset):
                 pred = pred[unique_labels]
                 max_ind = np.argmax(pred)
                 one_hot_cls = unique_labels[max_ind]
+                bboxes = bboxes[labels == one_hot_cls]
+                labels = labels[labels == one_hot_cls]
             else:
                 # For background image, take the class with highest probability from all the classes
                 one_hot_cls = np.argmax(pred)
-            bboxes = bboxes[labels == one_hot_cls]
-            labels = labels[labels == one_hot_cls]
+                labels = [one_hot_cls]
         res = dict(img=img, bboxes=bboxes, img_name=img_name)
 
         if self.with_mask:
             masks = transformed['masks']
             masks = np.stack(masks, 0)
             res.update(masks=masks)
-        # one-hot target
-        target = torch.zeros((len(self.CLASSES),), dtype=torch.long)
-        target[labels] = 1
+
+        # use integer as target
+        target = labels[0]
         res.update(target=target)
         return res
 

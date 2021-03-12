@@ -87,7 +87,6 @@ def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
             img = img.to(device).unsqueeze(0)
             target = target.item()
             if method == 'deep_shap':
-                # TODO to define a proper base distribution
                 base_distribution = img.new_zeros((10, ) + img.shape[1:])
                 attr_map = baseline.make_attribution(img, target, baselines=base_distribution)
                 attr_map = attr_map.detach().cpu().numpy()

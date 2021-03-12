@@ -8,18 +8,17 @@ def build_classifiers(cfg):
     model_name = cfg.pop('type')
     pretrained = cfg.pop('pretrained', True)
     assert isinstance(pretrained, (bool, str))
+    _builder = getattr(models, model_name)
     # if pretrained is a path, first build a randomly initialized model, then load the pretrained weight
     # if pretrained is a bool, just call the torchvision's builder, and pass the boolean to the builder
     if isinstance(pretrained, str):
-        pretrained_ = False
-    else:
-        pretrained_ = pretrained
-    _builder = getattr(models, model_name)
-    cfg.update({"pretrained": pretrained_})
-    model = _builder(**cfg)
-    if pretrained:
+        cfg.update({"pretrained": False})
+        model = _builder(**cfg)
         ckpt = torch.load(pretrained)
         model.load_state_dict(ckpt)
+    else:
+        cfg.update({'pretrained': pretrained})
+        model = _builder(**cfg)
     return model
 
 

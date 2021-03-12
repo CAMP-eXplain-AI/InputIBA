@@ -4,7 +4,7 @@ pretrained = 'workdirs/ckpts/vgg16_voc.pth'
 
 attributer = dict(
     layer='features.17',
-    use_softmax=False,
+    use_softmax=True,
     classifier=dict(
         type='vgg16',
         num_classes=20,

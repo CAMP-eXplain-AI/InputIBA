@@ -5,6 +5,7 @@ import os.path as osp
 from tqdm import tqdm
 from iba.evaluation import EffectiveHeatRatios
 from iba.datasets import build_dataset
+from iba.utils import get_valid_set
 import cv2
 from argparse import ArgumentParser
 
@@ -16,6 +17,16 @@ def parse_args():
     parser.add_argument('work_dir', help='directory to save the result file')
     parser.add_argument('file_name',
                         help='file name for saving the result file')
+    parser.add_argument('--scores-file',
+                        help='File that records the predicted probability of corresponding target class')
+    parser.add_argument('--scores-threshold',
+                        type=float,
+                        default=0.6,
+                        help='Threshold for filtering the samples with low predicted target probabilities')
+    parser.add_argument('--num-samples',
+                        type=int,
+                        default=0,
+                        help='Number of samples to check, 0 means checking all the (filtered) samples')
     parser.add_argument('--base-threshold',
                         type=float,
                         default=0.1,
@@ -36,18 +47,26 @@ def evaluate_ehr(cfg,
                  heatmap_dir,
                  work_dir,
                  file_name,
+                 scores_file=None,
+                 scores_threshold=0.6,
+                 num_samples=0,
                  base_threshold=0.1,
                  roi='bboxes',
                  weight=True):
     mmcv.mkdir_or_exist(work_dir)
 
-    dataset = build_dataset(cfg.data['val'])
+    val_set = build_dataset(cfg.data['val'])
+    val_set = get_valid_set(val_set,
+                            scores_file=scores_file,
+                            scores_threshold=scores_threshold,
+                            num_samples=num_samples)
+
     evaluator = EffectiveHeatRatios(base_threshold=base_threshold)
-    assert roi in dataset[0].keys(
+    assert roi in val_set[0].keys(
     ), f'dataset samples must contain the key: {roi}'
 
     res_dict = {}
-    for i, sample in tqdm(enumerate(dataset)):
+    for i, sample in tqdm(enumerate(val_set)):
         img_name = sample['img_name']
         target = sample['target']
         roi_array = sample[roi]
@@ -79,6 +98,9 @@ def main():
                  heatmap_dir=args.heatmap_dir,
                  work_dir=args.work_dir,
                  file_name=args.file_name,
+                 scores_file=args.scores_file,
+                 scores_threshold=args.scores_threshold,
+                 num_samples=args.num_samples,
                  base_threshold=args.base_threshold,
                  roi=args.roi,
                  weight=args.weight)

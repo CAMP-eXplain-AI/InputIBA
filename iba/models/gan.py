@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.utils.data as Data
 from .utils import _to_saliency_map
 import random
-from ..utils import get_logger
+from mmcv import get_logger
 from .model_zoo import get_module
 
 

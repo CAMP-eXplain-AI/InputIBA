@@ -1,11 +1,25 @@
 from torchvision import models
 import torch
+from copy import deepcopy
 
 
 def build_classifiers(cfg):
+    cfg = deepcopy(cfg)
     model_name = cfg.pop('type')
+    pretrained = cfg.pop('pretrained', True)
+    assert isinstance(pretrained, (bool, str))
     _builder = getattr(models, model_name)
-    return _builder(**cfg)
+    # if pretrained is a path, first build a randomly initialized model, then load the pretrained weight
+    # if pretrained is a bool, just call the torchvision's builder, and pass the boolean to the builder
+    if isinstance(pretrained, str):
+        cfg.update({"pretrained": False})
+        model = _builder(**cfg)
+        ckpt = torch.load(pretrained)
+        model.load_state_dict(ckpt)
+    else:
+        cfg.update({'pretrained': pretrained})
+        model = _builder(**cfg)
+    return model
 
 
 def get_module(model, module):

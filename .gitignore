@@ -10,3 +10,4 @@ workdirs/
 data
 .pytest_cache/
 .coverage
+scripts/

@@ -1,8 +1,8 @@
 import torch
+import torch.nn.functional as F
 from .gan import WGAN_CP
 from .pytorch_img_iba import ImageIBA
 import matplotlib.pyplot as plt
-from ..utils import get_logger
 import os.path as osp
 import mmcv
 import numpy as np
@@ -24,6 +24,12 @@ class Attributor:
             p.requires_grad = False
 
         self.layer = self.cfg['layer']
+        use_softmax = cfg.get('use_softmax', True)
+        # if not use_softmax:
+        #     num_classes = self.cfg['num_classes']
+        #     assert num_classes > 1, f"when not using softmax, num_classes should be non-negative, but got {num_classes}"
+        #     self.num_classes = num_classes
+        self.use_softmax = use_softmax
         self.iba = IBA(context=self, **self.cfg['iba'])
 
         self.buffer = {}
@@ -66,16 +72,31 @@ class Attributor:
                            device=self.device,
                            **img_iba_cfg)
         img_iba_heatmap = img_iba.analyze(img.unsqueeze(0), closure, **attr_cfg)
-        img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean(
-            [0, 1]).numpy()
+        img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean([0, 1]).numpy()
         return img_mask, img_iba_heatmap
+
+    @staticmethod
+    def get_closure(classifier, target, use_softmax, batch_size=None):
+        if use_softmax:
+            closure = lambda x: -torch.log_softmax(classifier(x), 1)[:, target].mean()
+        else:
+            assert batch_size is not None
+            # target is binary encoded and it is for a single sample
+            assert isinstance(target, torch.Tensor) and target.max() <= 1 and target.dim() == 1
+            raise NotImplementedError('Currently only support softmax')
+        return closure
 
     def make_attribution(self, img, target, attribution_cfg, logger=None):
         attr_cfg = deepcopy(attribution_cfg)
-        closure = lambda x: -torch.log_softmax(self.classifier(x), 1)[:, target
-                                                                     ].mean()
+        if not self.use_softmax:
+            assert attr_cfg['iba']['batch_size'] == attr_cfg['img_iba']['batch_size'], \
+                "batch sizes of iba and img_iba should be equal"
+        closure = self.get_closure(self.classifier,
+                                   target,
+                                   self.use_softmax,
+                                   batch_size=attr_cfg['iba']['batch_size'])
         if logger is None:
-            logger = get_logger('iba')
+            logger = mmcv.get_logger('iba')
 
         logger.info('Training Information Bottleneck')
         iba_heatmap = self.train_iba(img, closure, attr_cfg['iba'])

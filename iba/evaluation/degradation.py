@@ -46,6 +46,8 @@ class Degradation(BaseEvaluation):
         reverse_indices = np.unravel_index(reverse_indices.cpu().numpy(),
                                            grid_heatmap.size())
 
+        # TODO to make it compatible with multi-label classification setting
+        # TODO to make baseline_score and morf_scores local variables rather than object attributes
         # get baseline score
         self.baseline_score = torch.nn.functional.softmax(
             self.model(
@@ -98,6 +100,7 @@ class Degradation(BaseEvaluation):
                            img_history=None):
         scores_after_perturb = [self.baseline_score.item()]
         replaced_pixels = 0
+        # TODO to make it compatible with multi-label classification setting
         softmax = torch.nn.Softmax()
         while replaced_pixels < num_pixels:
             perturbed_imgs = []

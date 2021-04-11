@@ -3,7 +3,7 @@ import os.path as osp
 from argparse import ArgumentParser
 from copy import deepcopy
 import mmcv
-from iba.models import Attributer
+from iba.models import Attributor
 from iba.datasets import build_dataset
 from iba.evaluation import SanityCheck
 import cv2
@@ -51,7 +51,7 @@ def sanity_check(cfg,
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
 
-    attibuter = Attributer(cfg.attributer, device=device)
+    attibuter = Attributor(cfg.attributor, device=device)
     attibuter.estimate(train_loader, cfg.estimation_cfg)
     evaluator = SanityCheck(attibuter)
 

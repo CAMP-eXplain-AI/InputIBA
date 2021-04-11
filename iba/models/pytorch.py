@@ -206,7 +206,7 @@ class IBA(nn.Module):
 
 
     Args:
-        context (Attributer): the Attributer object which has a classifer(nn.Module) and a layer(
+        context (Attributor): the Attributor object which has a classifer(nn.Module) and a layer(
             str). If context is not None, register a forward hook for the context's classifier.
         layer (nn.Module, optional): The layer after which to inject the bottleneck. If layer is
             not None, register a forward hook for the layer.

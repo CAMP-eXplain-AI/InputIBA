@@ -1,6 +1,6 @@
 _base_ = ['_base_/imagenet.py']
 
-attributer = dict(
+attributor = dict(
     layer='features.17',
     classifier=dict(
         type='vgg16',

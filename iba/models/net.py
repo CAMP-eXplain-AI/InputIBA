@@ -12,7 +12,7 @@ from .pytorch import IBA
 from copy import deepcopy
 
 
-class Attributer:
+class Attributor:
 
     def __init__(self, cfg: dict, device='cuda:0'):
         self.cfg = deepcopy(cfg)
@@ -129,7 +129,7 @@ class Attributer:
         img = img * std + mean
         if isinstance(img, torch.Tensor):
             img = img.cpu().numpy()
-        Attributer.show_mask(img, show=show, out_file=out_file)
+        Attributor.show_mask(img, show=show, out_file=out_file)
 
     @staticmethod
     def show_mask(mask, show=False, out_file=None):

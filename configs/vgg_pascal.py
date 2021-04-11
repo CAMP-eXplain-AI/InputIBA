@@ -2,7 +2,7 @@ _base_ = ['_base_/pascal.py']
 
 pretrained = 'workdirs/ckpts/vgg16_voc.pth'
 
-attributer = dict(
+attributor = dict(
     layer='features.17',
     use_softmax=True,
     classifier=dict(

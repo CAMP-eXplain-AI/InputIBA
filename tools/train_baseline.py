@@ -7,7 +7,7 @@ import os.path as osp
 import mmcv
 from tqdm import tqdm
 from iba.datasets import build_dataset
-from iba.models import build_classifiers, get_module, Attributer
+from iba.models import build_classifiers, get_module, Attributor
 from copy import deepcopy
 from argparse import ArgumentParser
 
@@ -75,7 +75,7 @@ def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
 
-    classifier = build_classifiers(cfg.attributer['classifier']).to(device)
+    classifier = build_classifiers(cfg.attributor['classifier']).to(device)
     classifier.eval()
     baseline = Baseline(classifier, method, saliency_layer)
 
@@ -96,7 +96,7 @@ def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
             attr_map = attr_map / attr_map.max()
 
             out_file = osp.join(work_dir, img_name)
-            Attributer.show_mask(attr_map, show=False, out_file=out_file)
+            Attributor.show_mask(attr_map, show=False, out_file=out_file)
 
 
 def main():

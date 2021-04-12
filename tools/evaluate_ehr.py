@@ -79,8 +79,26 @@ def evaluate_ehr(cfg,
 
         if not osp.exists(osp.join(heatmap_dir, img_name + '.png')):
             continue
+
         heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'),
                              cv2.IMREAD_UNCHANGED)
+        # compute the ratio of roi_area / image_size
+        roi_mask = np.zeros_like(heatmap)
+        if roi_array.ndim == 1:
+            roi_array = roi_array[None, :]
+        if roi_array.shape[-1] == 4:
+            # bbox
+            for roi_single in roi_array:
+                x1, y1, x2, y2 = roi_single
+                roi_mask[y1: y2, x1: x2] = 1
+            roi_area_ratio = roi_mask.sum() / (roi_mask.shape[-1] * roi_mask.shape[-2])
+        else:
+            # binary mask
+            roi_area_ratio = roi_array.sum() / (roi_array.shape[-1] * roi_mask.shape[-2])
+        # only select the samples for which the roi area ratio is smaller than a threshold
+        if roi_area_ratio > 0.33:
+            continue
+
         res = evaluator.evaluate(heatmap, roi_array, weight_by_heat=weight)
         auc = res['auc']
         res_dict.update({img_name: {'target': target, 'auc': auc}})

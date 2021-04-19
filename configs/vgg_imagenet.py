@@ -4,6 +4,7 @@ attributor = dict(
     layer='features.17',
     use_softmax=True,
     classifier=dict(
+        source='torchvision',
         type='vgg16',
         pretrained=True),
     iba=dict(

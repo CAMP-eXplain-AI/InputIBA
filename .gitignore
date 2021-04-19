@@ -1,5 +1,6 @@
 tiny-imagenet-200/
 imagenet/
+pretrained
 
 __pycache__/
 *.egg-info/

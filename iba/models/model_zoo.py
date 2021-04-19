@@ -1,9 +1,26 @@
 from torchvision import models
 import torch
 from copy import deepcopy
+from mmcv import Registry, build_from_cfg
+
+MODELS = Registry('models')
 
 
-def build_classifiers(cfg):
+def build_classifiers(cfg, default_args=None):
+    cfg = deepcopy(cfg)
+    assert 'source' in cfg, "source is not specified, it can be one of ('custom', 'torchvision', 'timm)"
+    source = cfg.pop('source')
+    assert source in ('torchvision', 'custom', 'timm'), f"source should be on of ('custom', 'torchvision', 'timm), " \
+                                                        f"but got {source}"
+    if source == 'torchvision':
+        return build_torchvision_classifiers(cfg)
+    elif source == 'timm':
+        return build_timm_classifiers(cfg)
+    else:
+        return build_from_cfg(cfg, MODELS, default_args=default_args)
+
+
+def build_torchvision_classifiers(cfg):
     cfg = deepcopy(cfg)
     model_name = cfg.pop('type')
     pretrained = cfg.pop('pretrained', True)
@@ -20,6 +37,13 @@ def build_classifiers(cfg):
         cfg.update({'pretrained': pretrained})
         model = _builder(**cfg)
     return model
+
+
+def build_timm_classifiers(cfg):
+    import timm
+    cfg = deepcopy(cfg)
+    model_name = cfg.pop('type')
+    return timm.create_model(model_name, **cfg)
 
 
 def get_module(model, module):

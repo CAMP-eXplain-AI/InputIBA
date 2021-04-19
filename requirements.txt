@@ -4,3 +4,4 @@ mmcv
 tqdm
 torchvision
 opencv-python
+timm

@@ -1,7 +1,9 @@
 from captum.attr import GuidedBackprop
 from captum.attr import DeepLiftShap
+from captum.attr import IntegratedGradients
 from torchray.attribution.grad_cam import grad_cam
 from torchray.attribution.extremal_perturbation import extremal_perturbation
+import torch
 from torch.utils.data import DataLoader
 import os.path as osp
 import mmcv
@@ -33,7 +35,9 @@ class Baseline:
     method_pool = ['ex_perturb',
                    'grad_cam',
                    'deep_shap',
-                   'guided_bp']
+                   'guided_bp',
+                   'int_grad',
+                   'random']
 
     def __init__(self, classifier, method, saliency_layer=None):
         assert method in self.method_pool, f"Invalid method: {method}"
@@ -61,6 +65,15 @@ class Baseline:
 
         elif method == "guided_bp":
             self.attribute = GuidedBackprop(self.classifier).attribute
+
+        elif method == "int_grad":
+            self.attribute = IntegratedGradients(self.classifier).attribute
+
+        elif method == "random":
+            def attribution_func(input, target):
+                return torch.randn_like(input)/2.
+
+            self.attribute = attribution_func
 
         else:
             raise ValueError(f'Invalid method: {method}')

@@ -16,8 +16,6 @@ class ImageIBA(nn.Module):
                  img_eps_std=None,
                  img_eps_mean=None,
                  initial_alpha=5.0,
-                 feature_mean=None,
-                 feature_std=None,
                  progbar=False,
                  reverse_lambda=False,
                  combine_loss=False,
@@ -27,15 +25,13 @@ class ImageIBA(nn.Module):
         self.alpha = None  # Initialized on first forward pass
         self.img_mask = img_mask
         self.img = img
-        self.img_eps_std = img_eps_std
-        self.img_eps_mean = img_eps_mean
         self.progbar = progbar
         self.sigmoid = nn.Sigmoid()
         self._buffer_capacity = None  # Filled on forward pass, used for loss
         self.sigma = sigma
         self.device = device
-        self._mean = feature_mean
-        self._std = feature_std
+        self._mean = img_eps_mean
+        self._std = img_eps_std
         self._restrict_flow = False
         self.reverse_lambda = reverse_lambda
         self.combine_loss = combine_loss
@@ -85,33 +81,30 @@ class ImageIBA(nn.Module):
         return -0.5 * (1 + log_var - mu**2 - log_var.exp())
 
     @staticmethod
-    def _kl_div(x, g, image_mask, img_eps_mean, img_eps_std, lambda_, mean_x,
+    def _kl_div(x,
+                image_mask,
+                lambda_,
+                mean_x,
                 std_x):
         """
-        x:
-        g:
-        img_eps_mean:
-        img_eps_std:
+        x: unmasked variable
         img_mask: mask generated from GAN
         lambda_: learning parameter, img mask
-        mean_x:
-        std_x:
-
+        mean_x: mean of the noise applied to x
+        std_x: std of the noise applied to x
         """
-        mean_x = 0
-        std_x = 1
         r_norm = (x - mean_x + image_mask *
-                  (mean_x - g)) / ((1 - image_mask * lambda_) * std_x)
-        var_z = (1 - lambda_)**2 / (1 - image_mask * lambda_)**2
+                  (mean_x - x)) / ((1 - image_mask * lambda_) * std_x)
+        var_z = (1 - lambda_) ** 2 / (1 - image_mask * lambda_) ** 2
 
         log_var_z = torch.log(var_z)
 
         mu_z = r_norm * lambda_
 
-        capacity = -0.5 * (1 + log_var_z - mu_z**2 - var_z)
+        capacity = -0.5 * (1 + log_var_z - mu_z ** 2 - var_z)
         return capacity
 
-    def _do_restrict_information(self, g, alpha):
+    def _do_restrict_information(self, x, alpha):
         """ Selectively remove information from x by applying noise """
         if alpha is None:
             raise RuntimeWarning(
@@ -120,30 +113,27 @@ class ImageIBA(nn.Module):
 
         # Smoothen and expand alpha on batch dimension
         lamb = self.sigmoid(alpha)
-        lamb = lamb.expand(g.shape[0], g.shape[1], -1, -1)
+        lamb = lamb.expand(x.shape[0], x.shape[1], -1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
-
-        # sample from random variable x
-        eps = g.data.new(g.size()).normal_()
-        ε_img = self.img_eps_std * eps + self.img_eps_mean
-        # x = self.img_mask * g + (1-self.img_mask) * eps
-        x = g
-        self.x = x
 
         # calculate kl divergence
         self._mean = ifnone(self._mean, torch.tensor(0.).to(self.device))
         self._std = ifnone(self._std, torch.tensor(1.).to(self.device))
-        self._buffer_capacity = self._kl_div(x, g, self.img_mask,
-                                             self.img_eps_mean,
-                                             self.img_eps_std, lamb, self._mean,
+        self._buffer_capacity = self._kl_div(x,
+                                             self.img_mask,
+                                             lamb,
+                                             self._mean,
                                              self._std)
 
         # apply mask on sampled x
         eps = x.data.new(x.size()).normal_()
         ε = self._std * eps + self._mean
         λ = lamb
+
+        # TODO reverse_lambda and combined loss are only supported in original IBA
+        # but might be also possible to implement here
         if self.reverse_lambda:
-            #TODO rewrite
+            # TODO rewrite
             z = λ * ε + (1 - λ) * x
         elif self.combine_loss:
             z_positive = λ * x + (1 - λ) * ε

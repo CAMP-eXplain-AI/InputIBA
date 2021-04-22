@@ -152,8 +152,8 @@ class VisionFeatureIBA(BaseFeatureIBA):
 
         return z
 
-    def analyze(self,
-                input,
+    def analyze(self, # noqa
+                input_tensor,
                 model_loss_fn,
                 mode='saliency',
                 beta=10.0,
@@ -161,9 +161,9 @@ class VisionFeatureIBA(BaseFeatureIBA):
                 lr=1.0,
                 batch_size=10,
                 min_std=0.01):
-        assert input.shape[0] == 1, "We can only fit one sample a time"
+        assert input_tensor.shape[0] == 1, "We can only fit one sample a time"
 
-        batch = input.expand(batch_size, -1, -1, -1)
+        batch = input_tensor.expand(batch_size, -1, -1, -1)
 
         # Reset from previous run or modifications
         self.reset_alpha()

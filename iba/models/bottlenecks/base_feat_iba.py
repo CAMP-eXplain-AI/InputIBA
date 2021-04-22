@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 import torch
 from .base_iba import BaseIBA
 from ..utils import _InterruptExecution, _IBAForwardHook
@@ -5,10 +6,10 @@ from ..model_zoo import get_module
 from contextlib import contextmanager
 
 
-class BaseFeatureIBA(BaseIBA):
+class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
     def __init__(self,
-                 layer=None,
                  context=None,
+                 layer=None,
                  active_neurons_threshold=0.01,
                  estimator=None,
                  input_or_output='output',
@@ -66,6 +67,7 @@ class BaseFeatureIBA(BaseIBA):
             raise ValueError(
                 "Cannot detach hock. Either you never attached or already detached.")
 
+    @abstractmethod
     def init_alpha_and_kernel(self):
         """
         Initialize alpha with the same shape as the features.
@@ -97,8 +99,9 @@ class BaseFeatureIBA(BaseIBA):
         finally:
             self._estimate = False
 
+    @abstractmethod
     def reset_estimator(self):
-        raise NotImplementedError()
+        pass
 
     def estimate(self,
                  model,
@@ -108,7 +111,8 @@ class BaseFeatureIBA(BaseIBA):
                  reset=True):
         raise NotImplementedError()
 
-    def kl_div(self, r, lambda_, mean_r, std_r):
+    @staticmethod
+    def kl_div(r, lambda_, mean_r, std_r):
         r_norm = (r - mean_r) / std_r
         var_z = (1 - lambda_) ** 2
         log_var_z = torch.log(var_z)

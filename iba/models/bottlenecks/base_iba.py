@@ -1,10 +1,11 @@
+from abc import ABCMeta, abstractmethod
 import torch.nn as nn
 from contextlib import contextmanager
 from ..utils import _InterruptExecution
 import numpy as np
 
 
-class BaseIBA(nn.Module):
+class BaseIBA(nn.Module, metaclass=ABCMeta):
     def __init__(self,
                  sigma=1.0,
                  initial_alpha=5.0,
@@ -37,20 +38,25 @@ class BaseIBA(nn.Module):
         self.combine_loss = combine_loss
         self.device = device
 
+    @abstractmethod
     def reset_alpha(self):
         pass
 
+    @abstractmethod
     def init_alpha_and_kernel(self):
         pass
 
+    @abstractmethod
     def detach(self):
         pass
 
+    @abstractmethod
     def do_restrict_info(self, x, alpha):
         pass
 
+    @abstractmethod
     def analyze(self,
-                input,
+                input_tensor,
                 model_loss_fn,
                 mode='saliency',
                 beta=10.0,
@@ -108,5 +114,7 @@ class BaseIBA(nn.Module):
         """ Return the feature-wise KL-divergence of p(z|x) and q(z) """
         return -0.5 * (1 + log_var - mu ** 2 - log_var.exp())
 
-    def kl_div(self, *args, **kwargs):
+    @abstractmethod
+    @staticmethod
+    def kl_div(*args, **kwargs):
         pass

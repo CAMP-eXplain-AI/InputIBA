@@ -2,16 +2,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from .base_input_iba import BaseInputIBA
-from ..utils import _SpatialGaussianKernel, to_saliency_map, get_tqdm, ifnone
+from ..utils import _SpatialGaussianKernel, get_tqdm, ifnone
 import warnings
 
 
 class VisionInputIBA(BaseInputIBA):
     def __init__(self,
-                 input,
+                 input_tensor,
                  input_mask,
-                 input_eps_mean=0.0,
-                 input_eps_std=1.0,
                  sigma=1.0,
                  initial_alpha=5.0,
                  input_mean=None,
@@ -20,10 +18,8 @@ class VisionInputIBA(BaseInputIBA):
                  reverse_lambda=False,
                  combine_loss=False,
                  device='cuda:0'):
-        super(VisionInputIBA, self).__init__(input=input,
+        super(VisionInputIBA, self).__init__(input_tensor=input_tensor,
                                              input_mask=input_mask,
-                                             input_eps_mean=input_eps_mean,
-                                             input_eps_std=input_eps_std,
                                              sigma=sigma,
                                              initial_alpha=initial_alpha,
                                              input_mean=input_mean,
@@ -59,52 +55,35 @@ class VisionInputIBA(BaseInputIBA):
             return self.do_restrict_info(x, self.alpha)
         return x
 
-    def kl_div(self,
-               x,
-               g,
-               input_mask,
-               lambda_):
-        # TODO
-        mean_x = 0
-        std_x = 1
-        r_norm = (x - mean_x + input_mask *
-                  mean_x) / ((1 - input_mask * lambda_) * std_x)
-        var_z = (1 - lambda_) ** 2 / (1 - input_mask * lambda_) ** 2
-
-        log_var_z = torch.log(var_z)
-
-        mu_z = r_norm * lambda_
-
-        capacity = -0.5 * (1 + log_var_z - mu_z ** 2 - var_z)
-        return capacity
-
     def do_restrict_info(self, x, alpha):
+        """ Selectively remove information from x by applying noise """
         if alpha is None:
             raise RuntimeWarning(
-                "Alpha not initialized. Run _init() before using the bottleneck."
-            )
+                "Alpha not initialized. Run _init() before using the bottleneck.")
 
         # Smoothen and expand alpha on batch dimension
         lamb = F.sigmoid(alpha)
         lamb = lamb.expand(x.shape[0], x.shape[1], -1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
-        # sample from random variable x
-        eps = x.data.new(x.size()).normal_()
-        ε_img = self.img_eps_std * eps + self.img_eps_mean
-
         # calculate kl divergence
-        self.input_mean = ifnone(self._mean, torch.tensor(0.).to(self.device))
-        self.input_std = ifnone(self._std, torch.tensor(1.).to(self.device))
-        # TODO
-        self.buffer_capacity = self.kl_div(x, self.input_mask, lamb)
+        self.input_mean = ifnone(self.input_mean, torch.tensor(0.).to(self.device))
+        self.input_std = ifnone(self.input_std, torch.tensor(1.).to(self.device))
+        self.buffer_capacity = self.kl_div(x,
+                                           self.img_mask,
+                                           lamb,
+                                           self.input_mean,
+                                           self.input_std)
 
         # apply mask on sampled x
         eps = x.data.new(x.size()).normal_()
-        ε = self._std * eps + self._mean
+        ε = self.input_std * eps + self.input_mean
         λ = lamb
+
+        # TODO reverse_lambda and combined loss are only supported in original IBA
+        # but might be also possible to implement here
         if self.reverse_lambda:
-            #TODO rewrite
+            # TODO rewrite
             z = λ * ε + (1 - λ) * x
         elif self.combine_loss:
             z_positive = λ * x + (1 - λ) * ε
@@ -115,16 +94,16 @@ class VisionInputIBA(BaseInputIBA):
 
         return z
 
-    def analyze(self,
-                input,
+    def analyze(self,   # noqa
+                input_tensor,
                 model_loss_fn,
                 mode='saliency',
                 beta=10.0,
                 opt_steps=10,
                 lr=1.0,
                 batch_size=10):
-        assert input.shape[0] == 1, "We can only fit one sample a time"
-        batch = input.expand(batch_size, -1, -1, -1)
+        assert input_tensor.shape[0] == 1, "We can only fit one sample a time"
+        batch = input_tensor.expand(batch_size, -1, -1, -1)
 
         # Reset from previous run or modifications
         self.reset_alpha()

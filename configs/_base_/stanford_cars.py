@@ -1,9 +1,10 @@
 dataset_type = 'ImageFolder'
-data_root = 'data/cifar10/'
+data_root = 'data/stanford_cars/'
+
 img_norm_cfg = dict(
     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
-img_size = 32
+img_size = 224
 
 train_pipeline = [
     dict(type='Resize', height=img_size, width=img_size, always_apply=True),

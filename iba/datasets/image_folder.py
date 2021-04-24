@@ -7,18 +7,23 @@ import cv2
 
 
 @DATASETS.register_module()
-class CIFAR10(BaseDataset):
+class ImageFolder(BaseDataset):
     def __init__(self,
                  img_root,
-                 pipeline):
-        super(CIFAR10, self).__init__()
+                 pipeline,
+                 valid_formats=('png',)):
+        assert isinstance(valid_formats, (list, tuple)), 'valid_formats must be either a list or tuple'
+        super(ImageFolder, self).__init__()
         self.img_root = img_root
 
         cls_names = sorted(os.listdir(img_root))
         self.cls_to_ind = {c:i for i, c in enumerate(cls_names)}
         self.ind_to_cls = {v: k for k, v in self.cls_to_ind.items()}
 
-        self.image_paths = glob(osp.join(self.img_root, '**/*.png'), recursive=True)
+        image_paths = []
+        for valid_format in valid_formats:
+            image_paths.extend(glob(osp.join(self.img_root, f'**/*.{valid_format}'), recursive=True))
+        self.image_paths = image_paths
         self.pipeline = build_pipeline(pipeline)
 
     def __getitem__(self, index):

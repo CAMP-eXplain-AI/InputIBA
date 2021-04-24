@@ -1,14 +1,13 @@
-_base_ = ['_base_/cifar10.py']
+_base_ = ['../_base_/cifar10.py']
 
-pretrained = 'workdirs/ckpts/resnet8_cifar10.pth'
+pretrained = 'workdirs/ckpts/small_vgg_cifar10.pth'
 
 attributor = dict(
-    layer='layer2',
+    layer='features.14',
     use_softmax=True,
     classifier=dict(
         source='custom',
-        type='ResNet',
-        depth=8,
+        type='SmallVGG',
         num_classes=10,
         pretrained=pretrained),
     iba=dict(

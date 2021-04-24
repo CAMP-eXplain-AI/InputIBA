@@ -79,8 +79,10 @@ def train_attributor(cfg: mmcv.Config,
         for input_tensor, target, input_name in zip(inputs, targets, input_names):
             input_tensor = input_tensor.to(device)
             if target.nelement() == 1:
+                # multi-class classification, target of one sample is an integer
                 target = target.item()
             else:
+                # multi-label classification, target of one sample is an one-hot vector
                 target = target.to(device)
 
             if out_style == 'single_folder':

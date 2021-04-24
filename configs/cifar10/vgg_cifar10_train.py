@@ -1,4 +1,4 @@
-_base_ = ['_base_/cifar10.py']
+_base_ = ['../_base_/cifar10.py']
 
 pretrained = 'workdirs/ckpts/small_vgg_cifar10.pth'
 

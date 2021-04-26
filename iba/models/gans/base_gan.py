@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 
 
 class BaseWassersteinGAN(metaclass=ABCMeta):
+
     def __init__(self,
                  generator: dict,
                  discriminator: dict,

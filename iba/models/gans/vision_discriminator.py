@@ -3,11 +3,11 @@ import torch.nn as nn
 
 class VisionDiscriminator(nn.Module):
 
-    def __init__(self,
-                 channels: int,
-                 size: tuple):
+    def __init__(self, channels: int, size: tuple):
         super().__init__()
-        assert len(size) == 2, f"size must be a tuple of (height, width), but got {size}"
+        assert len(
+            size
+        ) == 2, f"size must be a tuple of (height, width), but got {size}"
         # Filters [256, 512, 1024]
         # Input_dim = channels (CxFeatureMapSizexFeatureMapSize)
         # Output_dim = 1

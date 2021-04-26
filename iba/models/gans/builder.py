@@ -3,7 +3,6 @@ from .vision_generator import VisionGenerator
 from .vision_discriminator import VisionDiscriminator
 from .vision_gan import VisionWGAN
 
-
 GENERATORS = Registry('Generators')
 DISCRIMINATORS = Registry('Discriminators')
 GANS = Registry('GANs')

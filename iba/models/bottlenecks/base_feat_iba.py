@@ -7,6 +7,7 @@ from contextlib import contextmanager
 
 
 class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
+
     def __init__(self,
                  context=None,
                  layer=None,
@@ -50,7 +51,7 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
             self._hook_handle = get_module(
                 self.context.classifier,
                 self.context.layer).register_forward_hook(
-                _IBAForwardHook(self, input_or_output))
+                    _IBAForwardHook(self, input_or_output))
         elif self.layer is not None:
             self._hook_handle = self.layer.register_forward_hook(
                 _IBAForwardHook(self, input_or_output))
@@ -65,7 +66,8 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
             self._hook_handle = None
         else:
             raise ValueError(
-                "Cannot detach hock. Either you never attached or already detached.")
+                "Cannot detach hock. Either you never attached or already detached."
+            )
 
     @abstractmethod
     def init_alpha_and_kernel(self):
@@ -114,8 +116,8 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
     @staticmethod
     def kl_div(r, lambda_, mean_r, std_r):
         r_norm = (r - mean_r) / std_r
-        var_z = (1 - lambda_) ** 2
+        var_z = (1 - lambda_)**2
         log_var_z = torch.log(var_z)
         mu_z = r_norm * lambda_
-        capacity = -0.5 * (1 + log_var_z - mu_z ** 2 - var_z)
+        capacity = -0.5 * (1 + log_var_z - mu_z**2 - var_z)
         return capacity

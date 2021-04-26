@@ -7,6 +7,7 @@ import warnings
 
 
 class VisionInputIBA(BaseInputIBA):
+
     def __init__(self,
                  input_tensor,
                  input_mask,
@@ -59,7 +60,8 @@ class VisionInputIBA(BaseInputIBA):
         """ Selectively remove information from x by applying noise """
         if alpha is None:
             raise RuntimeWarning(
-                "Alpha not initialized. Run _init() before using the bottleneck.")
+                "Alpha not initialized. Run _init() before using the bottleneck."
+            )
 
         # Smoothen and expand alpha on batch dimension
         lamb = F.sigmoid(alpha)
@@ -67,13 +69,12 @@ class VisionInputIBA(BaseInputIBA):
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
         # calculate kl divergence
-        self.input_mean = ifnone(self.input_mean, torch.tensor(0.).to(self.device))
-        self.input_std = ifnone(self.input_std, torch.tensor(1.).to(self.device))
-        self.buffer_capacity = self.kl_div(x,
-                                           self.img_mask,
-                                           lamb,
-                                           self.input_mean,
-                                           self.input_std)
+        self.input_mean = ifnone(self.input_mean,
+                                 torch.tensor(0.).to(self.device))
+        self.input_std = ifnone(self.input_std,
+                                torch.tensor(1.).to(self.device))
+        self.buffer_capacity = self.kl_div(x, self.img_mask, lamb,
+                                           self.input_mean, self.input_std)
 
         # apply mask on sampled x
         eps = x.data.new(x.size()).normal_()
@@ -94,14 +95,15 @@ class VisionInputIBA(BaseInputIBA):
 
         return z
 
-    def analyze(self,   # noqa
-                input_tensor,
-                model_loss_fn,
-                mode='saliency',
-                beta=10.0,
-                opt_steps=10,
-                lr=1.0,
-                batch_size=10):
+    def analyze(
+            self,  # noqa
+            input_tensor,
+            model_loss_fn,
+            mode='saliency',
+            beta=10.0,
+            opt_steps=10,
+            lr=1.0,
+            batch_size=10):
         assert input_tensor.shape[0] == 1, "We can only fit one sample a time"
         batch = input_tensor.expand(batch_size, -1, -1, -1)
 

@@ -8,6 +8,7 @@ import random
 
 
 class VisionWGAN(BaseWassersteinGAN):
+
     def __init__(self,
                  generator: dict,
                  discriminator: dict,
@@ -23,15 +24,19 @@ class VisionWGAN(BaseWassersteinGAN):
                                          device=device)
 
     def build_generator(self, input_tensor, context, cfg):
-        default_args = {'input_tensor': self.input_tensor,
-                        'context': context,
-                        'device': self.device,
-                        'capacity': self.feat_mask}
+        default_args = {
+            'input_tensor': self.input_tensor,
+            'context': context,
+            'device': self.device,
+            'capacity': self.feat_mask
+        }
         return build_generator(cfg, default_args=default_args)
 
     def build_discriminator(self, cfg):
-        default_args = {'channels': self.feat_map.shape[0],
-                        'size': self.feat_map.shape[1:]}
+        default_args = {
+            'channels': self.feat_map.shape[0],
+            'size': self.feat_map.shape[1:]
+        }
         return build_discriminator(cfg, default_args=default_args)
 
     def build_data(self, dataset_size, sub_dataset_size, batch_size):
@@ -39,12 +44,14 @@ class VisionWGAN(BaseWassersteinGAN):
         num_sub_dataset = int(dataset_size / sub_dataset_size)
         dataset = []
         for idx_subset in range(num_sub_dataset):
-            sub_dataset = self.feat_map.unsqueeze(0).expand(sub_dataset_size, -1, -1, -1)
+            sub_dataset = self.feat_map.unsqueeze(0).expand(
+                sub_dataset_size, -1, -1, -1)
             noise = torch.zeros_like(sub_dataset).normal_()
             std = random.uniform(0, 5)
             mean = random.uniform(-2, 2)
             noise = std * noise + mean
-            sub_dataset = self.feat_mask * sub_dataset + (1 - self.feat_mask) * noise
+            sub_dataset = self.feat_mask * sub_dataset + (
+                1 - self.feat_mask) * noise
             dataset.append(sub_dataset)
 
         dataset = torch.cat(dataset, dim=0)
@@ -69,15 +76,20 @@ class VisionWGAN(BaseWassersteinGAN):
         # Initialize generator and discriminator
         if logger is None:
             logger = get_logger('iba')
-        data_loader = self.build_data(dataset_size,
-                                      sub_dataset_size,
+        data_loader = self.build_data(dataset_size, sub_dataset_size,
                                       batch_size)
 
         # Optimizers
-        optimizer_G = RMSprop(
-            [{"params": self.generator.mean, "lr": 0.1},
-             {"params": self.generator.eps, "lr": 0.05},
-             {"params": self.generator.input_mask_param, "lr": 0.003}])
+        optimizer_G = RMSprop([{
+            "params": self.generator.mean,
+            "lr": 0.1
+        }, {
+            "params": self.generator.eps,
+            "lr": 0.05
+        }, {
+            "params": self.generator.input_mask_param,
+            "lr": 0.003
+        }])
         optimizer_D = RMSprop(self.discriminator.parameters(), lr=lr)
 
         # training
@@ -93,12 +105,15 @@ class VisionWGAN(BaseWassersteinGAN):
                 # Sample noise as generator input
                 # TODO simply the expression
                 z = torch.zeros_like(self.input_tensor)
-                z = z.unsqueeze(0).expand(real_input.shape[0], -1, -1, -1).clone().normal_().to(self.device)
+                z = z.unsqueeze(0).expand(real_input.shape[0], -1, -1,
+                                          -1).clone().normal_().to(self.device)
 
                 # Generate a batch of images
                 fake_input = self.generator(z).detach()
                 # Adversarial loss
-                loss_D = -torch.mean(self.discriminator(real_input)) + torch.mean(self.discriminator(fake_input))
+                loss_D = -torch.mean(
+                    self.discriminator(real_input)) + torch.mean(
+                        self.discriminator(fake_input))
 
                 loss_D.backward()
                 optimizer_D.step()

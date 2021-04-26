@@ -6,6 +6,7 @@ import numpy as np
 
 
 class BaseIBA(nn.Module, metaclass=ABCMeta):
+
     def __init__(self,
                  sigma=1.0,
                  initial_alpha=5.0,
@@ -112,7 +113,7 @@ class BaseIBA(nn.Module, metaclass=ABCMeta):
     @staticmethod
     def calc_capacity(mu, log_var):
         """ Return the feature-wise KL-divergence of p(z|x) and q(z) """
-        return -0.5 * (1 + log_var - mu ** 2 - log_var.exp())
+        return -0.5 * (1 + log_var - mu**2 - log_var.exp())
 
     @abstractmethod
     @staticmethod

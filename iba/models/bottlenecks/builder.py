@@ -2,7 +2,6 @@ from mmcv import Registry, build_from_cfg
 from .vision_feat_iba import VisionFeatureIBA
 from .vision_input_iba import VisionInputIBA
 
-
 FEATURE_IBAS = Registry('Feature IBAs')
 INPUT_IBAS = Registry('Input IBAs')
 

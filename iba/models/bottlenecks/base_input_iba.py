@@ -3,6 +3,7 @@ import torch
 
 
 class BaseInputIBA(BaseIBA):
+
     def __init__(self,
                  input_tensor,
                  input_mask,
@@ -26,11 +27,7 @@ class BaseInputIBA(BaseIBA):
         self.input_mask = input_mask
 
     @staticmethod
-    def kl_div(x,
-               image_mask,
-               lambda_,
-               mean_x,
-               std_x):
+    def kl_div(x, image_mask, lambda_, mean_x, std_x):
         """
         x: unmasked variable
         img_mask: mask generated from GAN
@@ -40,11 +37,11 @@ class BaseInputIBA(BaseIBA):
         """
         r_norm = (x - mean_x + image_mask *
                   (mean_x - x)) / ((1 - image_mask * lambda_) * std_x)
-        var_z = (1 - lambda_) ** 2 / (1 - image_mask * lambda_) ** 2
+        var_z = (1 - lambda_)**2 / (1 - image_mask * lambda_)**2
 
         log_var_z = torch.log(var_z)
 
         mu_z = r_norm * lambda_
 
-        capacity = -0.5 * (1 + log_var_z - mu_z ** 2 - var_z)
+        capacity = -0.5 * (1 + log_var_z - mu_z**2 - var_z)
         return capacity

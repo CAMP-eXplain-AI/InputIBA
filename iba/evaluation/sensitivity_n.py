@@ -12,7 +12,7 @@ class SensitivityN(BaseEvaluation):
         self.indices, self.masks = self._generate_random_masks(
             num_masks, img_size, device=self.device)
 
-    def evaluate(   # noqa
+    def evaluate(  # noqa
             self,
             heatmap: torch.Tensor,
             img: torch.Tensor,
@@ -60,7 +60,8 @@ class SensitivityN(BaseEvaluation):
         masks = []
         h, w = img_size
         for _ in range(num_masks):
-            idxs = np.unravel_index(np.random.choice(h * w, self.n, replace=False), (h, w))
+            idxs = np.unravel_index(
+                np.random.choice(h * w, self.n, replace=False), (h, w))
             indices.append(idxs)
             mask = np.zeros((h, w))
             mask[idxs] = 1

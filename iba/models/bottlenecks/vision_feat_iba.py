@@ -126,9 +126,7 @@ class VisionFeatureIBA(BaseFeatureIBA):
         lamb = lamb.expand(x.shape[0], x.shape[1], -1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
-        self.buffer_capacity = self.kl_div(x,
-                                           lamb,
-                                           self.input_mean,
+        self.buffer_capacity = self.kl_div(x, lamb, self.input_mean,
                                            self._std) * self.active_neurons
 
         eps = x.data.new(x.size()).normal_()
@@ -152,15 +150,16 @@ class VisionFeatureIBA(BaseFeatureIBA):
 
         return z
 
-    def analyze(self, # noqa
-                input_tensor,
-                model_loss_fn,
-                mode='saliency',
-                beta=10.0,
-                opt_steps=10,
-                lr=1.0,
-                batch_size=10,
-                min_std=0.01):
+    def analyze(    # noqa
+            self,
+            input_tensor,
+            model_loss_fn,
+            mode='saliency',
+            beta=10.0,
+            opt_steps=10,
+            lr=1.0,
+            batch_size=10,
+            min_std=0.01):
         assert input_tensor.shape[0] == 1, "We can only fit one sample a time"
 
         batch = input_tensor.expand(batch_size, -1, -1, -1)

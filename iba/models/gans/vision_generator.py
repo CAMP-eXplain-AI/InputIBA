@@ -9,13 +9,10 @@ from .base_generator import BaseGenerator
 class VisionGenerator(BaseGenerator):
     # generate takes random noise as input, learnable parameter is the img mask.
     # masked img (with noise added) go through the original network and generate masked feature map
-    def __init__(self,
-                 input_tensor,
-                 context,
-                 device='cuda:0',
-                 capacity=None):
+    def __init__(self, input_tensor, context, device='cuda:0', capacity=None):
         super().__init__(input_tensor, context, device=device)
-        self.input_mask_param = self.init_input_mask_param(input_tensor, capacity)
+        self.input_mask_param = self.init_input_mask_param(
+            input_tensor, capacity)
         self.mean, self.eps = self.init_mean_and_eps()
 
         # register hook in trained classification network
@@ -31,15 +28,18 @@ class VisionGenerator(BaseGenerator):
                                     input_tensor.shape[1:],
                                     data_format="channels_first")
             input_mask_param = torch.tensor(mask).to(self.device)
-            input_mask_param = input_mask_param.expand(input_tensor.shape[0], -1, -1).unsqueeze(0)
+            input_mask_param = input_mask_param.expand(input_tensor.shape[0],
+                                                       -1, -1).unsqueeze(0)
         else:
-            input_mask_param = torch.zeros(input_tensor.shape, dtype=torch.float).to(self.device)
+            input_mask_param = torch.zeros(input_tensor.shape,
+                                           dtype=torch.float).to(self.device)
         return nn.Parameter(input_mask_param, requires_grad=True)
 
     def init_mean_and_eps(self):
         mean = torch.tensor([0., 0., 0.]).view(1, -1, 1, 1).to(self.device)
         eps = torch.tensor([1., 1., 1.]).view(1, -1, 1, 1).to(self.device)
-        return nn.Parameter(mean, requires_grad=True), nn.Parameter(eps, requires_grad=True)
+        return nn.Parameter(mean, requires_grad=True), nn.Parameter(
+            eps, requires_grad=True)
 
     def forward(self, gaussian):
         noise = self.eps * gaussian + self.mean
@@ -65,4 +65,5 @@ class VisionGenerator(BaseGenerator):
             self._hook_handle = None
         else:
             raise ValueError(
-                "Cannot detach hock. Either you never attached or already detached.")
+                "Cannot detach hock. Either you never attached or already detached."
+            )

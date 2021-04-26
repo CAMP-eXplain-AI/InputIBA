@@ -6,10 +6,7 @@ import torch.nn.functional as F
 class BaseGenerator(nn.Module):
     # generate takes random noise as input, learnable parameter is the input mask.
     # masked input (with noise added) go through the original network and generate masked feature map
-    def __init__(self,
-                 input_tensor,
-                 context,
-                 device='cuda:0'):
+    def __init__(self, input_tensor, context, device='cuda:0'):
         super().__init__()
         self.input_tensor = input_tensor
         self.context = context

@@ -10,11 +10,12 @@ class EffectiveHeatRatios(BaseEvaluation):
         self.base_threshold = base_threshold
         self.quantiles = np.linspace(0, 1.0, 11)
 
-    def evaluate(self,  # noqa
-                 heatmap,
-                 roi,
-                 return_curve=False,
-                 weight_by_heat=True):
+    def evaluate(
+            self,  # noqa
+            heatmap,
+            roi,
+            return_curve=False,
+            weight_by_heat=True):
         """Compute the Effective Heat Ratios for a single heat map.
 
         Args:

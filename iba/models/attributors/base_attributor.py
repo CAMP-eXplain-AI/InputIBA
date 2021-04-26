@@ -11,7 +11,8 @@ class BaseAttributor(abc=ABCMeta):
     def __init__(self, cfg: dict, device='cuda:0'):
         self.cfg = deepcopy(cfg)
         self.device = device
-        self.classfier = self.build_classifier(self.cfg['classifier'], device=self.device)
+        self.classfier = self.build_classifier(self.cfg['classifier'],
+                                               device=self.device)
         self.layer = self.cfg['layer']
         use_softmax = cfg.get('use_softmax', True)
         self.use_softmax = use_softmax
@@ -43,10 +44,12 @@ class BaseAttributor(abc=ABCMeta):
         pass
 
     def train_gan(self, input_tensor, attr_cfg, logger=None):
-        default_args = {'input_tensor': input_tensor,
-                        'context': self,
-                        'feat_mask': self.iba.capacity(),
-                        'device': self.device}
+        default_args = {
+            'input_tensor': input_tensor,
+            'context': self,
+            'feat_mask': self.iba.capacity(),
+            'device': self.device
+        }
         gan = build_gan(self.cfg['gan'], default_args=default_args)
         gan.train(logger=logger, **attr_cfg)
         gen_input_mask = gan.generator.input_mask().clone().detach()
@@ -61,12 +64,19 @@ class BaseAttributor(abc=ABCMeta):
                         attr_cfg):
         pass
 
-    @abstractmethod
     @staticmethod
-    def get_closure(classifier, target, use_softmax, batch_size=None):
+    @abstractmethod
+    def get_closure(classifier,
+                    target,
+                    use_softmax,
+                    batch_size=None):
         pass
 
-    def make_attribution(self, input_tensor, target, attribution_cfg, logger=None):
+    def make_attribution(self,
+                         input_tensor,
+                         target,
+                         attribution_cfg,
+                         logger=None):
         attr_cfg = deepcopy(attribution_cfg)
         if not self.use_softmax:
             assert attr_cfg['iba']['batch_size'] == attr_cfg['img_iba']['batch_size'], \
@@ -79,22 +89,20 @@ class BaseAttributor(abc=ABCMeta):
             logger = mmcv.get_logger('iba')
 
         logger.info('Training Feature Information Bottleneck')
-        iba_heatmap = self.train_iba(input_tensor, closure, attr_cfg['iba'])
+        feat_mask = self.train_iba(input_tensor, closure, attr_cfg['iba'])
 
         logger.info('Training GAN')
-        gen_input_mask = self.train_gan(input_tensor, attr_cfg['gan'], logger=logger)
+        gen_input_mask = self.train_gan(input_tensor,
+                                        attr_cfg['gan'],
+                                        logger=logger)
 
         logger.info('Training Input Information Bottleneck')
-        # TODO rename `input_iba_heatmap`
-        input_mask, input_iba_heatmap = self.train_input_iba(input_tensor,
-                                                             self.cfg['input_iba'],
-                                                             gen_input_mask,
-                                                             closure,
-                                                             attr_cfg['input_iba'])
+        input_mask = self.train_input_iba(input_tensor, self.cfg['input_iba'],
+                                          gen_input_mask, closure,
+                                          attr_cfg['input_iba'])
         iba_capacity = self.iba.capacity().sum(0).clone().detach().cpu().numpy()
         gen_input_mask = gen_input_mask.mean([0, 1]).numpy()
-        self.buffer.update(iba_heatmap=iba_heatmap,
-                           input_iba_heatmap=input_iba_heatmap,
+        self.buffer.update(feat_mask=feat_mask,
                            input_mask=input_mask,
                            gen_input_mask=gen_input_mask,
                            iba_capacity=iba_capacity)
@@ -110,7 +118,7 @@ class BaseAttributor(abc=ABCMeta):
     def show_input_mask(self, **kwargs):
         pass
 
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def show_mask(self, mask, **kwargs):
         pass

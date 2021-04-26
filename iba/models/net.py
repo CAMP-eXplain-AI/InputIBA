@@ -98,16 +98,12 @@ class Attributor:
         if logger is None:
             logger = mmcv.get_logger('iba')
 
-        logger.info('Training Information Bottleneck')
-
         # # feature mask at image size (with upscale)
         iba_heatmap = self.train_iba(img, closure, attr_cfg['iba'])
 
-        logger.info('Training GAN')
         # get generated image mask (size of image size)
         gen_img_mask = self.train_gan(img, attr_cfg['gan'], logger=logger)
 
-        logger.info('Training Image Information Bottleneck')
         img_mask, img_iba_heatmap = self.train_img_iba(self.cfg['img_iba'], img,
                                                        gen_img_mask, closure,
                                                        attr_cfg['img_iba'])

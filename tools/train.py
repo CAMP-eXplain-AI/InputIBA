@@ -63,9 +63,6 @@ def train_attributor(cfg: mmcv.Config,
         targets = batch['target']
         img_names = batch['img_name']
         for img, target, img_name in zip(imgs, targets, img_names):
-            logger.info(
-                f'allocated memory in MB: '
-                f'{int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
             img = img.to(device)
             if target.nelement() == 1:
                 # multi-class classification, target of one sample is an integer

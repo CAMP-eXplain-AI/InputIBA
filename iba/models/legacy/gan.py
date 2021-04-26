@@ -193,7 +193,8 @@ class WGAN_CP(object):
               batch_size=32,
               weight_clip=0.01,
               epochs=200,
-              critic_iter=5):
+              critic_iter=5,
+              verbose=False):
         # TODO add learning rate scheduler
         # Initialize generator and discriminator
         if logger is None:
@@ -257,10 +258,11 @@ class WGAN_CP(object):
 
                     loss_G.backward()
                     optimizer_G.step()
-                    log_str = f'[Epoch{epoch + 1}/{epochs}], '
-                    log_str += f'[{batches_done % len(data_loader)}/{len(data_loader)}], '
-                    log_str += f'D loss: {loss_D.item():.5f}, G loss: {loss_G.item():.5f}'
-                    logger.info(log_str)
+                    if verbose:
+                        log_str = f'[Epoch{epoch + 1}/{epochs}], '
+                        log_str += f'[{batches_done % len(data_loader)}/{len(data_loader)}], '
+                        log_str += f'D loss: {loss_D.item():.5f}, G loss: {loss_G.item():.5f}'
+                        logger.info(log_str)
                 batches_done += 1
 
         del data_loader

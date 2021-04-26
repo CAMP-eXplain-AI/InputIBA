@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from copy import deepcopy
 import mmcv
 from mmcv.runner.utils import set_random_seed
-from iba.models import Attributor
+from iba.models import build_attributor
 from iba.datasets import build_dataset
 from iba.evaluation import SanityCheck
 from iba.utils import get_valid_set
@@ -67,33 +67,33 @@ def sanity_check(cfg,
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
 
-    attibuter = Attributor(cfg.attributor, device=device)
+    attibuter = build_attributor(cfg.attributor, default_args=dict(device=device))
     attibuter.estimate(train_loader, cfg.estimation_cfg)
     evaluator = SanityCheck(attibuter)
 
     results = {}
     try:
         for batch in tqdm(val_loader, total=len(val_loader)):
-            imgs = batch['img']
+            inputs = batch['input']
             targets = batch['target']
-            img_names = batch['img_name']
+            input_names = batch['input_name']
 
-            for img, target, img_name in zip(imgs, targets, img_names):
-                img = img.to(device)
+            for input_tensor, target, input_name in zip(inputs, targets, input_names):
+                input_tensor = input_tensor.to(device)
                 target = target.item()
-                heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'),
+                heatmap = cv2.imread(osp.join(heatmap_dir, input_name + '.png'),
                                      cv2.IMREAD_UNCHANGED)
 
                 ssim_dict = evaluator.evaluate(
                     heatmap=heatmap,
-                    img=img,
+                    input_tensor=input_tensor,
                     target=target,
                     attribution_cfg=cfg.attribution_cfg,
                     perturb_layers=cfg.sanity_check['perturb_layers'],
                     check=cfg.sanity_check['check'],
-                    save_dir=osp.join(work_dir, img_name),
+                    save_dir=osp.join(work_dir, input_name),
                     save_heatmaps=save_heatmaps)
-                results.update({img_name: ssim_dict['ssim_all']})
+                results.update({input_name: ssim_dict['ssim_all']})
                 gc.collect()
     except KeyboardInterrupt:
         mmcv.dump(results, file=osp.join(work_dir, file_name))

@@ -67,7 +67,7 @@ def evaluate_ehr(cfg,
 
     res_dict = {}
     for i, sample in tqdm(enumerate(val_set)):
-        img_name = sample['img_name']
+        input_name = sample['input_name']
         target = sample['target']
         roi_array = sample[roi]
         if isinstance(roi_array, torch.Tensor):
@@ -77,10 +77,10 @@ def evaluate_ehr(cfg,
             # bboxes
             roi_array = roi_array.astype(int)
 
-        if not osp.exists(osp.join(heatmap_dir, img_name + '.png')):
+        if not osp.exists(osp.join(heatmap_dir, input_name + '.png')):
             continue
 
-        heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'),
+        heatmap = cv2.imread(osp.join(heatmap_dir, input_name + '.png'),
                              cv2.IMREAD_UNCHANGED)
         # compute the ratio of roi_area / image_size
         roi_mask = np.zeros_like(heatmap)
@@ -101,7 +101,7 @@ def evaluate_ehr(cfg,
 
         res = evaluator.evaluate(heatmap, roi_array, weight_by_heat=weight)
         auc = res['auc']
-        res_dict.update({img_name: {'target': target, 'auc': auc}})
+        res_dict.update({input_name: {'target': target, 'auc': auc}})
     aucs = np.array([v['auc'] for v in res_dict.values()])
     print(f'auc: {aucs.mean():.5f} +/- {aucs.std():.5f}')
     file_name = osp.splitext(file_name)[0]

@@ -84,7 +84,6 @@ class VisionFeatureIBA(BaseFeatureIBA):
             if isinstance(batch, tuple) or isinstance(batch, list):
                 imgs = batch[0]
             else:
-                # TODO change the keys in the Dataset class
                 imgs = batch['input']
             if self.estimator.n_samples() > n_samples:
                 break

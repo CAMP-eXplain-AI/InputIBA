@@ -11,14 +11,13 @@ class BaseAttributor(abc=ABCMeta):
     def __init__(self, cfg: dict, device='cuda:0'):
         self.cfg = deepcopy(cfg)
         self.device = device
-        self.classfier = self.build_classifier(self.cfg['classifier'],
+        self.classifier = self.build_classifier(self.cfg['classifier'],
                                                device=self.device)
         self.layer = self.cfg['layer']
         use_softmax = cfg.get('use_softmax', True)
         self.use_softmax = use_softmax
 
-        self.iba = build_feat_iba(self.cfg['iba'],
-                                  default_args={'context': self})
+        self.feat_iba = build_feat_iba(self.cfg['feat_iba'], default_args={'context': self})
         self.buffer = {}
 
     def build_classifier(self, classifier_cfg, device='cuda:0'):
@@ -32,22 +31,23 @@ class BaseAttributor(abc=ABCMeta):
         self.buffer.clear()
 
     def estimate(self, data_loader, estimation_cfg):
-        self.iba.sigma = None
-        self.iba.reset_estimate()
-        self.iba.estimate(self.classfier,
-                          data_loader,
-                          device=self.device,
-                          **estimation_cfg)
+        self.feat_iba.sigma = None
+        self.feat_iba.reset_estimate()
+        self.feat_iba.estimate(self.classifier,
+                               data_loader,
+                               device=self.device,
+                               **estimation_cfg)
 
     @abstractmethod
-    def train_iba(self, input_tensor, closure, attr_cfg):
+    def train_feat_iba(self, input_tensor, closure, attr_cfg):
         pass
 
     def train_gan(self, input_tensor, attr_cfg, logger=None):
         default_args = {
             'input_tensor': input_tensor,
             'context': self,
-            'feat_mask': self.iba.capacity(),
+            # TODO check whether to pass capacity or sigmoid(self.feat_iba.alpha)
+            'feat_mask': self.feat_iba.capacity(),
             'device': self.device
         }
         gan = build_gan(self.cfg['gan'], default_args=default_args)
@@ -79,33 +79,30 @@ class BaseAttributor(abc=ABCMeta):
                          logger=None):
         attr_cfg = deepcopy(attribution_cfg)
         if not self.use_softmax:
-            assert attr_cfg['iba']['batch_size'] == attr_cfg['img_iba']['batch_size'], \
-                "batch sizes of iba and img_iba should be equal"
-        closure = self.get_closure(self.classfier,
+            assert attr_cfg['feat_iba']['batch_size'] == attr_cfg['input_iba']['batch_size'], \
+                "batch sizes of feat_iba and input_iba should be equal"
+        closure = self.get_closure(self.classifier,
                                    target,
                                    self.use_softmax,
-                                   batch_size=attr_cfg['iba']['batch_size'])
+                                   batch_size=attr_cfg['feat_iba']['batch_size'])
         if logger is None:
             logger = mmcv.get_logger('iba')
 
-        logger.info('Training Feature Information Bottleneck')
-        feat_mask = self.train_iba(input_tensor, closure, attr_cfg['iba'])
+        feat_mask = self.train_feat_iba(input_tensor, closure, attr_cfg['feat_iba'])
 
-        logger.info('Training GAN')
         gen_input_mask = self.train_gan(input_tensor,
                                         attr_cfg['gan'],
                                         logger=logger)
 
-        logger.info('Training Input Information Bottleneck')
         input_mask = self.train_input_iba(input_tensor, self.cfg['input_iba'],
                                           gen_input_mask, closure,
                                           attr_cfg['input_iba'])
-        iba_capacity = self.iba.capacity().sum(0).clone().detach().cpu().numpy()
+        feat_iba_capacity = self.feat_iba.capacity().sum(0).clone().detach().cpu().numpy()
         gen_input_mask = gen_input_mask.mean([0, 1]).numpy()
         self.buffer.update(feat_mask=feat_mask,
                            input_mask=input_mask,
                            gen_input_mask=gen_input_mask,
-                           iba_capacity=iba_capacity)
+                           feat_iba_capacity=feat_iba_capacity)
 
     @abstractmethod
     def show_feat_mask(self, **kwargs):
@@ -120,5 +117,5 @@ class BaseAttributor(abc=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def show_mask(self, mask, **kwargs):
+    def show_mask(mask, **kwargs):
         pass

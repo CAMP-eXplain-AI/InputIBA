@@ -9,14 +9,16 @@ attributor = dict(
         type='vgg16',
         num_classes=20,
         pretrained=pretrained),
-    iba=dict(
+    feat_iba=dict(
         input_or_output="output",
         active_neurons_threshold=0.01,
         initial_alpha=5.0),
-    img_iba=dict(
+    input_iba=dict(
         initial_alpha=5.0,
-        sigma=1.0,
-    )
+        sigma=1.0),
+    gan=dict(
+        generator=dict(type='VisionGenerator'),
+        discriminator=dict(type='VisionDiscriminator'))
 )
 
 estimation_cfg = dict(
@@ -25,7 +27,7 @@ estimation_cfg = dict(
 )
 
 attribution_cfg = dict(
-    iba=dict(
+    feat_iba=dict(
         batch_size=10,
         beta=10.0),
     gan=dict(
@@ -36,7 +38,7 @@ attribution_cfg = dict(
         weight_clip=0.01,
         epochs=20,
         critic_iter=5),
-    img_iba=dict(
+    input_iba=dict(
         beta=10.0,
         opt_steps=60,
         lr=1.0,
@@ -44,6 +46,6 @@ attribution_cfg = dict(
     feat_mask=dict(
         upscale=True,
         show=False),
-    img_mask=dict(
+    input_mask=dict(
         show=False)
 )

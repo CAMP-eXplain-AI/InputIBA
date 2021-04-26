@@ -20,17 +20,17 @@
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# THE SOFTWARE.                  F
 
 import numpy as np
 import torch.nn as nn
 import torch
 import warnings
 from contextlib import contextmanager
-from .utils import to_saliency_map, get_tqdm, ifnone, \
+from iba.models.utils import to_saliency_map, get_tqdm, ifnone, \
     _SpatialGaussianKernel, _InterruptExecution
 from iba.models.estimators.estimators import VisionWelfordEstimator
-from .model_zoo import get_module
+from iba.models.model_zoo import get_module
 
 
 class _IBAForwardHook:

@@ -29,7 +29,8 @@ class ImageNet(BaseDataset):
     Args:
         img_root (str): root of the images.
         annot_root (str): root of the bounding box annotations
-        ind_to_cls_file(str): json file that contains mapping from indices to class names and sub-folder names.
+        ind_to_cls_file(str): json file that contains key-value pairs that map indices to class
+            names or sub-folder names.
         pipeline (list): pipeline to transform the images.
         with_bbox (bool): if True, load the bounding boxes.
     """
@@ -108,12 +109,12 @@ class ImageNet(BaseDataset):
 
         if self.with_bbox:
             bboxes = res['bboxes']
-            return dict(img=img,
+            return dict(input=img,
                         target=target,
-                        img_name=img_name,
+                        input_name=img_name,
                         bboxes=bboxes)
         else:
-            return dict(img=img, target=target, img_name=img_name)
+            return dict(input=img, target=target, input_name=img_name)
 
     def __len__(self):
         return len(self.image_paths)

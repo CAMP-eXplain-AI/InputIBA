@@ -52,5 +52,6 @@ class BaseWassersteinGAN(metaclass=ABCMeta):
               batch_size=32,
               weight_clip=0.1,
               epochs=200,
-              critic_iter=5):
+              critic_iter=5,
+              verbose=False):
         pass

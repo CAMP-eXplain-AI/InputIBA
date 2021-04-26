@@ -5,7 +5,7 @@ import warnings
 from argparse import ArgumentParser
 from copy import deepcopy
 import mmcv
-from iba.models import Attributor
+from iba.models import build_attributor
 from tqdm import tqdm
 from iba.datasets import build_dataset
 import torch
@@ -43,34 +43,35 @@ def train_attributor(cfg: mmcv.Config, logger, work_dir, device='cuda:0'):
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
 
-    attributor = Attributor(cfg.attributor, device=device)
+    attributor = build_attributor(cfg.attributor, default_args=dict(device=device))
     attributor.estimate(train_loader, cfg.estimation_cfg)
 
     for batch in tqdm(val_loader, total=len(val_loader)):
-        imgs = batch['img']
+        inputs = batch['input']
         targets = batch['target']
-        img_names = batch['img_name']
-        for img, target, img_name in zip(imgs, targets, img_names):
+        input_names = batch['input_name']
+        for input_tensor, target, input_name in zip(inputs, targets, input_names):
+            # TODO remove this log message after debug
             logger.info(
                 f'allocated memory in MB: '
                 f'{int(torch.cuda.memory_allocated(device) / (1024 ** 2))}')
-            img = img.to(device)
+            input_tensor = input_tensor.to(device)
             if target.nelement() == 1:
                 target = target.item()
             else:
                 target = target.to(device)
-            feat_mask_file = osp.join(work_dir, 'feat_masks', img_name)
-            img_mask_file = osp.join(work_dir, 'img_masks', img_name)
+            feat_mask_file = osp.join(work_dir, 'feat_masks', input_name)
+            input_mask_file = osp.join(work_dir, 'input_masks', input_name)
 
-            attributor.make_attribution(img,
+            attributor.make_attribution(input_tensor,
                                         target,
                                         attribution_cfg=cfg.attribution_cfg,
                                         logger=logger)
             attributor.show_feat_mask(out_file=feat_mask_file,
                                       **cfg.attribution_cfg.get(
                                           'feat_mask', {}))
-            attributor.show_img_mask(out_file=img_mask_file,
-                                     **cfg.attribution_cfg.get('img_mask', {}))
+            attributor.show_img_mask(out_file=input_mask_file,
+                                     **cfg.attribution_cfg.get('input_mask', {}))
             gc.collect()
 
 

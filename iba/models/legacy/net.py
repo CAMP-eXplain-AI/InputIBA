@@ -1,14 +1,13 @@
 import torch
-import torch.nn.functional as F
-from .gan import WGAN_CP
-from .pytorch_img_iba import ImageIBA
+from iba.models.legacy.gan import WGAN_CP
+from iba.models.legacy.pytorch_img_iba import ImageIBA
 import matplotlib.pyplot as plt
 import os.path as osp
 import mmcv
 import numpy as np
 from PIL import Image
-from .model_zoo import build_classifiers
-from .pytorch import IBA
+from iba.models.model_zoo import build_classifiers
+from iba.models.legacy.pytorch import IBA
 from copy import deepcopy
 
 

@@ -14,12 +14,12 @@ class VisionAttributor(BaseAttributor):
     def __init__(self, cfg: dict, device='cuda:0'):
         super(VisionAttributor, self).__init__(cfg, device)
 
-    def train_iba(self, input_tensor, closure, attr_cfg):
+    def train_feat_iba(self, input_tensor, closure, attr_cfg):
         if input_tensor.dim() == 3:
             input_tensor = input_tensor.unsqueeze(0)
-        feat_mask = self.iba.analyze(input_tensor=input_tensor,
-                                     model_loss_fn = closure,
-                                     **attr_cfg)
+        feat_mask = self.feat_iba.analyze(input_tensor=input_tensor,
+                                          model_loss_fn=closure,
+                                          **attr_cfg)
         return feat_mask
 
     def train_input_iba(self,

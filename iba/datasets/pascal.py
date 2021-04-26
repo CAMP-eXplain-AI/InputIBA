@@ -99,7 +99,7 @@ class PascalVOC(BaseDataset):
                 # For background image, take the class with highest probability from all the classes
                 one_hot_cls = np.argmax(pred)
                 labels = [one_hot_cls]
-        res = dict(img=img, bboxes=bboxes, img_name=img_name)
+        res = dict(input=img, bboxes=bboxes, input_name=img_name)
 
         if self.with_mask:
             masks = transformed['masks']

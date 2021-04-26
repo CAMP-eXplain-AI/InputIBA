@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch
 import warnings
 from contextlib import contextmanager
-from .utils import to_saliency_map, get_tqdm, ifnone
-from .pytorch import _SpatialGaussianKernel
+from iba.models.utils import to_saliency_map, get_tqdm, ifnone
+from iba.models.legacy.pytorch import _SpatialGaussianKernel
 
 
 class ImageIBA(nn.Module):

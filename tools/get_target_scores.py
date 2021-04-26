@@ -38,17 +38,17 @@ def get_target_scores(cfg, work_dir, file_name, device='cuda:0'):
     res = {}
     with torch.no_grad():
         for batch in tqdm(val_loader):
-            imgs = batch['img'].to(device)
+            inputs = batch['input'].to(device)
             targets = batch['target'].to(device)
-            img_names = batch['img_name']
+            input_names = batch['input_name']
 
-            preds = classifer(imgs)
+            preds = classifer(inputs)
 
             preds = torch.softmax(preds, -1)
             target_preds = preds[torch.arange(targets.shape[0]), targets].detach().cpu().numpy()
             targets = targets.detach().cpu().numpy()
             res_dict = {name: {'target': int(t), 'pred': float(p)}
-                        for name, t, p in zip(img_names, targets, target_preds)}
+                        for name, t, p in zip(input_names, targets, target_preds)}
             res.update(res_dict)
 
     mmcv.dump(res, osp.join(work_dir, file_name))

@@ -7,7 +7,7 @@ import os.path as osp
 import mmcv
 from tqdm import tqdm
 from iba.datasets import build_dataset
-from iba.models import build_classifiers, get_module, Attributor
+from iba.models import build_classifiers, get_module, VisionAttributor
 from copy import deepcopy
 from argparse import ArgumentParser
 
@@ -65,8 +65,8 @@ class Baseline:
         else:
             raise ValueError(f'Invalid method: {method}')
 
-    def make_attribution(self, img, target, **kwargs):
-        return self.attribute(img, target=target, **kwargs)
+    def make_attribution(self, input_tensor, target, **kwargs):
+        return self.attribute(input_tensor, target=target, **kwargs)
 
 
 def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
@@ -80,23 +80,25 @@ def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
     baseline = Baseline(classifier, method, saliency_layer)
 
     for batch in tqdm(val_loader, total=len(val_loader)):
-        imgs = batch['img']
+        inputs = batch['input']
         targets = batch['target']
-        img_names = batch['img_name']
-        for img, target, img_name in zip(imgs, targets, img_names):
-            img = img.to(device).unsqueeze(0)
+        input_names = batch['input_name']
+        for input_tensor, target, input_name in zip(inputs, targets, input_names):
+            input_tensor = input_tensor.to(device).unsqueeze(0)
             target = target.item()
             if method == 'deep_shap':
-                base_distribution = img.new_zeros((10, ) + img.shape[1:])
-                attr_map = baseline.make_attribution(img, target, baselines=base_distribution)
+                base_distribution = input_tensor.new_zeros((10, ) + input_tensor.shape[1:])
+                attr_map = baseline.make_attribution(input_tensor,
+                                                     target,
+                                                     baselines=base_distribution)
                 attr_map = attr_map.detach().cpu().numpy()
             else:
-                attr_map = baseline.make_attribution(img, target).detach().cpu().numpy()
+                attr_map = baseline.make_attribution(input_tensor, target).detach().cpu().numpy()
             attr_map = attr_map.mean((0, 1))
             attr_map = attr_map / attr_map.max()
 
-            out_file = osp.join(work_dir, img_name)
-            Attributor.show_mask(attr_map, show=False, out_file=out_file)
+            out_file = osp.join(work_dir, input_name)
+            VisionAttributor.show_mask(attr_map, show=False, out_file=out_file)
 
 
 def main():

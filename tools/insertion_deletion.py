@@ -83,23 +83,23 @@ def insertion_deletion(cfg,
     results = {}
     try:
         for batch in tqdm(val_loader, total=len(val_loader)):
-            imgs = batch['img']
+            inputs = batch['input']
             targets = batch['target']
-            img_names = batch['img_name']
+            input_names = batch['input_name']
 
-            for img, target, img_name in zip(imgs, targets, img_names):
-                img = img.to(device)
+            for input_tensor, target, input_name in zip(inputs, targets, input_names):
+                input_tensor = input_tensor.to(device)
                 target = target.item()
-                heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'),
+                heatmap = cv2.imread(osp.join(heatmap_dir, input_name + '.png'),
                                      cv2.IMREAD_UNCHANGED)
-                heatmap = torch.from_numpy(heatmap).to(img) / 255.0
+                heatmap = torch.from_numpy(heatmap).to(input_tensor) / 255.0
 
-                res_single = evaluator.evaluate(heatmap, img, target)
+                res_single = evaluator.evaluate(heatmap, input_tensor, target)
                 ins_auc = res_single['ins_auc']
                 del_auc = res_single['del_auc']
 
                 results.update(
-                    {img_name: dict(ins_auc=ins_auc, del_auc=del_auc)})
+                    {input_name: dict(ins_auc=ins_auc, del_auc=del_auc)})
     except KeyboardInterrupt:
         mmcv.dump(results, file=osp.join(work_dir, file_name))
         return

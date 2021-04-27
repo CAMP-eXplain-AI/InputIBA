@@ -20,12 +20,18 @@ def parse_args():
     parser.add_argument('heatmap_dir', help='directory of the heatmaps')
     parser.add_argument('work_dir', help='directory to save the result file')
     parser.add_argument('file_name', help='file name fo saving the results')
-    parser.add_argument('--scores-file',
-                        help='File that records the predicted probability of corresponding target class')
-    parser.add_argument('--scores-threshold',
-                        type=float,
-                        default=0.6,
-                        help='Threshold for filtering the samples with low predicted target probabilities')
+    parser.add_argument(
+        '--scores-file',
+        help=
+        'File that records the predicted probability of corresponding target class'
+    )
+    parser.add_argument(
+        '--scores-threshold',
+        type=float,
+        default=0.6,
+        help=
+        'Threshold for filtering the samples with low predicted target probabilities'
+    )
     parser.add_argument('--log-n-max',
                         type=float,
                         default=4.5,
@@ -38,18 +44,13 @@ def parse_args():
                         type=int,
                         default=100,
                         help='Number of random masks of Sensitivity-N')
-    parser.add_argument('--num-samples',
-                        type=int,
-                        default=0,
-                        help='Number of samples to evaluate, 0 means checking all the samples')
-    parser.add_argument('--gpu-id',
-                        type=int,
-                        default=0,
-                        help='GPU id')
-    parser.add_argument('--seed',
-                        type=int,
-                        default=2021,
-                        help='random seed')
+    parser.add_argument(
+        '--num-samples',
+        type=int,
+        default=0,
+        help='Number of samples to evaluate, 0 means checking all the samples')
+    parser.add_argument('--gpu-id', type=int, default=0, help='GPU id')
+    parser.add_argument('--seed', type=int, default=2021, help='random seed')
     args = parser.parse_args()
     return args
 
@@ -69,8 +70,8 @@ def sensitivity_n(cfg,
     mmcv.mkdir_or_exist(work_dir)
     val_set = build_dataset(cfg.data['val'])
     # check if n is valid
-    img_h, img_w = val_set[0]['img'].shape[-2:]
-    max_allowed_n = np.log(img_h * img_w)
+    input_h, input_w = val_set[0]['input'].shape[-2:]
+    max_allowed_n = np.log(input_h * input_w)
     assert log_n_max < max_allowed_n, f"log_n_max must smaller than {max_allowed_n}, but got {log_n_max}"
 
     val_set = get_valid_set(val_set,
@@ -83,36 +84,45 @@ def sensitivity_n(cfg,
     val_loader = DataLoader(val_set, **val_loader_cfg)
     classifier = build_classifiers(cfg.attributor['classifier']).to(device)
 
-    sample = val_set[0]['img']
+    sample = val_set[0]['input']
     h, w = sample.shape[1:]
     results = {}
 
     try:
-        n_list = np.logspace(0, log_n_max, int(log_n_max / log_n_ticks), base=10.0, dtype=int)
+        n_list = np.logspace(0,
+                             log_n_max,
+                             int(log_n_max / log_n_ticks),
+                             base=10.0,
+                             dtype=int)
         # to eliminate the duplicate elements caused by rounding
         n_list = np.unique(n_list)
         logger.info(f"n_list: [{', '.join(map(str,n_list))}]")
         pbar = tqdm(total=len(n_list) * len(val_loader))
         for n in n_list:
             evaluator = SensitivityN(classifier,
-                                     img_size=(h, w),
+                                     input_size=(h, w),
                                      n=n,
                                      num_masks=num_masks)
 
             corr_all = []
             for batch in val_loader:
-                imgs = batch['img']
+                inputs = batch['input']
                 targets = batch['target']
-                img_names = batch['img_name']
+                input_names = batch['input_name']
 
-                for img, target, img_name in zip(imgs, targets, img_names):
-                    img = img.to(device)
+                for input_tensor, target, input_name in zip(
+                        inputs, targets, input_names):
+                    input_tensor = input_tensor.to(device)
                     target = target.item()
-                    heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'),
-                                         cv2.IMREAD_UNCHANGED)
-                    heatmap = torch.from_numpy(heatmap).to(img) / 255.0
+                    heatmap = cv2.imread(
+                        osp.join(heatmap_dir, input_name + '.png'),
+                        cv2.IMREAD_UNCHANGED)
+                    heatmap = torch.from_numpy(heatmap).to(input_tensor) / 255.0
 
-                    res_single = evaluator.evaluate(heatmap, img, target, calculate_corr=True)
+                    res_single = evaluator.evaluate(heatmap,
+                                                    input_tensor,
+                                                    target,
+                                                    calculate_corr=True)
                     corr = res_single['correlation'][1, 0]
                     corr_all.append(corr)
                 pbar.update(1)

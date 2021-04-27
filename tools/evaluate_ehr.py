@@ -17,16 +17,25 @@ def parse_args():
     parser.add_argument('work_dir', help='directory to save the result file')
     parser.add_argument('file_name',
                         help='file name for saving the result file')
-    parser.add_argument('--scores-file',
-                        help='File that records the predicted probability of corresponding target class')
-    parser.add_argument('--scores-threshold',
-                        type=float,
-                        default=0.6,
-                        help='Threshold for filtering the samples with low predicted target probabilities')
-    parser.add_argument('--num-samples',
-                        type=int,
-                        default=0,
-                        help='Number of samples to check, 0 means checking all the (filtered) samples')
+    parser.add_argument(
+        '--scores-file',
+        help=
+        'File that records the predicted probability of corresponding target class'
+    )
+    parser.add_argument(
+        '--scores-threshold',
+        type=float,
+        default=0.6,
+        help=
+        'Threshold for filtering the samples with low predicted target probabilities'
+    )
+    parser.add_argument(
+        '--num-samples',
+        type=int,
+        default=0,
+        help=
+        'Number of samples to check, 0 means checking all the (filtered) samples'
+    )
     parser.add_argument('--base-threshold',
                         type=float,
                         default=0.1,
@@ -67,7 +76,7 @@ def evaluate_ehr(cfg,
 
     res_dict = {}
     for i, sample in tqdm(enumerate(val_set)):
-        img_name = sample['img_name']
+        input_name = sample['input_name']
         target = sample['target']
         roi_array = sample[roi]
         if isinstance(roi_array, torch.Tensor):
@@ -77,10 +86,10 @@ def evaluate_ehr(cfg,
             # bboxes
             roi_array = roi_array.astype(int)
 
-        if not osp.exists(osp.join(heatmap_dir, img_name + '.png')):
+        if not osp.exists(osp.join(heatmap_dir, input_name + '.png')):
             continue
 
-        heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'),
+        heatmap = cv2.imread(osp.join(heatmap_dir, input_name + '.png'),
                              cv2.IMREAD_UNCHANGED)
         # compute the ratio of roi_area / image_size
         roi_mask = np.zeros_like(heatmap)
@@ -90,18 +99,20 @@ def evaluate_ehr(cfg,
             # bbox
             for roi_single in roi_array:
                 x1, y1, x2, y2 = roi_single
-                roi_mask[y1: y2, x1: x2] = 1
-            roi_area_ratio = roi_mask.sum() / (roi_mask.shape[-1] * roi_mask.shape[-2])
+                roi_mask[y1:y2, x1:x2] = 1
+            roi_area_ratio = roi_mask.sum() / (roi_mask.shape[-1] *
+                                               roi_mask.shape[-2])
         else:
             # binary mask
-            roi_area_ratio = roi_array.sum() / (roi_array.shape[-1] * roi_mask.shape[-2])
+            roi_area_ratio = roi_array.sum() / (roi_array.shape[-1] *
+                                                roi_mask.shape[-2])
         # only select the samples for which the roi area ratio is smaller than a threshold
         if roi_area_ratio > 0.33:
             continue
 
         res = evaluator.evaluate(heatmap, roi_array, weight_by_heat=weight)
         auc = res['auc']
-        res_dict.update({img_name: {'target': target, 'auc': auc}})
+        res_dict.update({input_name: {'target': target, 'auc': auc}})
     aucs = np.array([v['auc'] for v in res_dict.values()])
     print(f'auc: {aucs.mean():.5f} +/- {aucs.std():.5f}')
     file_name = osp.splitext(file_name)[0]

@@ -8,21 +8,23 @@ import cv2
 
 @DATASETS.register_module()
 class ImageFolder(BaseDataset):
-    def __init__(self,
-                 img_root,
-                 pipeline,
-                 valid_formats=('png',)):
-        assert isinstance(valid_formats, (list, tuple)), 'valid_formats must be either a list or tuple'
+
+    def __init__(self, img_root, pipeline, valid_formats=('png',)):
+        assert isinstance(
+            valid_formats,
+            (list, tuple)), 'valid_formats must be either a list or tuple'
         super(ImageFolder, self).__init__()
         self.img_root = img_root
 
         cls_names = sorted(os.listdir(img_root))
-        self.cls_to_ind = {c:i for i, c in enumerate(cls_names)}
+        self.cls_to_ind = {c: i for i, c in enumerate(cls_names)}
         self.ind_to_cls = {v: k for k, v in self.cls_to_ind.items()}
 
         image_paths = []
         for valid_format in valid_formats:
-            image_paths.extend(glob(osp.join(self.img_root, f'**/*.{valid_format}'), recursive=True))
+            image_paths.extend(
+                glob(osp.join(self.img_root, f'**/*.{valid_format}'),
+                     recursive=True))
         self.image_paths = image_paths
         self.pipeline = build_pipeline(pipeline)
 
@@ -37,9 +39,7 @@ class ImageFolder(BaseDataset):
         res = self.pipeline(image=img)
         img = res['image']
 
-        return dict(img=img,
-                    target=target,
-                    img_name=img_name)
+        return dict(input=img, target=target, input_name=img_name)
 
     def __len__(self):
         return len(self.image_paths)

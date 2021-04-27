@@ -50,7 +50,6 @@ def get_module(model, module):
     r"""Returns a specific layer in a model based.
     Shameless copy from `TorchRay
     <https://github.com/facebookresearch/TorchRay/blob/master/torchray/attribution/common.py>`_
-
     :attr:`module` is either the name of a module (as given by the
     :func:`named_modules` function for :class:`torch.nn.Module` objects) or
     a :class:`torch.nn.Module` object. If :attr:`module` is a

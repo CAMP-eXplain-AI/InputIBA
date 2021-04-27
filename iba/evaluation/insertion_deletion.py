@@ -17,27 +17,23 @@ class InsertionDeletion(BaseEvaluation):
             int(2 * sigma - 1), sigma)
 
     @torch.no_grad()
-    def evaluate(self, heatmap, img, target):  # noqa
+    def evaluate(self, heatmap, input_tensor, target):  # noqa
         """# TODO to add docs
 
         Args:
             heatmap (Tensor): heatmap with shape (H, W) or (3, H, W).
-            img (Tensor): image with shape (3, H, W).
+            input_tensor (Tensor): image with shape (3, H, W).
             target (int): class index of the image.
 
         Returns:
             dict[str, Union[Tensor, np.array, float]]: a dictionary containing following fields
                 - del_scores: ndarray,
                 - ins_scores:
-                - del_img:
-                - ins_img:
+                - del_input:
+                - ins_input:
                 - ins_auc:
                 - del_auc:
         """
-        # compress heatmap to 2D if needed
-        if heatmap.ndim == 3:
-            heatmap = heatmap.mean(0)
-            heatmap = heatmap.mean(0)
 
         # sort pixel in attribution
         num_pixels = torch.numel(heatmap)
@@ -45,13 +41,14 @@ class InsertionDeletion(BaseEvaluation):
         indices = np.unravel_index(indices.cpu().numpy(), heatmap.size())
 
         # apply deletion game
-        deletion_perturber = PixelPerturber(img, torch.zeros_like(img))
+        deletion_perturber = PixelPerturber(input_tensor,
+                                            torch.zeros_like(input_tensor))
         deletion_scores = self._procedure_perturb(deletion_perturber,
                                                   num_pixels, indices, target)
 
         # apply insertion game
-        blurred_img = self.gaussian_blurr(img)
-        insertion_perturber = PixelPerturber(blurred_img, img)
+        blurred_input = self.gaussian_blurr(input_tensor)
+        insertion_perturber = PixelPerturber(blurred_input, input_tensor)
         insertion_scores = self._procedure_perturb(insertion_perturber,
                                                    num_pixels, indices, target)
 
@@ -60,13 +57,13 @@ class InsertionDeletion(BaseEvaluation):
                                   dx=1. / len(insertion_scores))
         deletion_auc = trapezoid(deletion_scores, dx=1. / len(deletion_scores))
 
-        # deletion_img and insertion_img are final results, they are only used for debug purpose
+        # deletion_input and insertion_input are final results, they are only used for debug purpose
         # TODO check if it is necessary to convert the Tensors to np.ndarray
         return {
             "del_scores": deletion_scores,
             "ins_scores": insertion_scores,
-            "del_img": deletion_perturber.get_current(),
-            "ins_img": insertion_perturber.get_current(),
+            "del_input": deletion_perturber.get_current(),
+            "ins_input": insertion_perturber.get_current(),
             "ins_auc": insertion_auc,
             "del_auc": deletion_auc
         }
@@ -86,7 +83,7 @@ class InsertionDeletion(BaseEvaluation):
         scores_after_perturb = []
         replaced_pixels = 0
         while replaced_pixels < num_pixels:
-            perturbed_imgs = []
+            perturbed_inputs = []
             for i in range(80):
                 batch = min(num_pixels - replaced_pixels, self.pixel_batch_size)
 
@@ -95,17 +92,17 @@ class InsertionDeletion(BaseEvaluation):
                     perturb_index = (indices[0][replaced_pixels + pixel],
                                      indices[1][replaced_pixels + pixel])
 
-                    # perturb img using given pixels
+                    # perturb input using given pixels
                     perturber.perturb(perturb_index[0], perturb_index[1])
-                perturbed_imgs.append(perturber.get_current())
+                perturbed_inputs.append(perturber.get_current())
                 replaced_pixels += batch
                 if replaced_pixels == num_pixels:
                     break
 
             # get score after perturb
             device = next(self.classifier.parameters()).device
-            perturbed_imgs = torch.stack(perturbed_imgs)
-            logits = self.classifier(perturbed_imgs.to(device))
+            perturbed_inputs = torch.stack(perturbed_inputs)
+            logits = self.classifier(perturbed_inputs.to(device))
             score_after = torch.softmax(logits, dim=-1)[:, target]
             scores_after_perturb = np.concatenate(
                 (scores_after_perturb, score_after.detach().cpu().numpy()))

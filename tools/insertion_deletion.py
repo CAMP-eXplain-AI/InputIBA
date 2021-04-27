@@ -15,40 +15,41 @@ from tqdm import tqdm
 
 def parse_args():
     parser = ArgumentParser('Insertion Deletion evaluation')
-    parser.add_argument('config',
-                        help='config file of the attribution method')
-    parser.add_argument('heatmap_dir',
-                        help='directory of the heatmaps')
-    parser.add_argument('work_dir',
-                        help='directory to save the result file')
-    parser.add_argument('file_name',
-                        help='file name with extension of the results to be saved')
-    parser.add_argument('--scores-file',
-                        help='File that records the predicted probability of corresponding target class')
-    parser.add_argument('--scores-threshold',
-                        type=float,
-                        default=0.6,
-                        help='Threshold for filtering the samples with low predicted target probabilities')
-    parser.add_argument('--num-samples',
-                        type=int,
-                        default=0,
-                        help='Number of samples to check, 0 means checking all the (filtered) samples')
-    parser.add_argument('--pixel-batch-size',
-                        type=int,
-                        default=10,
-                        help='Batch size for inserting or deleting the heatmap pixels')
+    parser.add_argument('config', help='config file of the attribution method')
+    parser.add_argument('heatmap_dir', help='directory of the heatmaps')
+    parser.add_argument('work_dir', help='directory to save the result file')
+    parser.add_argument(
+        'file_name', help='file name with extension of the results to be saved')
+    parser.add_argument(
+        '--scores-file',
+        help=
+        'File that records the predicted probability of corresponding target class'
+    )
+    parser.add_argument(
+        '--scores-threshold',
+        type=float,
+        default=0.6,
+        help=
+        'Threshold for filtering the samples with low predicted target probabilities'
+    )
+    parser.add_argument(
+        '--num-samples',
+        type=int,
+        default=0,
+        help=
+        'Number of samples to check, 0 means checking all the (filtered) samples'
+    )
+    parser.add_argument(
+        '--pixel-batch-size',
+        type=int,
+        default=10,
+        help='Batch size for inserting or deleting the heatmap pixels')
     parser.add_argument('--sigma',
                         type=float,
                         default=5.0,
                         help='Sigma of the gaussian blur filter')
-    parser.add_argument('--gpu-id',
-                        type=int,
-                        default=0,
-                        help='GPU id')
-    parser.add_argument('--seed',
-                        type=int,
-                        default=2021,
-                        help='Random seed')
+    parser.add_argument('--gpu-id', type=int, default=0, help='GPU id')
+    parser.add_argument('--seed', type=int, default=2021, help='Random seed')
     args = parser.parse_args()
     return args
 
@@ -83,23 +84,24 @@ def insertion_deletion(cfg,
     results = {}
     try:
         for batch in tqdm(val_loader, total=len(val_loader)):
-            imgs = batch['img']
+            inputs = batch['input']
             targets = batch['target']
-            img_names = batch['img_name']
+            input_names = batch['input_name']
 
-            for img, target, img_name in zip(imgs, targets, img_names):
-                img = img.to(device)
+            for input_tensor, target, input_name in zip(inputs, targets,
+                                                        input_names):
+                input_tensor = input_tensor.to(device)
                 target = target.item()
-                heatmap = cv2.imread(osp.join(heatmap_dir, img_name + '.png'),
+                heatmap = cv2.imread(osp.join(heatmap_dir, input_name + '.png'),
                                      cv2.IMREAD_UNCHANGED)
-                heatmap = torch.from_numpy(heatmap).to(img) / 255.0
+                heatmap = torch.from_numpy(heatmap).to(input_tensor) / 255.0
 
-                res_single = evaluator.evaluate(heatmap, img, target)
+                res_single = evaluator.evaluate(heatmap, input_tensor, target)
                 ins_auc = res_single['ins_auc']
                 del_auc = res_single['del_auc']
 
                 results.update(
-                    {img_name: dict(ins_auc=ins_auc, del_auc=del_auc)})
+                    {input_name: dict(ins_auc=ins_auc, del_auc=del_auc)})
     except KeyboardInterrupt:
         mmcv.dump(results, file=osp.join(work_dir, file_name))
         return

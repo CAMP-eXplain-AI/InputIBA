@@ -4,8 +4,10 @@ import torch.nn.functional as F
 from ..utils import _to_saliency_map
 from ..model_zoo import get_module
 from .base_generator import BaseGenerator
+from .builder import GENERATORS
 
 
+@GENERATORS.register_module()
 class VisionGenerator(BaseGenerator):
     # generate takes random noise as input, learnable parameter is the img mask.
     # masked img (with noise added) go through the original network and generate masked feature map
@@ -28,8 +30,9 @@ class VisionGenerator(BaseGenerator):
                                     input_tensor.shape[1:],
                                     data_format="channels_first")
             input_mask_param = torch.tensor(mask).to(self.device)
-            input_mask_param = input_mask_param.expand(input_tensor.shape[0],
-                                                       -1, -1).unsqueeze(0)
+            # clone operation is necessary because expand does not allocate new memory,
+            # this will cause a problem to optimization, where some inplace operations are applied
+            input_mask_param = input_mask_param.expand(input_tensor.shape[0], -1, -1).clone().unsqueeze(0)
         else:
             input_mask_param = torch.zeros(input_tensor.shape,
                                            dtype=torch.float).to(self.device)
@@ -43,7 +46,7 @@ class VisionGenerator(BaseGenerator):
 
     def forward(self, gaussian):
         noise = self.eps * gaussian + self.mean
-        input_mask = F.sigmoid(self.input_mask_param)
+        input_mask = torch.sigmoid(self.input_mask_param)
         masked_input = input_mask * self.input_tensor + (1 - input_mask) * noise
         _ = self.context.classifier(masked_input)
         masked_feature_map = self.feature_map

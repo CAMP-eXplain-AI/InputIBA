@@ -2,11 +2,12 @@ import torch
 from torch.optim import RMSprop
 from torch.utils.data import TensorDataset, DataLoader
 from .base_gan import BaseWassersteinGAN
-from .builder import build_generator, build_discriminator
+from .builder import build_generator, build_discriminator, GANS
 from mmcv import get_logger
 import random
 
 
+@GANS.register_module()
 class VisionWGAN(BaseWassersteinGAN):
 
     def __init__(self,

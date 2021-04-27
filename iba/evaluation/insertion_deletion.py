@@ -34,10 +34,6 @@ class InsertionDeletion(BaseEvaluation):
                 - ins_auc:
                 - del_auc:
         """
-        # compress heatmap to 2D if needed
-        if heatmap.ndim == 3:
-            heatmap = heatmap.mean(0)
-            heatmap = heatmap.mean(0)
 
         # sort pixel in attribution
         num_pixels = torch.numel(heatmap)

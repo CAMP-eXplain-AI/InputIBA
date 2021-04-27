@@ -6,19 +6,26 @@ from copy import deepcopy
 import mmcv
 
 
-class BaseAttributor(abc=ABCMeta):
+class BaseAttributor(metaclass=ABCMeta):
 
-    def __init__(self, cfg: dict, device='cuda:0'):
-        self.cfg = deepcopy(cfg)
+    def __init__(self,
+                 layer: str,
+                 classifier: dict,
+                 feat_iba: dict,
+                 input_iba: dict,
+                 gan: dict,
+                 use_softmax=True,
+                 device='cuda:0'):
         self.device = device
-        self.classifier = self.build_classifier(self.cfg['classifier'],
-                                               device=self.device)
-        self.layer = self.cfg['layer']
-        use_softmax = cfg.get('use_softmax', True)
+        self.classifier = self.build_classifier(classifier, device=self.device)
+        self.layer = layer
         self.use_softmax = use_softmax
 
-        self.feat_iba = build_feat_iba(self.cfg['feat_iba'], default_args={'context': self})
+        self.feat_iba = build_feat_iba(feat_iba, default_args={'context': self})
         self.buffer = {}
+
+        self.input_iba = input_iba
+        self.gan = gan
 
     def build_classifier(self, classifier_cfg, device='cuda:0'):
         classifier = build_classifiers(classifier_cfg).to(device)
@@ -32,15 +39,10 @@ class BaseAttributor(abc=ABCMeta):
 
     def estimate(self, data_loader, estimation_cfg):
         self.feat_iba.sigma = None
-        self.feat_iba.reset_estimate()
+        self.feat_iba.reset_estimator()
         self.feat_iba.estimate(self.classifier,
                                data_loader,
-                               device=self.device,
                                **estimation_cfg)
-
-    @abstractmethod
-    def train_feat_iba(self, input_tensor, closure, attr_cfg):
-        pass
 
     def train_gan(self, input_tensor, attr_cfg, logger=None):
         default_args = {
@@ -50,27 +52,10 @@ class BaseAttributor(abc=ABCMeta):
             'feat_mask': self.feat_iba.capacity(),
             'device': self.device
         }
-        gan = build_gan(self.cfg['gan'], default_args=default_args)
+        gan = build_gan(self.gan, default_args=default_args)
         gan.train(logger=logger, **attr_cfg)
         gen_input_mask = gan.generator.input_mask().clone().detach()
         return gen_input_mask
-
-    @abstractmethod
-    def train_input_iba(self,
-                        input_tensor,
-                        input_iba_cfg,
-                        gen_input_mask,
-                        closure,
-                        attr_cfg):
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def get_closure(classifier,
-                    target,
-                    use_softmax,
-                    batch_size=None):
-        pass
 
     def make_attribution(self,
                          input_tensor,
@@ -94,15 +79,36 @@ class BaseAttributor(abc=ABCMeta):
                                         attr_cfg['gan'],
                                         logger=logger)
 
-        input_mask = self.train_input_iba(input_tensor, self.cfg['input_iba'],
+        input_mask = self.train_input_iba(input_tensor, self.input_iba,
                                           gen_input_mask, closure,
                                           attr_cfg['input_iba'])
         feat_iba_capacity = self.feat_iba.capacity().sum(0).clone().detach().cpu().numpy()
-        gen_input_mask = gen_input_mask.mean([0, 1]).numpy()
+        gen_input_mask = gen_input_mask.mean([0, 1]).cpu().numpy()
         self.buffer.update(feat_mask=feat_mask,
                            input_mask=input_mask,
                            gen_input_mask=gen_input_mask,
                            feat_iba_capacity=feat_iba_capacity)
+
+    @abstractmethod
+    def train_feat_iba(self, input_tensor, closure, attr_cfg):
+        pass
+
+    @abstractmethod
+    def train_input_iba(self,
+                        input_tensor,
+                        input_iba_cfg,
+                        gen_input_mask,
+                        closure,
+                        attr_cfg):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def get_closure(classifier,
+                    target,
+                    use_softmax,
+                    batch_size=None):
+        pass
 
     @abstractmethod
     def show_feat_mask(self, **kwargs):

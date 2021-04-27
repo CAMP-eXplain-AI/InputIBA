@@ -64,17 +64,18 @@ class VisionInputIBA(BaseInputIBA):
             )
 
         # Smoothen and expand alpha on batch dimension
-        lamb = F.sigmoid(alpha)
+        lamb = torch.sigmoid(alpha)
         lamb = lamb.expand(x.shape[0], x.shape[1], -1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
         # calculate kl divergence
-        self.input_mean = ifnone(self.input_mean,
-                                 torch.tensor(0.).to(self.device))
-        self.input_std = ifnone(self.input_std,
-                                torch.tensor(1.).to(self.device))
-        self.buffer_capacity = self.kl_div(x, self.img_mask, lamb,
-                                           self.input_mean, self.input_std)
+        self.input_mean = ifnone(self.input_mean, torch.tensor(0.).to(self.device))
+        self.input_std = ifnone(self.input_std, torch.tensor(1.).to(self.device))
+        self.buffer_capacity = self.kl_div(x,
+                                           self.input_mask,
+                                           lamb,
+                                           self.input_mean,
+                                           self.input_std)
 
         # apply mask on sampled x
         eps = x.data.new(x.size()).normal_()
@@ -95,8 +96,8 @@ class VisionInputIBA(BaseInputIBA):
 
         return z
 
-    def analyze(
-            self,  # noqa
+    def analyze(    # noqa
+            self,
             input_tensor,
             model_loss_fn,
             mode='saliency',
@@ -104,7 +105,7 @@ class VisionInputIBA(BaseInputIBA):
             opt_steps=10,
             lr=1.0,
             batch_size=10):
-        assert input_tensor.shape[0] == 1, "We can only fit one sample a time"
+        assert input_tensor.shape[0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]}"
         batch = input_tensor.expand(batch_size, -1, -1, -1)
 
         # Reset from previous run or modifications
@@ -147,3 +148,6 @@ class VisionInputIBA(BaseInputIBA):
                 self.information_loss.append(information_loss.item())
 
         return self._get_saliency(mode=mode)
+
+    def detach(self):
+        raise NotImplementedError

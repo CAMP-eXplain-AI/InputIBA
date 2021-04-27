@@ -1,5 +1,5 @@
 import torch.nn as nn
-from . import BaseWelfordEstimator
+from .base_estimator import BaseWelfordEstimator
 
 
 class VisionWelfordEstimator(BaseWelfordEstimator):

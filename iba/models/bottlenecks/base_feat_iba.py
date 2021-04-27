@@ -34,7 +34,7 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
         assert (layer is None) ^ (context is None)
         self.layer = layer
         self.context = context
-        self._activate_neurons_threshold = active_neurons_threshold
+        self._active_neurons_threshold = active_neurons_threshold
         self.relu = relu
         self.initial_alpha = initial_alpha
 

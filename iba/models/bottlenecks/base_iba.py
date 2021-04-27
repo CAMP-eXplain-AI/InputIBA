@@ -115,7 +115,8 @@ class BaseIBA(nn.Module, metaclass=ABCMeta):
         """ Return the feature-wise KL-divergence of p(z|x) and q(z) """
         return -0.5 * (1 + log_var - mu**2 - log_var.exp())
 
-    @abstractmethod
+
     @staticmethod
+    @abstractmethod
     def kl_div(*args, **kwargs):
         pass

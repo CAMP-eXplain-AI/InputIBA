@@ -1,6 +1,8 @@
 import torch.nn as nn
+from .builder import DISCRIMINATORS
 
 
+@DISCRIMINATORS.register_module()
 class VisionDiscriminator(nn.Module):
 
     def __init__(self, channels: int, size: tuple):

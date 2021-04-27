@@ -1,4 +1,5 @@
 from .base_attributor import BaseAttributor
+from .builder import ATTRIBUTORS
 from ..bottlenecks import build_input_iba
 import torch
 import torch.nn.functional as F
@@ -9,10 +10,24 @@ import mmcv
 from PIL import Image
 
 
+@ATTRIBUTORS.register_module()
 class VisionAttributor(BaseAttributor):
 
-    def __init__(self, cfg: dict, device='cuda:0'):
-        super(VisionAttributor, self).__init__(cfg, device)
+    def __init__(self,
+                 layer: str,
+                 classifier: dict,
+                 feat_iba: dict,
+                 input_iba: dict,
+                 gan: dict,
+                 use_softmax=True,
+                 device='cuda:0'):
+        super(VisionAttributor, self).__init__(layer=layer,
+                                               classifier=classifier,
+                                               feat_iba=feat_iba,
+                                               input_iba=input_iba,
+                                               gan=gan,
+                                               use_softmax=use_softmax,
+                                               device=device)
 
     def train_feat_iba(self, input_tensor, closure, attr_cfg):
         if input_tensor.dim() == 3:
@@ -33,11 +48,12 @@ class VisionAttributor(BaseAttributor):
         default_args = {'input_tensor': input_tensor,
                         'input_mask': gen_input_mask}
         input_iba = build_input_iba(input_iba_cfg, default_args=default_args)
+        input_tensor = input_tensor.unsqueeze(0)
         input_iba_heatmap = input_iba.analyze(input_tensor,
                                               closure,
                                               **attr_cfg)
 
-        input_mask = F.sigmoid(input_iba.alpha).detach().cpu().mean([0, 1]).numpy()
+        input_mask = torch.sigmoid(input_iba.alpha).detach().cpu().mean([0, 1]).numpy()
         return input_mask
 
     @staticmethod

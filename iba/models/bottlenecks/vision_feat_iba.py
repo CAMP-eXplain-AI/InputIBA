@@ -79,7 +79,7 @@ class VisionFeatureIBA(BaseFeatureIBA):
             bar = None
 
         if reset:
-            self.reset_estimate()
+            self.reset_estimator()
         for batch in dataloader:
             if isinstance(batch, tuple) or isinstance(batch, list):
                 imgs = batch[0]
@@ -121,12 +121,11 @@ class VisionFeatureIBA(BaseFeatureIBA):
             self.active_neurons = self.estimator.active_neurons()
 
         # Smoothen and expand alpha on batch dimension
-        lamb = F.sigmoid(alpha)
+        lamb = torch.sigmoid(alpha)
         lamb = lamb.expand(x.shape[0], x.shape[1], -1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
-        self.buffer_capacity = self.kl_div(x, lamb, self.input_mean,
-                                           self._std) * self.active_neurons
+        self.buffer_capacity = self.kl_div(x, lamb, self.input_mean, self.input_std) * self.active_neurons
 
         eps = x.data.new(x.size()).normal_()
         ε = self.input_std * eps + self.input_mean

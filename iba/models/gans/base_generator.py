@@ -27,7 +27,7 @@ class BaseGenerator(nn.Module):
         pass
 
     def input_mask(self):
-        return F.sigmoid(self.input_mask_param)
+        return torch.sigmoid(self.input_mask_param)
 
     def clear(self):
         del self.feature_map

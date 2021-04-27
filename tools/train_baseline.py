@@ -7,7 +7,7 @@ import os.path as osp
 import mmcv
 from tqdm import tqdm
 from iba.datasets import build_dataset
-from iba.models import build_classifiers, get_module, VisionAttributor
+from iba.models import build_classifiers, VisionAttributor
 from copy import deepcopy
 from argparse import ArgumentParser
 

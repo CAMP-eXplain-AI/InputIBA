@@ -1,4 +1,6 @@
-_base_ = ['_base_/imagenet.py']
+_base_ = ['../_base_/stanford_cars.py']
+
+pretrained = 'workdirs/ckpts/vgg16_cars.pth'
 
 attributor = dict(
     type='VisionAttributor',
@@ -7,7 +9,8 @@ attributor = dict(
     classifier=dict(
         source='torchvision',
         type='vgg16',
-        pretrained=True),
+        num_classes=196,
+        pretrained=pretrained),
     feat_iba=dict(
         type='VisionFeatureIBA',
         input_or_output="output",
@@ -31,7 +34,7 @@ estimation_cfg = dict(
 attribution_cfg = dict(
     feat_iba=dict(
         batch_size=10,
-        beta=20),
+        beta=50),
     gan=dict(
         dataset_size=200,
         sub_dataset_size=20,
@@ -42,7 +45,7 @@ attribution_cfg = dict(
         critic_iter=5,
         verbose=False),
     input_iba=dict(
-        beta=20.0,
+        beta=50,
         opt_steps=60,
         lr=1.0,
         batch_size=10),
@@ -52,14 +55,3 @@ attribution_cfg = dict(
     input_mask=dict(
         show=False)
 )
-
-
-sanity_check = dict(
-    perturb_layers=[
-        'classifier.6',
-        'classifier.0',
-        'features.21',
-        'features.17',
-        'features.7',
-        'features.0'],
-    check='img_iba')

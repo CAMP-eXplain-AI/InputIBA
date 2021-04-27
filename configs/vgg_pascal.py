@@ -3,27 +3,31 @@ _base_ = ['_base_/pascal.py']
 pretrained = 'workdirs/ckpts/vgg16_voc.pth'
 
 attributor = dict(
+    type='VisionAttributor',
     layer='features.17',
     use_softmax=True,
     classifier=dict(
+        source='torchvision',
         type='vgg16',
-        num_classes=20,
         pretrained=pretrained),
     feat_iba=dict(
+        type='VisionFeatureIBA',
         input_or_output="output",
         active_neurons_threshold=0.01,
         initial_alpha=5.0),
     input_iba=dict(
+        type='VisionInputIBA',
         initial_alpha=5.0,
         sigma=1.0),
     gan=dict(
+        type='VisionWGAN',
         generator=dict(type='VisionGenerator'),
         discriminator=dict(type='VisionDiscriminator'))
 )
 
 estimation_cfg = dict(
     n_samples=1000,
-    progbar=True,
+    progbar=False,
 )
 
 attribution_cfg = dict(
@@ -37,7 +41,8 @@ attribution_cfg = dict(
         batch_size=32,
         weight_clip=0.01,
         epochs=20,
-        critic_iter=5),
+        critic_iter=5,
+        verbose=False),
     input_iba=dict(
         beta=10.0,
         opt_steps=60,

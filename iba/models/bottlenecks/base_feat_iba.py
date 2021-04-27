@@ -105,13 +105,14 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
     def reset_estimator(self):
         pass
 
+    @abstractmethod
     def estimate(self,
                  model,
                  dataloader,
                  n_samples=10000,
                  progbar=False,
                  reset=True):
-        raise NotImplementedError()
+        pass
 
     @staticmethod
     def kl_div(r, lambda_, mean_r, std_r):

@@ -41,7 +41,8 @@ class PascalVOC(BaseDataset):
         self.ind_to_cls = {i: cls for i, cls in enumerate(self.CLASSES)}
 
         bbox_params = BboxParams(format='pascal_voc', label_fields=['labels'])
-        self.pipeline = build_pipeline(pipeline, default_args=dict(bbox_params=bbox_params))
+        self.pipeline = build_pipeline(
+            pipeline, default_args=dict(bbox_params=bbox_params))
 
         img_sets = mmcv.list_from_file(img_sets_file)
         self.with_mask = with_mask
@@ -65,13 +66,18 @@ class PascalVOC(BaseDataset):
 
     def __getitem__(self, idx):
         img_name = self.img_sets[idx]
-        img = cv2.cvtColor(cv2.imread(osp.join(self.img_root, f'{img_name}.jpg')), cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(
+            cv2.imread(osp.join(self.img_root, f'{img_name}.jpg')),
+            cv2.COLOR_BGR2RGB)
         bbox_info = self.get_bbox_info(img_name)
         bboxes = bbox_info['bboxes']
         labels = bbox_info['labels']
         if self.with_mask:
             masks = self.get_mask_info(img_name)
-            transformed = self.pipeline(image=img, bboxes=bboxes, labels=labels, masks=masks)
+            transformed = self.pipeline(image=img,
+                                        bboxes=bboxes,
+                                        labels=labels,
+                                        masks=masks)
         else:
             transformed = self.pipeline(image=img, bboxes=bboxes, labels=labels)
         img = transformed['image']
@@ -93,7 +99,7 @@ class PascalVOC(BaseDataset):
                 # For background image, take the class with highest probability from all the classes
                 one_hot_cls = np.argmax(pred)
                 labels = [one_hot_cls]
-        res = dict(img=img, bboxes=bboxes, img_name=img_name)
+        res = dict(input=img, bboxes=bboxes, input_name=img_name)
 
         if self.with_mask:
             masks = transformed['masks']
@@ -153,15 +159,15 @@ class PascalVOC(BaseDataset):
         else:
             bboxes_ignore = np.array(bboxes_ignore, ndmin=2) - 1
             labels_ignore = np.array(labels_ignore)
-        ann = dict(
-            bboxes=bboxes.astype(np.float32),
-            labels=labels.astype(np.int64),
-            bboxes_ignore=bboxes_ignore.astype(np.float32),
-            labels_ignore=labels_ignore.astype(np.int64))
+        ann = dict(bboxes=bboxes.astype(np.float32),
+                   labels=labels.astype(np.int64),
+                   bboxes_ignore=bboxes_ignore.astype(np.float32),
+                   labels_ignore=labels_ignore.astype(np.int64))
         return ann
 
     def get_mask_info(self, img_name):
-        gt_mask = np.array(Image.open(osp.join(self.gt_mask_root, f'{img_name}.png')))
+        gt_mask = np.array(
+            Image.open(osp.join(self.gt_mask_root, f'{img_name}.png')))
         masks = []
         for label in range(len(self.CLASSES)):
             # class indices in the mask is in the interval [1, 20]

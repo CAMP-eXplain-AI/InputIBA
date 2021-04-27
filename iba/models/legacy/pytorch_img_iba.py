@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch
 import warnings
 from contextlib import contextmanager
-from .utils import to_saliency_map, get_tqdm, ifnone
-from .pytorch import _SpatialGaussianKernel
+from iba.models.utils import to_saliency_map, get_tqdm, ifnone
+from iba.models.legacy.pytorch import _SpatialGaussianKernel
 
 
 class ImageIBA(nn.Module):
@@ -81,11 +81,7 @@ class ImageIBA(nn.Module):
         return -0.5 * (1 + log_var - mu**2 - log_var.exp())
 
     @staticmethod
-    def _kl_div(x,
-                image_mask,
-                lambda_,
-                mean_x,
-                std_x):
+    def _kl_div(x, image_mask, lambda_, mean_x, std_x):
         """
         x: unmasked variable
         img_mask: mask generated from GAN
@@ -95,13 +91,13 @@ class ImageIBA(nn.Module):
         """
         r_norm = (x - mean_x + image_mask *
                   (mean_x - x)) / ((1 - image_mask * lambda_) * std_x)
-        var_z = (1 - lambda_) ** 2 / (1 - image_mask * lambda_) ** 2
+        var_z = (1 - lambda_)**2 / (1 - image_mask * lambda_)**2
 
         log_var_z = torch.log(var_z)
 
         mu_z = r_norm * lambda_
 
-        capacity = -0.5 * (1 + log_var_z - mu_z ** 2 - var_z)
+        capacity = -0.5 * (1 + log_var_z - mu_z**2 - var_z)
         return capacity
 
     def _do_restrict_information(self, x, alpha):
@@ -119,10 +115,7 @@ class ImageIBA(nn.Module):
         # calculate kl divergence
         self._mean = ifnone(self._mean, torch.tensor(0.).to(self.device))
         self._std = ifnone(self._std, torch.tensor(1.).to(self.device))
-        self._buffer_capacity = self._kl_div(x,
-                                             self.img_mask,
-                                             lamb,
-                                             self._mean,
+        self._buffer_capacity = self._kl_div(x, self.img_mask, lamb, self._mean,
                                              self._std)
 
         # apply mask on sampled x

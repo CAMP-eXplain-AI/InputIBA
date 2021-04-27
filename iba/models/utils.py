@@ -24,105 +24,80 @@
 
 import numpy as np
 from skimage.transform import resize
-
-# this module should be independent of torch and tensorflow
-assert 'torch' not in globals()
-assert 'tf' not in globals()
-assert 'tensorflow' not in globals()
+import torch
+import torch.nn as nn
+from torchvision.transforms import Compose, Normalize
 
 
-class WelfordEstimator:
+class _IBAForwardHook:
+
+    def __init__(self, iba, input_or_output="output"):
+        self.iba = iba
+        self.input_or_output = input_or_output
+
+    def __call__(self, m, inputs, outputs):
+        if self.input_or_output == "input":
+            return self.iba(inputs)
+        elif self.input_or_output == "output":
+            return self.iba(outputs)
+
+
+class _InterruptExecution(Exception):
+    pass
+
+
+def tensor_to_np_img(img_t):
     """
-    Estimates the mean and standard derivation.
-    For the algorithm see `wikipedia <https://en.wikipedia.org/wiki/
-    Algorithms_for_calculating_variance#/Welford's_online_algorithm>`_.
-
-    Example:
-        Given a batch of images ``imgs`` with shape ``(10, 3, 64, 64)``, the mean and std could
-        be estimated as follows::
-
-            # exemplary data source: 5 batches of size 10, filled with random data
-            batch_generator = (torch.randn(10, 3, 64, 64) for _ in range(5))
-
-            estim = WelfordEstimator(3, 64, 64)
-            for batch in batch_generator:
-                estim(batch)
-
-            # returns the estimated mean
-            estim.mean()
-
-            # returns the estimated std
-            estim.std()
-
-            # returns the number of seen samples, here 10
-            estim.n_samples()
-
-            # returns a mask with active neurons
-            estim.active_neurons()
+    Convert a torch tensor of shape ``(c, h, w)`` to a numpy array of shape ``(h, w, c)``
+    and reverse the torchvision prepocessing.
     """
+    return Compose([
+        Normalize(mean=[0, 0, 0], std=[1 / 0.229, 1 / 0.224, 1 / 0.225]),
+        Normalize(std=[1, 1, 1], mean=[-0.485, -0.456, -0.406]),
+    ])(img_t).detach().cpu().numpy().transpose(1, 2, 0)
 
-    def __init__(self):
+
+class _SpatialGaussianKernel(nn.Module):
+    """ A simple convolutional layer with fixed gaussian kernels, used to smoothen the input """
+
+    def __init__(
+        self,
+        kernel_size,
+        sigma,
+        channels,
+    ):
         super().__init__()
-        self.reset()
+        self.sigma = sigma
+        self.kernel_size = kernel_size
+        assert kernel_size % 2 == 1, \
+            "kernel_size must be an odd number (for padding), {} given".format(self.kernel_size)
+        variance = sigma**2.
+        x_cord = torch.arange(kernel_size, dtype=torch.float)
+        x_grid = x_cord.repeat(kernel_size).view(kernel_size, kernel_size)
+        y_grid = x_grid.t()
+        xy_grid = torch.stack([x_grid, y_grid], dim=-1)
+        mean_xy = (kernel_size - 1) / 2.
+        kernel_2d = (1. / (2. * np.pi * variance)) * torch.exp(-torch.sum(
+            (xy_grid - mean_xy)**2., dim=-1) / (2 * variance))
+        kernel_2d = kernel_2d / kernel_2d.sum()
+        kernel_3d = kernel_2d.expand(channels, 1, -1,
+                                     -1)  # expand in channel dimension
+        self.conv = nn.Conv2d(in_channels=channels,
+                              out_channels=channels,
+                              padding=0,
+                              kernel_size=kernel_size,
+                              groups=channels,
+                              bias=False)
+        self.conv.weight.data.copy_(kernel_3d)
+        self.conv.weight.requires_grad = False
+        self.pad = nn.ReflectionPad2d(int((kernel_size - 1) / 2))
 
-    def reset(self):
-        """Resets the estimates."""
-        self.m = None
-        self.s = None
-        self._n_samples = 0
-        self._neuron_nonzero = None
+    def parameters(self, **kwargs):
+        """returns no parameters"""
+        return []
 
-    def fit(self, x):
-        """ Update estimates without altering x """
-        if self._n_samples == 0:
-            # Initialize on first datapoint
-            shape = x.shape[1:]
-            self.m = np.zeros(shape)
-            self.s = np.zeros(shape)
-            self._neuron_nonzero = np.zeros(shape, dtype='long')
-        for xi in x:
-            self._neuron_nonzero += (xi != 0.)
-            old_m = self.m.copy()
-            self.m = self.m + (xi - self.m) / (self._n_samples + 1)
-            self.s = self.s + (xi - self.m) * (xi - old_m)
-            self._n_samples += 1
-        return x
-
-    def n_samples(self):
-        """ Returns the number of seen samples. """
-        return self._n_samples
-
-    def mean(self):
-        """ Returns the estimate of the mean. """
-        return self.m
-
-    def std(self):
-        """ Returns the estimate of the standard derivation."""
-        return np.sqrt(self.s / (self._n_samples - 1))
-
-    def active_neurons(self, threshold=0.01):
-        """
-        Returns a mask of all active neurons.
-        A neuron is considered active if ``n_nonzero / n_samples  > threshold``
-        """
-        return (self._neuron_nonzero.astype(np.float32) /
-                self._n_samples) > threshold
-
-    def state_dict(self):
-        """ Returns internal state. Useful for saving to disk."""
-        return {
-            'm': self.m,
-            's': self.s,
-            'n_samples': self._n_samples,
-            'neuron_nonzero': self._neuron_nonzero,
-        }
-
-    def load_state_dict(self, state):
-        """ Loads the internal state of the estimator. """
-        self.m = state['m']
-        self.s = state['s']
-        self._n_samples = state['n_samples']
-        self._neuron_nonzero = state['neuron_nonzero']
+    def forward(self, x):
+        return self.conv(self.pad(x))
 
 
 def to_saliency_map(capacity, shape=None):
@@ -183,31 +158,6 @@ def ifnone(a, b):
 def to_unit_interval(x):
     """Scales ``x`` to be in ``[0, 1]``."""
     return (x - x.min()) / (x.max() - x.min())
-
-
-def load_monkeys(center_crop=True, size=224, pil=False):
-    """Returns the monkey tests img."""
-    from urllib.request import urlopen
-    from io import BytesIO
-    from PIL import Image
-
-    if size is not None and type(size) == int:
-        size = (size, size)
-
-    resp = urlopen("http://farm1.static.flickr.com/95/247213534_e8be5222be.jpg")
-    img_bytes = resp.read()
-    img = Image.open(BytesIO(img_bytes))
-    target = 382
-    if pil:
-        return img, target
-
-    w, h = img.size
-    cl = (w - h) // 2
-    if center_crop:
-        img = img.crop((cl, 0, cl + h, h))
-    if size is not None:
-        img = img.resize(size)
-    return np.array(img), target
 
 
 def plot_saliency_map(saliency_map,

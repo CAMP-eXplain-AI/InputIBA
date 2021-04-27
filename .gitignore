@@ -9,6 +9,7 @@ __pycache__/
 
 workdirs/
 data
+configs/extra_experiments/
 .pytest_cache/
 .coverage
 scripts/

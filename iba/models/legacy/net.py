@@ -1,14 +1,13 @@
 import torch
-import torch.nn.functional as F
-from .gan import WGAN_CP
-from .pytorch_img_iba import ImageIBA
+from iba.models.legacy.gan import WGAN_CP
+from iba.models.legacy.pytorch_img_iba import ImageIBA
 import matplotlib.pyplot as plt
 import os.path as osp
 import mmcv
 import numpy as np
 from PIL import Image
-from .model_zoo import build_classifiers
-from .pytorch import IBA
+from iba.models.model_zoo import build_classifiers
+from iba.models.legacy.pytorch import IBA
 from copy import deepcopy
 
 
@@ -72,17 +71,21 @@ class Attributor:
                            device=self.device,
                            **img_iba_cfg)
         img_iba_heatmap = img_iba.analyze(img.unsqueeze(0), closure, **attr_cfg)
-        img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean([0, 1]).numpy()
+        img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean(
+            [0, 1]).numpy()
         return img_mask, img_iba_heatmap
 
     @staticmethod
     def get_closure(classifier, target, use_softmax, batch_size=None):
         if use_softmax:
-            closure = lambda x: -torch.log_softmax(classifier(x), 1)[:, target].mean()
+            closure = lambda x: -torch.log_softmax(classifier(x), 1)[:, target
+                                                                    ].mean()
         else:
             assert batch_size is not None
             # target is binary encoded and it is for a single sample
-            assert isinstance(target, torch.Tensor) and target.max() <= 1 and target.dim() == 1
+            assert isinstance(
+                target,
+                torch.Tensor) and target.max() <= 1 and target.dim() == 1
             raise NotImplementedError('Currently only support softmax')
         return closure
 

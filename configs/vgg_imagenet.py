@@ -1,20 +1,26 @@
 _base_ = ['_base_/imagenet.py']
 
 attributor = dict(
+    type='VisionAttributor',
     layer='features.17',
     use_softmax=True,
     classifier=dict(
         source='torchvision',
         type='vgg16',
         pretrained=True),
-    iba=dict(
+    feat_iba=dict(
+        type='VisionFeatureIBA',
         input_or_output="output",
         active_neurons_threshold=0.01,
         initial_alpha=5.0),
-    img_iba=dict(
+    input_iba=dict(
+        type='VisionInputIBA',
         initial_alpha=5.0,
-        sigma=1.0,
-    )
+        sigma=1.0),
+    gan=dict(
+        type='VisionWGAN',
+        generator=dict(type='VisionGenerator'),
+        discriminator=dict(type='VisionDiscriminator'))
 )
 
 estimation_cfg = dict(
@@ -23,7 +29,7 @@ estimation_cfg = dict(
 )
 
 attribution_cfg = dict(
-    iba=dict(
+    feat_iba=dict(
         batch_size=10,
         beta=20),
     gan=dict(
@@ -35,7 +41,7 @@ attribution_cfg = dict(
         epochs=20,
         critic_iter=5,
         verbose=False),
-    img_iba=dict(
+    input_iba=dict(
         beta=20.0,
         opt_steps=60,
         lr=1.0,
@@ -43,7 +49,7 @@ attribution_cfg = dict(
     feat_mask=dict(
         upscale=True,
         show=False),
-    img_mask=dict(
+    input_mask=dict(
         show=False)
 )
 

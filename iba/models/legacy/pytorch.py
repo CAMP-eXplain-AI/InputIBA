@@ -20,152 +20,17 @@
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# THE SOFTWARE.                  F
 
 import numpy as np
 import torch.nn as nn
 import torch
 import warnings
 from contextlib import contextmanager
-from torchvision.transforms import Normalize, Compose
-from .utils import to_saliency_map, get_tqdm, ifnone
-from .model_zoo import get_module
-
-
-def tensor_to_np_img(img_t):
-    """
-    Convert a torch tensor of shape ``(c, h, w)`` to a numpy array of shape ``(h, w, c)``
-    and reverse the torchvision prepocessing.
-    """
-    return Compose([
-        Normalize(mean=[0, 0, 0], std=[1 / 0.229, 1 / 0.224, 1 / 0.225]),
-        Normalize(std=[1, 1, 1], mean=[-0.485, -0.456, -0.406]),
-    ])(img_t).detach().cpu().numpy().transpose(1, 2, 0)
-
-
-class _SpatialGaussianKernel(nn.Module):
-    """ A simple convolutional layer with fixed gaussian kernels, used to smoothen the input """
-
-    def __init__(
-        self,
-        kernel_size,
-        sigma,
-        channels,
-    ):
-        super().__init__()
-        self.sigma = sigma
-        self.kernel_size = kernel_size
-        assert kernel_size % 2 == 1, \
-            "kernel_size must be an odd number (for padding), {} given".format(self.kernel_size)
-        variance = sigma**2.
-        x_cord = torch.arange(kernel_size, dtype=torch.float)
-        x_grid = x_cord.repeat(kernel_size).view(kernel_size, kernel_size)
-        y_grid = x_grid.t()
-        xy_grid = torch.stack([x_grid, y_grid], dim=-1)
-        mean_xy = (kernel_size - 1) / 2.
-        kernel_2d = (1. / (2. * np.pi * variance)) * torch.exp(-torch.sum(
-            (xy_grid - mean_xy)**2., dim=-1) / (2 * variance))
-        kernel_2d = kernel_2d / kernel_2d.sum()
-        kernel_3d = kernel_2d.expand(channels, 1, -1,
-                                     -1)  # expand in channel dimension
-        self.conv = nn.Conv2d(in_channels=channels,
-                              out_channels=channels,
-                              padding=0,
-                              kernel_size=kernel_size,
-                              groups=channels,
-                              bias=False)
-        self.conv.weight.data.copy_(kernel_3d)
-        self.conv.weight.requires_grad = False
-        self.pad = nn.ReflectionPad2d(int((kernel_size - 1) / 2))
-
-    def parameters(self, **kwargs):
-        """returns no parameters"""
-        return []
-
-    def forward(self, x):
-        return self.conv(self.pad(x))
-
-
-class TorchWelfordEstimator(nn.Module):
-    """
-    Estimates the mean and standard derivation.
-    For the algorithm see ``https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance``.
-
-    Example:
-        Given a batch of images ``imgs`` with shape ``(10, 3, 64, 64)``, the mean and std could
-        be estimated as follows::
-
-            # exemplary data source: 5 batches of size 10, filled with random data
-            batch_generator = (torch.randn(10, 3, 64, 64) for _ in range(5))
-
-            estim = WelfordEstimator(3, 64, 64)
-            for batch in batch_generator:
-                estim(batch)
-
-            # returns the estimated mean
-            estim.mean()
-
-            # returns the estimated std
-            estim.std()
-
-            # returns the number of samples, here 10
-            estim.n_samples()
-
-            # returns a mask with active neurons
-            estim.active_neurons()
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.device = None  # Defined on first forward pass
-        self.shape = None  # Defined on first forward pass
-        self.register_buffer('_n_samples', torch.tensor([0], dtype=torch.long))
-
-    def _init(self, shape, device):
-        self.device = device
-        self.shape = shape
-        self.register_buffer('m', torch.zeros(*shape))
-        self.register_buffer('s', torch.zeros(*shape))
-        self.register_buffer('_neuron_nonzero',
-                             torch.zeros(*shape, dtype=torch.long))
-        self.to(device)
-
-    def forward(self, x):
-        """ Update estimates without altering x """
-        if self.shape is None:
-            # Initialize runnnig mean and std on first datapoint
-            self._init(x.shape[1:], x.device)
-        for xi in x:
-            self._neuron_nonzero += (xi != 0.).long()
-            old_m = self.m.clone()
-            self.m = self.m + (xi - self.m) / (self._n_samples.float() + 1)
-            self.s = self.s + (xi - self.m) * (xi - old_m)
-            self._n_samples += 1
-        return x
-
-    def n_samples(self):
-        """ Returns the number of seen samples. """
-        return int(self._n_samples.item())
-
-    def mean(self):
-        """ Returns the estimate of the mean. """
-        return self.m
-
-    def std(self):
-        """returns the estimate of the standard derivation."""
-        return torch.sqrt(self.s / (self._n_samples.float() - 1))
-
-    def active_neurons(self, threshold=0.01):
-        """
-        Returns a mask of all active neurons.
-        A neuron is considered active if ``n_nonzero / n_samples  > threshold``
-        """
-        return (self._neuron_nonzero.float() /
-                self._n_samples.float()) > threshold
-
-
-class _InterruptExecution(Exception):
-    pass
+from iba.models.utils import to_saliency_map, get_tqdm, ifnone, \
+    _SpatialGaussianKernel, _InterruptExecution
+from iba.models.estimators.estimators import VisionWelfordEstimator
+from iba.models.model_zoo import get_module
 
 
 class _IBAForwardHook:
@@ -242,7 +107,7 @@ class IBA(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self._buffer_capacity = None  # Filled on forward pass, used for loss
         self.sigma = sigma
-        self.estimator = ifnone(estimator, TorchWelfordEstimator())
+        self.estimator = ifnone(estimator, VisionWelfordEstimator())
         self.device = None
         self._estimate = False
         self._mean = feature_mean
@@ -267,12 +132,12 @@ class IBA(nn.Module):
             raise ValueError(
                 'context and layer cannot be None at the same time')
 
-    def _reset_alpha(self):
+    def reset_alpha(self):
         """ Used to reset the mask to train on another sample """
         with torch.no_grad():
             self.alpha.fill_(self.initial_alpha)
 
-    def _build(self):
+    def init_alpha_and_kernel(self):
         """
         Initialize alpha with the same shape as the features.
         We use the estimator to obtain shape and device.
@@ -422,7 +287,7 @@ class IBA(nn.Module):
         Resets the estimator. Useful if the distribution changes. Which can happen if you
         trained the model more.
         """
-        self.estimator = TorchWelfordEstimator()
+        self.estimator = VisionWelfordEstimator()
 
     def estimate(self,
                  model,
@@ -483,7 +348,7 @@ class IBA(nn.Module):
         # After estimaton, feature map dimensions are known and
         # we can initialize alpha and the smoothing kernel
         if self.alpha is None:
-            self._build()
+            self.init_alpha_and_kernel()
 
     @contextmanager
     def restrict_flow(self):
@@ -533,7 +398,7 @@ class IBA(nn.Module):
         batch = input_t.expand(batch_size, -1, -1, -1)
 
         # Reset from previous run or modifications
-        self._reset_alpha()
+        self.reset_alpha()
         optimizer = torch.optim.Adam(lr=lr, params=[self.alpha])
 
         if self.estimator.n_samples() < 1000:

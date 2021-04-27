@@ -5,30 +5,30 @@ from iba.evaluation.base import BaseEvaluation
 
 class SensitivityN(BaseEvaluation):
 
-    def __init__(self, classifier, img_size, n, num_masks=100):
+    def __init__(self, classifier, input_size, n, num_masks=100):
         self.classifier = classifier
         self.n = n
         self.device = next(self.classifier.parameters()).device
         self.indices, self.masks = self._generate_random_masks(
-            num_masks, img_size, device=self.device)
+            num_masks, input_size, device=self.device)
 
-    def evaluate(   # noqa
+    def evaluate(  # noqa
             self,
             heatmap: torch.Tensor,
-            img: torch.Tensor,
+            input_tensor: torch.Tensor,
             target: int,
             calculate_corr=False) -> dict:
-        pertubated_imgs = []
+        pertubated_inputs = []
         sum_attributions = []
         for mask in self.masks:
             # perturb is done by interpolation
-            pertubated_imgs.append(img * (1 - mask))
+            pertubated_inputs.append(input_tensor * (1 - mask))
             sum_attributions.append((heatmap * mask).sum())
         sum_attributions = torch.stack(sum_attributions)
-        input_imgs = pertubated_imgs + [img]
+        input_inputs = pertubated_inputs + [input_tensor]
         with torch.no_grad():
-            input_imgs = torch.stack(input_imgs).to(self.device)
-            output = self.classifier(input_imgs)
+            input_inputs = torch.stack(input_inputs).to(self.device)
+            output = self.classifier(input_inputs)
         output_pertubated = output[:-1]
         output_clean = output[-1:]
 
@@ -47,7 +47,7 @@ class SensitivityN(BaseEvaluation):
             "sum_attributions": sum_attributions
         }
 
-    def _generate_random_masks(self, num_masks, img_size, device='cuda:0'):
+    def _generate_random_masks(self, num_masks, input_size, device='cuda:0'):
         """
         generate random masks with n pixel set to zero
         Args:
@@ -58,9 +58,10 @@ class SensitivityN(BaseEvaluation):
         """
         indices = []
         masks = []
-        h, w = img_size
+        h, w = input_size
         for _ in range(num_masks):
-            idxs = np.unravel_index(np.random.choice(h * w, self.n, replace=False), (h, w))
+            idxs = np.unravel_index(
+                np.random.choice(h * w, self.n, replace=False), (h, w))
             indices.append(idxs)
             mask = np.zeros((h, w))
             mask[idxs] = 1

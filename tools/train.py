@@ -23,11 +23,14 @@ def parse_args():
                         help='Structure of output folders that store the attribution maps',
                         choices=['image_folder', 'single_folder'],
                         default='single_folder')
+    parser.add_argument('--pbar',
+                        action='store_true',
+                        help='Whether to use a progressbar to track the main loop')
     args = parser.parse_args()
     return args
 
 
-def train(config, work_dir, gpu_id=0, out_style='single_folder'):
+def train(config, work_dir, gpu_id=0, out_style='single_folder', pbar=False):
     cfg = mmcv.Config.fromfile(config)
     mmcv.mkdir_or_exist(work_dir)
     if len(os.listdir(work_dir)) > 0:
@@ -38,14 +41,15 @@ def train(config, work_dir, gpu_id=0, out_style='single_folder'):
     cfg.dump(osp.join(work_dir, 'config.py'))
     logger = mmcv.get_logger('iba', log_file=osp.join(work_dir, 'log_file.log'))
     device = f'cuda:{gpu_id}'
-    train_attributor(cfg, logger, work_dir=work_dir, device=device, out_style=out_style)
+    train_attributor(cfg, logger, work_dir=work_dir, device=device, out_style=out_style, pbar=pbar)
 
 
 def train_attributor(cfg: mmcv.Config,
                      logger,
                      work_dir,
                      device='cuda:0',
-                     out_style='single_folder'):
+                     out_style='single_folder',
+                     pbar=False):
     assert out_style in ('single_folder', 'image_folder'), \
         f"Invalid out_style, should be one of ('single_folder', 'image_folder'), but got {out_style}"
     train_set = build_dataset(cfg.data['train'])
@@ -58,7 +62,12 @@ def train_attributor(cfg: mmcv.Config,
     attributor = Attributor(cfg.attributor, device=device)
     attributor.estimate(train_loader, cfg.estimation_cfg)
 
-    for batch in tqdm(val_loader, total=len(val_loader)):
+    if pbar:
+        bar = tqdm(val_loader, total=len(val_loader))
+    else:
+        bar = None
+
+    for batch in val_loader:
         imgs = batch['img']
         targets = batch['target']
         img_names = batch['img_name']
@@ -98,6 +107,11 @@ def train_attributor(cfg: mmcv.Config,
             attributor.show_img_mask(out_file=img_mask_file,
                                      **cfg.attribution_cfg.get('img_mask', {}))
             gc.collect()
+
+            if bar is not None:
+                bar.update(1)
+    if bar is not None:
+        bar.close()
 
 
 def main():

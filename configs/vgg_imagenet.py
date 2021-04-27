@@ -19,7 +19,7 @@ attributor = dict(
 
 estimation_cfg = dict(
     n_samples=1000,
-    progbar=True,
+    progbar=False,
 )
 
 attribution_cfg = dict(

@@ -17,25 +17,16 @@ def parse_args():
     parser.add_argument('work_dir', help='directory to save the result file')
     parser.add_argument('file_name',
                         help='file name for saving the result file')
-    parser.add_argument(
-        '--scores-file',
-        help=
-        'File that records the predicted probability of corresponding target class'
-    )
-    parser.add_argument(
-        '--scores-threshold',
-        type=float,
-        default=0.6,
-        help=
-        'Threshold for filtering the samples with low predicted target probabilities'
-    )
-    parser.add_argument(
-        '--num-samples',
-        type=int,
-        default=0,
-        help=
-        'Number of samples to check, 0 means checking all the (filtered) samples'
-    )
+    parser.add_argument('--scores-file',
+                        help='File that records the predicted probability of corresponding target class')
+    parser.add_argument('--scores-threshold',
+                        type=float,
+                        default=0.6,
+                        help='Threshold for filtering the samples with low predicted target probabilities')
+    parser.add_argument('--num-samples',
+                        type=int,
+                        default=0,
+                        help='Number of samples to check, 0 means checking all the (filtered) samples')
     parser.add_argument('--base-threshold',
                         type=float,
                         default=0.1,

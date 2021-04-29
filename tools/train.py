@@ -14,18 +14,11 @@ import gc
 
 def parse_args():
     parser = ArgumentParser('train a model')
-    parser.add_argument(
-        'config',
-        help='configuration file')
-    parser.add_argument(
-        '--work-dir',
-        help='working directory',
-        default=os.getcwd())
-    parser.add_argument(
-        '--gpu-id',
-        help='gpu id',
-        type=int,
-        default=0)
+    parser.add_argument('config', help='configuration file')
+    parser.add_argument('--work-dir',
+                        help='working directory',
+                        default=os.getcwd())
+    parser.add_argument('--gpu-id', help='gpu id', type=int, default=0)
     parser.add_argument(
         '--out-style',
         help='Structure of output folders that store the attribution maps',

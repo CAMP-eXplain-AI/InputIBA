@@ -25,6 +25,15 @@ def parse_args():
         default='features.30',
         help='Saliency layer of Grad-Cam, only useful when method is grad_cam')
     parser.add_argument('--gpu-id', type=int, default=0, help='GPU Id')
+    parser.add_argument(
+        '--out-style',
+        help='Structure of output folders that store the attribution maps',
+        choices=['image_folder', 'single_folder'],
+        default='single_folder')
+    parser.add_argument(
+        '--pbar',
+        action='store_true',
+        help='Whether to use a progressbar to track the main loop')
     args = parser.parse_args()
     return args
 
@@ -43,8 +52,10 @@ class Baseline:
             def make_attribution(classifier):
 
                 def attribution_func(input, target):
-                    saliency_map, _ = extremal_perturbation(
-                        classifier, input, target)
+                    saliency_map, _ = extremal_perturbation(classifier,
+                                                            input,
+                                                            target,
+                                                            areas=[0.3])
                     return saliency_map
 
                 return attribution_func
@@ -90,7 +101,15 @@ class Baseline:
         return self.attribute(input_tensor, target=target, **kwargs)
 
 
-def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
+def train_baseline(cfg,
+                   work_dir,
+                   method,
+                   saliency_layer=None,
+                   device='cuda:0',
+                   out_style='single_folder',
+                   pbar=False):
+    assert out_style in ('single_folder', 'image_folder'), \
+        f"Invalid out_style, should be one of ('single_folder', 'image_folder'), but got {out_style}"
     val_set = build_dataset(cfg.data['val'])
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})
@@ -100,7 +119,12 @@ def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
     classifier.eval()
     baseline = Baseline(classifier, method, saliency_layer)
 
-    for batch in tqdm(val_loader, total=len(val_loader)):
+    if pbar:
+        bar = tqdm(val_loader, total=len(val_loader))
+    else:
+        bar = None
+
+    for batch in val_loader:
         inputs = batch['input']
         targets = batch['target']
         input_names = batch['input_name']
@@ -120,8 +144,18 @@ def train_baseline(cfg, work_dir, method, saliency_layer=None, device='cuda:0'):
             attr_map = attr_map.mean((0, 1))
             attr_map = attr_map / attr_map.max()
 
-            out_file = osp.join(work_dir, input_name)
+            if out_style == 'single_folder':
+                out_file = osp.join(work_dir, input_name)
+            else:
+                sub_dir = val_set.ind_to_cls[target]
+                mmcv.mkdir_or_exist(osp.join(work_dir, sub_dir))
+                out_file = osp.join(work_dir, sub_dir, input_name)
             VisionAttributor.show_mask(attr_map, show=False, out_file=out_file)
+
+            if bar is not None:
+                bar.update(1)
+    if bar is not None:
+        bar.close()
 
 
 def main():
@@ -132,7 +166,9 @@ def main():
                    work_dir=args.work_dir,
                    method=args.method,
                    saliency_layer=args.saliency_layer,
-                   device=f'cuda:{args.gpu_id}')
+                   device=f'cuda:{args.gpu_id}',
+                   out_style=args.out_style,
+                   pbar=args.pbar)
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ from tqdm import tqdm
 def filter_samples(dataset, name_to_score_dict, threshold=0.6):
     valid_inds = []
     for i, sample in tqdm(enumerate(dataset), total=len(dataset)):
-        score = name_to_score_dict[sample['img_name']]
+        score = name_to_score_dict[sample['input_name']]
         if score >= threshold:
             valid_inds.append(i)
     return valid_inds

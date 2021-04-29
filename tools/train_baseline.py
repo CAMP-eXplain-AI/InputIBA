@@ -6,6 +6,7 @@ from torchray.attribution.extremal_perturbation import extremal_perturbation
 import torch
 from torch.utils.data import DataLoader, Subset
 import numpy as np
+import os
 import os.path as osp
 import mmcv
 from tqdm import tqdm
@@ -18,8 +19,8 @@ from argparse import ArgumentParser
 def parse_args():
     parser = ArgumentParser('Train other baselines')
     parser.add_argument('config', help='config file')
-    parser.add_argument('work_dir', help='working directory')
     parser.add_argument('method', type=str, help='baseline method')
+    parser.add_argument('--work-dir', help='working directory', default=os.getcwd())
     parser.add_argument('--saliency-layer',
                         type=str,
                         default='features.30',
@@ -103,8 +104,8 @@ class Baseline:
 
 
 def train_baseline(cfg,
-                   work_dir,
                    method,
+                   work_dir,
                    saliency_layer=None,
                    device='cuda:0',
                    out_style='single_folder',
@@ -168,8 +169,8 @@ def main():
     cfg = mmcv.Config.fromfile(args.config)
     mmcv.mkdir_or_exist(args.work_dir)
     train_baseline(cfg=cfg,
-                   work_dir=args.work_dir,
                    method=args.method,
+                   work_dir=args.work_dir,
                    saliency_layer=args.saliency_layer,
                    device=f'cuda:{args.gpu_id}',
                    out_style=args.out_style,

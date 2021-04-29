@@ -4,7 +4,8 @@ from captum.attr import IntegratedGradients
 from torchray.attribution.grad_cam import grad_cam
 from torchray.attribution.extremal_perturbation import extremal_perturbation
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
+import numpy as np
 import os.path as osp
 import mmcv
 from tqdm import tqdm
@@ -19,21 +20,21 @@ def parse_args():
     parser.add_argument('config', help='config file')
     parser.add_argument('work_dir', help='working directory')
     parser.add_argument('method', type=str, help='baseline method')
-    parser.add_argument(
-        '--saliency-layer',
-        type=str,
-        default='features.30',
-        help='Saliency layer of Grad-Cam, only useful when method is grad_cam')
+    parser.add_argument('--saliency-layer',
+                        type=str,
+                        default='features.30',
+                        help='Saliency layer of Grad-Cam, only useful when method is grad_cam')
     parser.add_argument('--gpu-id', type=int, default=0, help='GPU Id')
-    parser.add_argument(
-        '--out-style',
-        help='Structure of output folders that store the attribution maps',
-        choices=['image_folder', 'single_folder'],
-        default='single_folder')
-    parser.add_argument(
-        '--pbar',
-        action='store_true',
-        help='Whether to use a progressbar to track the main loop')
+    parser.add_argument('--out-style',
+                        help='Structure of output folders that store the attribution maps',
+                        choices=['image_folder', 'single_folder'],
+                        default='single_folder')
+    parser.add_argument('--pbar',
+                        action='store_true',
+                        help='Whether to use a progressbar to track the main loop')
+    parser.add_argument('--subset-file',
+                        help='A txt file, where each line stores the sample index in subset. '
+                             'Attribution is only applied on this subset')
     args = parser.parse_args()
     return args
 
@@ -107,10 +108,14 @@ def train_baseline(cfg,
                    saliency_layer=None,
                    device='cuda:0',
                    out_style='single_folder',
-                   pbar=False):
+                   pbar=False,
+                   subset_file=None):
     assert out_style in ('single_folder', 'image_folder'), \
         f"Invalid out_style, should be one of ('single_folder', 'image_folder'), but got {out_style}"
     val_set = build_dataset(cfg.data['val'])
+    if subset_file is not None:
+        subset_inds = np.loadtxt(subset_file, dtype=int)
+        val_set = Subset(val_set, indices=subset_inds)
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
@@ -168,7 +173,8 @@ def main():
                    saliency_layer=args.saliency_layer,
                    device=f'cuda:{args.gpu_id}',
                    out_style=args.out_style,
-                   pbar=args.pbar)
+                   pbar=args.pbar,
+                   subset_file=args.subset_file)
 
 
 if __name__ == '__main__':

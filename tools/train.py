@@ -1,4 +1,4 @@
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import os
 import os.path as osp
 import warnings
@@ -9,6 +9,7 @@ from iba.models import build_attributor
 from tqdm import tqdm
 from iba.datasets import build_dataset
 import torch
+import numpy as np
 import gc
 
 
@@ -19,20 +20,22 @@ def parse_args():
                         help='working directory',
                         default=os.getcwd())
     parser.add_argument('--gpu-id', help='gpu id', type=int, default=0)
-    parser.add_argument(
-        '--out-style',
-        help='Structure of output folders that store the attribution maps',
-        choices=['image_folder', 'single_folder'],
-        default='single_folder')
-    parser.add_argument(
-        '--pbar',
-        action='store_true',
-        help='Whether to use a progressbar to track the main loop')
+    parser.add_argument('--out-style',
+                        help='Structure of output folders that store the attribution maps',
+                        choices=['image_folder', 'single_folder'],
+                        default='single_folder')
+    parser.add_argument('--pbar',
+                        action='store_true',
+                        help='Whether to use a progressbar to track the main loop')
+    parser.add_argument('--subset-file',
+                        help='A txt file, where each line stores the sample index in subset. '
+                             'Attribution is only applied on this subset')
+
     args = parser.parse_args()
     return args
 
 
-def train(config, work_dir, gpu_id=0, out_style='single_folder', pbar=False):
+def train(config, work_dir, gpu_id=0, out_style='single_folder', pbar=False, subset_file=None):
     cfg = mmcv.Config.fromfile(config)
     mmcv.mkdir_or_exist(work_dir)
     if len(os.listdir(work_dir)) > 0:
@@ -48,7 +51,8 @@ def train(config, work_dir, gpu_id=0, out_style='single_folder', pbar=False):
                      work_dir=work_dir,
                      device=device,
                      out_style=out_style,
-                     pbar=pbar)
+                     pbar=pbar,
+                     subset_file=subset_file)
 
 
 def train_attributor(cfg: mmcv.Config,
@@ -56,11 +60,15 @@ def train_attributor(cfg: mmcv.Config,
                      work_dir,
                      device='cuda:0',
                      out_style='single_folder',
-                     pbar=False):
+                     pbar=False,
+                     subset_file=None):
     assert out_style in ('single_folder', 'image_folder'), \
         f"Invalid out_style, should be one of ('single_folder', 'image_folder'), but got {out_style}"
     train_set = build_dataset(cfg.data['train'])
     val_set = build_dataset(cfg.data['val'])
+    if subset_file is not None:
+        subset_inds = np.loadtxt(subset_file, dtype=int)
+        val_set = Subset(val_set, indices=subset_inds)
     train_loader = DataLoader(train_set, **cfg.data['data_loader'])
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})

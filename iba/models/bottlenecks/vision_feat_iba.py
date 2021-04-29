@@ -209,4 +209,4 @@ class VisionFeatureIBA(BaseFeatureIBA):
                 self.model_loss.append(model_loss.item())
                 self.information_loss.append(information_loss.item())
 
-        return self._get_saliency(mode=mode)
+        return self._get_saliency(mode=mode, shape=input_tensor.shape[2:])

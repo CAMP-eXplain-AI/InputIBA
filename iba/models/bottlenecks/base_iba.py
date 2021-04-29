@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import torch.nn as nn
 from contextlib import contextmanager
-from ..utils import _InterruptExecution
+from ..utils import _InterruptExecution, to_saliency_map
 import numpy as np
 
 
@@ -71,12 +71,12 @@ class BaseIBA(nn.Module, metaclass=ABCMeta):
     def capacity(self):
         return self.buffer_capacity.mean(dim=0)
 
-    def _get_saliency(self, mode='saliency'):
+    def _get_saliency(self, mode='saliency', shape=None):
         assert mode in ('saliency', 'capacity'), f"mode should be either 'saliency' or " \
                                                  f"'capacity', but got {mode}"
         capacity_np = self.capacity().detach().cpu().numpy()
         if mode == 'saliency':
-            return capacity_np.sum(1)
+            return to_saliency_map(capacity_np, shape)
         else:
             return capacity_np / float(np.log(2))
 

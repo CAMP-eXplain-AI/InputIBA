@@ -2,7 +2,6 @@ from .base_attributor import BaseAttributor
 from .builder import ATTRIBUTORS
 from ..bottlenecks import build_input_iba
 import torch
-import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 import os.path as osp

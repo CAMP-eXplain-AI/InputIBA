@@ -153,7 +153,10 @@ def train_baseline(cfg,
             if out_style == 'single_folder':
                 out_file = osp.join(work_dir, input_name)
             else:
-                sub_dir = val_set.ind_to_cls[target]
+                if isinstance(val_set, Subset):
+                    sub_dir = val_set.dataset.ind_to_cls[target]    # noqa
+                else:
+                    sub_dir = val_set.ind_to_cls[target]
                 mmcv.mkdir_or_exist(osp.join(work_dir, sub_dir))
                 out_file = osp.join(work_dir, sub_dir, input_name)
             VisionAttributor.show_mask(attr_map, show=False, out_file=out_file)

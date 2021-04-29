@@ -105,7 +105,10 @@ def train_attributor(cfg: mmcv.Config,
                     raise RuntimeError(
                         'For multi-label classification, saving the attribution maps with image folder'
                         'style is not possible')
-                sub_dir = val_set.ind_to_cls[target]
+                if isinstance(val_set, Subset):
+                    sub_dir = val_set.dataset.ind_to_cls[target]    # noqa
+                else:
+                    sub_dir = val_set.ind_to_cls[target]
 
                 img_mask_dir = osp.join(work_dir, 'input_masks', sub_dir)
                 feat_mask_dir = osp.join(work_dir, 'feat_masks', sub_dir)

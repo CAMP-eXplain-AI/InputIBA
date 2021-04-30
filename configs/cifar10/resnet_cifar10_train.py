@@ -3,6 +3,7 @@ _base_ = ['../_base_/cifar10.py']
 pretrained = 'workdirs/ckpts/resnet8_cifar10.pth'
 
 attributor = dict(
+    type='VisionAttributor',
     layer='layer2',
     use_softmax=True,
     classifier=dict(
@@ -11,23 +12,26 @@ attributor = dict(
         depth=8,
         num_classes=10,
         pretrained=pretrained),
-    iba=dict(
+    feat_iba=dict(
         input_or_output="output",
         active_neurons_threshold=0.01,
         initial_alpha=5.0),
-    img_iba=dict(
+    input_iba=dict(
         initial_alpha=5.0,
-        sigma=1.0,
-    )
+        sigma=1.0),
+    gan=dict(
+        type='VisionWGAN',
+        generator=dict(type='VisionGenerator'),
+        discriminator=dict(type='VisionDiscriminator'))
 )
 
 estimation_cfg = dict(
     n_samples=1000,
-    progbar=True,
+    progbar=False,
 )
 
 attribution_cfg = dict(
-    iba=dict(
+    feat_iba=dict(
         batch_size=10,
         beta=20),
     gan=dict(
@@ -37,8 +41,9 @@ attribution_cfg = dict(
         batch_size=32,
         weight_clip=0.01,
         epochs=20,
-        critic_iter=5),
-    img_iba=dict(
+        critic_iter=5,
+        verbose=False),
+    input_iba=dict(
         beta=20.0,
         opt_steps=60,
         lr=1.0,

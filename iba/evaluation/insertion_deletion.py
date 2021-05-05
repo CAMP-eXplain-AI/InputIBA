@@ -1,7 +1,7 @@
 import torch
-import torchvision
 import numpy as np
 from scipy.integrate import trapezoid
+from torchvision.transforms import GaussianBlur
 
 from iba.evaluation.base import BaseEvaluation
 from iba.evaluation.perturber import PixelPerturber
@@ -13,8 +13,7 @@ class InsertionDeletion(BaseEvaluation):
         self.classifier = classifier
         self.classifier.eval()
         self.pixel_batch_size = pixel_batch_size
-        self.gaussian_blurr = torchvision.transforms.GaussianBlur(
-            int(2 * sigma - 1), sigma)
+        self.gaussian_blurr = GaussianBlur(int(2 * sigma - 1), sigma)
 
     @torch.no_grad()
     def evaluate(self, heatmap, input_tensor, target):  # noqa
@@ -26,7 +25,8 @@ class InsertionDeletion(BaseEvaluation):
             target (int): class index of the image.
 
         Returns:
-            dict[str, Union[Tensor, np.array, float]]: a dictionary containing following fields
+            dict[str, Union[Tensor, np.array, float]]: a dictionary
+                containing following fields:
                 - del_scores: ndarray,
                 - ins_scores:
                 - del_input:
@@ -53,11 +53,12 @@ class InsertionDeletion(BaseEvaluation):
                                                    num_pixels, indices, target)
 
         # calculate AUC
-        insertion_auc = trapezoid(insertion_scores,
-                                  dx=1. / len(insertion_scores))
+        insertion_auc = trapezoid(
+            insertion_scores, dx=1. / len(insertion_scores))
         deletion_auc = trapezoid(deletion_scores, dx=1. / len(deletion_scores))
 
-        # deletion_input and insertion_input are final results, they are only used for debug purpose
+        # deletion_input and insertion_input are final results, they are
+        # only used for debug purpose
         # TODO check if it is necessary to convert the Tensors to np.ndarray
         return {
             "del_scores": deletion_scores,
@@ -85,7 +86,8 @@ class InsertionDeletion(BaseEvaluation):
         while replaced_pixels < num_pixels:
             perturbed_inputs = []
             for i in range(80):
-                batch = min(num_pixels - replaced_pixels, self.pixel_batch_size)
+                batch = min(num_pixels - replaced_pixels,
+                            self.pixel_batch_size)
 
                 # perturb # of pixel_batch_size pixels
                 for pixel in range(batch):

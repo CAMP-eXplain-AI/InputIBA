@@ -2,12 +2,6 @@
 import torch
 import numpy as np
 
-__all__ = [
-    'Perturber',
-    'PixelPerturber',
-    'GridPerturber',
-]
-
 
 class GridView:
     """ access something by 2D-tile indices """
@@ -59,7 +53,8 @@ class Perturber:
         raise NotImplementedError
 
     def get_idxes(self, hmap: np.ndarray, reverse=False) -> list:
-        # TODO: might not needed, we determine perturb priority outside perturber
+        # TODO: might not needed, we determine perturb priority outside
+        #  perturber
         """return a sorted list with shape length NUM_CELLS of
         which pixel/cell index to blur first"""
         raise NotImplementedError
@@ -92,9 +87,6 @@ class GridPerturber(Perturber):
         self.view = GridView(tuple(inp.shape[-2:]), tile_dim)
         self.current = inp.clone()
         self.baseline = baseline
-        # print("original shape ", self.current.img.shape)
-        # print("tile grid {}x{}".format(self.current.tiles_c, self.current.tiles_r))
-        # print("tile size {}x{}".format(self.current.tile_h, self.current.tile_w))
 
     def perturb(self, r: int, c: int):
         slc = self.view.tile_slice(r, c)

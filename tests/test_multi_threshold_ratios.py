@@ -27,7 +27,7 @@ class TestMultiThresholdRatios:
         assert 1.0 - res['auc'] < 0.01
 
     def test_case_2(self):
-        h, w= 100, 100
+        h, w = 100, 100
         bbox = np.array([40, 40, 60, 60])
         heatmap = np.zeros((h, w))
         heatmap[bbox[1] - 20: bbox[3] + 20, bbox[0] - 20: bbox[2] + 20] = 0.90

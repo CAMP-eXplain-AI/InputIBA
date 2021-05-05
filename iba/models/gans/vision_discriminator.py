@@ -15,29 +15,32 @@ class VisionDiscriminator(nn.Module):
         # Output_dim = 1
         self.main_module = nn.Sequential(
             # Image (Cx32x32)
-            nn.Conv2d(in_channels=channels,
-                      out_channels=channels * 2,
-                      kernel_size=4,
-                      stride=2,
-                      padding=1),
+            nn.Conv2d(
+                in_channels=channels,
+                out_channels=channels * 2,
+                kernel_size=4,
+                stride=2,
+                padding=1),
             nn.BatchNorm2d(num_features=channels * 2),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (256x16x16)
-            nn.Conv2d(in_channels=channels * 2,
-                      out_channels=channels * 4,
-                      kernel_size=4,
-                      stride=2,
-                      padding=1),
+            nn.Conv2d(
+                in_channels=channels * 2,
+                out_channels=channels * 4,
+                kernel_size=4,
+                stride=2,
+                padding=1),
             nn.BatchNorm2d(num_features=channels * 4),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (512x8x8)
-            nn.Conv2d(in_channels=channels * 4,
-                      out_channels=channels,
-                      kernel_size=3,
-                      stride=1,
-                      padding=1),
+            nn.Conv2d(
+                in_channels=channels * 4,
+                out_channels=channels,
+                kernel_size=3,
+                stride=1,
+                padding=1),
             nn.BatchNorm2d(num_features=channels),
             nn.LeakyReLU(0.2, inplace=True))
         # # output of main module --> State (1024x4x4)

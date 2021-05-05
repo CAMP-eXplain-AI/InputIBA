@@ -50,10 +50,9 @@ class ImageIBA(nn.Module):
         We use the estimator to obtain shape and device.
         """
         shape = self.img_mask.shape
-        self.alpha = nn.Parameter(torch.full(shape,
-                                             self.initial_alpha,
-                                             device=self.device),
-                                  requires_grad=True)
+        self.alpha = nn.Parameter(
+            torch.full(shape, self.initial_alpha, device=self.device),
+            requires_grad=True)
         if self.sigma is not None and self.sigma > 0:
             # Construct static conv layer with gaussian kernel
             kernel_size = int(round(
@@ -115,8 +114,8 @@ class ImageIBA(nn.Module):
         # calculate kl divergence
         self._mean = ifnone(self._mean, torch.tensor(0.).to(self.device))
         self._std = ifnone(self._std, torch.tensor(1.).to(self.device))
-        self._buffer_capacity = self._kl_div(x, self.img_mask, lamb, self._mean,
-                                             self._std)
+        self._buffer_capacity = self._kl_div(x, self.img_mask, lamb,
+                                             self._mean, self._std)
 
         # apply mask on sampled x
         eps = x.data.new(x.size()).normal_()
@@ -194,9 +193,10 @@ class ImageIBA(nn.Module):
         opt_range = range(opt_steps)
         try:
             tqdm = get_tqdm()
-            opt_range = tqdm(opt_range,
-                             desc="Training Bottleneck",
-                             disable=not self.progbar)
+            opt_range = tqdm(
+                opt_range,
+                desc="Training Bottleneck",
+                disable=not self.progbar)
         except ImportError:
             if self.progbar:
                 warnings.warn("Cannot load tqdm! Sorry, no progress bar")

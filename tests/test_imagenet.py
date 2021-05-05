@@ -11,13 +11,23 @@ def test_imagenet():
 
     img_size = 224
     train_pipeline = [
-        dict(type='Resize', height=img_size, width=img_size, always_apply=True),
-        dict(type='Normalize', always_apply=True, **img_norm_cfg),
+        dict(type='Resize',
+             height=img_size,
+             width=img_size,
+             always_apply=True),
+        dict(type='Normalize',
+             always_apply=True,
+             **img_norm_cfg),
         dict(type='ToTensor')]
 
     test_pipeline = [
-        dict(type='Resize', height=img_size, width=img_size, always_apply=True),
-        dict(type='Normalize', always_apply=True, **img_norm_cfg),
+        dict(type='Resize',
+             height=img_size,
+             width=img_size,
+             always_apply=True),
+        dict(type='Normalize',
+             always_apply=True,
+             **img_norm_cfg),
         dict(type='ToTensor')]
 
     data = dict(
@@ -49,5 +59,5 @@ def test_imagenet():
     bboxes = sample['bboxes']
 
     assert isinstance(img, torch.Tensor) and img.shape[0] == 3
-    assert isinstance(bboxes, np.ndarray) and bboxes.shape[-1] == 4 and bboxes.dtype == int
-
+    assert isinstance(bboxes, np.ndarray) \
+           and bboxes.shape[-1] == 4 and bboxes.dtype == int

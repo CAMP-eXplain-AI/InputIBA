@@ -1,4 +1,3 @@
-from .models import *
-from .evaluation import *
-from .utils import *
-from .datasets import *
+from .version import __version__, short_version
+
+__all__ = ['__version__', 'short_version']

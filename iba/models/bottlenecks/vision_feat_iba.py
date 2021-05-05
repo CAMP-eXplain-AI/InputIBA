@@ -12,24 +12,6 @@ class VisionFeatureIBA(BaseFeatureIBA):
     """
         iba finds relevant features of your model by applying noise to
         intermediate features.
-
-        Example: ::
-
-            model = Net()
-            # Create the Per-Sample Bottleneck:
-            iba = iba(model.conv4)
-
-            # Estimate the mean and variance.
-            iba.estimate(model, datagen)
-
-            img, target = next(iter(datagen(batch_size=1)))
-
-            # Closure that returns the loss for one batch
-            model_loss_closure = lambda x: F.nll_loss(F.log_softmax(model(x), target)
-
-            # Explain class target for the given img
-            saliency_map = iba.analyze(img.to(dev), model_loss_closure)
-            plot_saliency_map(img.to(dev))
     """
 
     def __init__(self, **kwargs):
@@ -42,14 +24,14 @@ class VisionFeatureIBA(BaseFeatureIBA):
     def init_alpha_and_kernel(self):
         # TODO to check if it is neccessary to keep it in base class
         if self.estimator.n_samples() <= 0:
-            raise RuntimeWarning("You need to estimate the feature distribution"
-                                 " before using the bottleneck.")
+            raise RuntimeWarning(
+                "You need to estimate the feature distribution"
+                " before using the bottleneck.")
         shape = self.estimator.shape
         device = self.estimator.device
-        self.alpha = nn.Parameter(torch.full(shape,
-                                             self.initial_alpha,
-                                             device=device),
-                                  requires_grad=True)
+        self.alpha = nn.Parameter(
+            torch.full(shape, self.initial_alpha, device=device),
+            requires_grad=True)
         if self.sigma is not None and self.sigma > 0:
             # Construct static conv layer with gaussian kernel
             kernel_size = int(round(
@@ -102,9 +84,9 @@ class VisionFeatureIBA(BaseFeatureIBA):
 
     def do_restrict_info(self, x, alpha):
         if alpha is None:
-            raise RuntimeWarning(
-                "Alpha not initialized. Run _init() before using the bottleneck."
-            )
+            raise RuntimeWarning("Alpha not initialized. Run "
+                                 "init_alpha_and_kernel() "
+                                 "before using the bottleneck.")
 
         if self.input_mean is None:
             self.input_mean = self.estimator.mean()
@@ -120,8 +102,8 @@ class VisionFeatureIBA(BaseFeatureIBA):
         lamb = lamb.expand(x.shape[0], x.shape[1], -1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
-        self.buffer_capacity = self.kl_div(x, lamb, self.input_mean,
-                                           self.input_std) * self.active_neurons
+        self.buffer_capacity = self.kl_div(
+            x, lamb, self.input_mean, self.input_std) * self.active_neurons
 
         eps = x.data.new(x.size()).normal_()
         ε = self.input_std * eps + self.input_mean
@@ -156,8 +138,9 @@ class VisionFeatureIBA(BaseFeatureIBA):
             min_std=0.01,
             logger=None,
             log_every_steps=-1):
-        assert input_tensor.shape[
-            0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]} samples"
+        assert input_tensor.shape[0] == 1, \
+            f"We can only fit one sample a time, " \
+            f"but got {input_tensor.shape[0]} samples"
         if logger is None:
             logger = mmcv.get_logger('iba')
 
@@ -168,9 +151,9 @@ class VisionFeatureIBA(BaseFeatureIBA):
         optimizer = torch.optim.Adam(lr=lr, params=[self.alpha])
 
         if self.estimator.n_samples() < 1000:
-            warnings.warn(
-                f"Selected estimator was only fitted on {self.estimator.n_samples()} "
-                f"samples. Might not be enough! We recommend 10.000 samples.")
+            warnings.warn(f"Selected estimator was only fitted "
+                          f"on {self.estimator.n_samples()} samples. Might "
+                          f"not be enough! We recommend 10.000 samples.")
         std = self.estimator.std()
         self.active_neurons = self.estimator.active_neurons(
             self._active_neurons_threshold).float()

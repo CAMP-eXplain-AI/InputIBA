@@ -15,39 +15,37 @@ def parse_args():
     parser.add_argument('config', help='config file of the attribution method')
     parser.add_argument('heatmap_dir', help='directory of the heatmaps')
     parser.add_argument('work_dir', help='directory to save the result file')
-    parser.add_argument('file_name',
-                        help='file name for saving the result file')
+    parser.add_argument(
+        'file_name', help='file name for saving the result file')
     parser.add_argument(
         '--scores-file',
-        help=
-        'File that records the predicted probability of corresponding target class'
-    )
+        help='File that records the predicted probability of corresponding '
+        'target class')
     parser.add_argument(
         '--scores-threshold',
         type=float,
         default=0.6,
-        help=
-        'Threshold for filtering the samples with low predicted target probabilities'
-    )
+        help='Threshold for filtering the samples with low predicted target '
+        'probabilities')
     parser.add_argument(
         '--num-samples',
         type=int,
         default=0,
-        help=
-        'Number of samples to check, 0 means checking all the (filtered) samples'
-    )
-    parser.add_argument('--base-threshold',
-                        type=float,
-                        default=0.1,
-                        help='base threshold of the metric')
-    parser.add_argument('--roi',
-                        type=str,
-                        default='bboxes',
-                        choices=['bboxes', 'masks'],
-                        help='region of interest')
-    parser.add_argument('--weight',
-                        action='store_true',
-                        help='weight the pixels by the heat')
+        help='Number of samples to check, 0 means checking all the (filtered) '
+        'samples')
+    parser.add_argument(
+        '--base-threshold',
+        type=float,
+        default=0.1,
+        help='base threshold of the metric')
+    parser.add_argument(
+        '--roi',
+        type=str,
+        default='bboxes',
+        choices=['bboxes', 'masks'],
+        help='region of interest')
+    parser.add_argument(
+        '--weight', action='store_true', help='weight the pixels by the heat')
     args = parser.parse_args()
     return args
 
@@ -65,10 +63,11 @@ def evaluate_ehr(cfg,
     mmcv.mkdir_or_exist(work_dir)
 
     val_set = build_dataset(cfg.data['val'])
-    val_set = get_valid_set(val_set,
-                            scores_file=scores_file,
-                            scores_threshold=scores_threshold,
-                            num_samples=num_samples)
+    val_set = get_valid_set(
+        val_set,
+        scores_file=scores_file,
+        scores_threshold=scores_threshold,
+        num_samples=num_samples)
 
     evaluator = EffectiveHeatRatios(base_threshold=base_threshold)
     assert roi in val_set[0].keys(
@@ -89,8 +88,8 @@ def evaluate_ehr(cfg,
         if not osp.exists(osp.join(heatmap_dir, input_name + '.png')):
             continue
 
-        heatmap = cv2.imread(osp.join(heatmap_dir, input_name + '.png'),
-                             cv2.IMREAD_UNCHANGED)
+        heatmap = cv2.imread(
+            osp.join(heatmap_dir, input_name + '.png'), cv2.IMREAD_UNCHANGED)
         # compute the ratio of roi_area / image_size
         roi_mask = np.zeros_like(heatmap)
         if roi_array.ndim == 1:
@@ -100,13 +99,14 @@ def evaluate_ehr(cfg,
             for roi_single in roi_array:
                 x1, y1, x2, y2 = roi_single
                 roi_mask[y1:y2, x1:x2] = 1
-            roi_area_ratio = roi_mask.sum() / (roi_mask.shape[-1] *
-                                               roi_mask.shape[-2])
+            roi_area_ratio = roi_mask.sum() / (
+                roi_mask.shape[-1] * roi_mask.shape[-2])
         else:
             # binary mask
-            roi_area_ratio = roi_array.sum() / (roi_array.shape[-1] *
-                                                roi_mask.shape[-2])
-        # only select the samples for which the roi area ratio is smaller than a threshold
+            roi_area_ratio = roi_array.sum() / (
+                roi_array.shape[-1] * roi_mask.shape[-2])
+        # only select the samples for which the roi area ratio is smaller
+        # than a threshold
         if roi_area_ratio > 0.33:
             continue
 
@@ -123,16 +123,17 @@ def evaluate_ehr(cfg,
 def main():
     args = parse_args()
     cfg = mmcv.Config.fromfile(args.config)
-    evaluate_ehr(cfg=cfg,
-                 heatmap_dir=args.heatmap_dir,
-                 work_dir=args.work_dir,
-                 file_name=args.file_name,
-                 scores_file=args.scores_file,
-                 scores_threshold=args.scores_threshold,
-                 num_samples=args.num_samples,
-                 base_threshold=args.base_threshold,
-                 roi=args.roi,
-                 weight=args.weight)
+    evaluate_ehr(
+        cfg=cfg,
+        heatmap_dir=args.heatmap_dir,
+        work_dir=args.work_dir,
+        file_name=args.file_name,
+        scores_file=args.scores_file,
+        scores_threshold=args.scores_threshold,
+        num_samples=args.num_samples,
+        base_threshold=args.base_threshold,
+        roi=args.roi,
+        weight=args.weight)
 
 
 if __name__ == '__main__':

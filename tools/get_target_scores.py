@@ -1,5 +1,4 @@
 from torch.utils.data import DataLoader
-import os
 import os.path as osp
 from argparse import ArgumentParser
 import mmcv
@@ -23,8 +22,9 @@ def parse_args():
 
 
 def get_target_scores(cfg, work_dir, file_name, device='cuda:0'):
-    assert cfg.attributor.get('use_softmax', True), "Currently only support multi-class classification settings," \
-                                                    "so use_softmax must be True."
+    assert cfg.attributor.get('use_softmax', True), \
+        "Currently only support multi-class classification settings, " \
+        "so use_softmax must be True."
     mmcv.mkdir_or_exist(work_dir)
     val_set = build_dataset(cfg.data['val'])
     val_loader = DataLoader(val_set, **cfg.data['data_loader'])
@@ -49,7 +49,8 @@ def get_target_scores(cfg, work_dir, file_name, device='cuda:0'):
                 name: {
                     'target': int(t),
                     'pred': float(p)
-                } for name, t, p in zip(input_names, targets, target_preds)
+                }
+                for name, t, p in zip(input_names, targets, target_preds)
             }
             res.update(res_dict)
 
@@ -59,10 +60,11 @@ def get_target_scores(cfg, work_dir, file_name, device='cuda:0'):
 def main():
     args = parse_args()
     cfg = mmcv.Config.fromfile(args.config)
-    get_target_scores(cfg=cfg,
-                      work_dir=args.work_dir,
-                      file_name=args.file_name,
-                      device=f"cuda:{args.gpu_id}")
+    get_target_scores(
+        cfg=cfg,
+        work_dir=args.work_dir,
+        file_name=args.file_name,
+        device=f"cuda:{args.gpu_id}")
 
 
 if __name__ == '__main__':

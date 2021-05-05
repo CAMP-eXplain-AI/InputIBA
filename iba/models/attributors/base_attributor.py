@@ -21,7 +21,8 @@ class BaseAttributor(metaclass=ABCMeta):
         self.layer = layer
         self.use_softmax = use_softmax
 
-        self.feat_iba = build_feat_iba(feat_iba, default_args={'context': self})
+        self.feat_iba = build_feat_iba(
+            feat_iba, default_args={'context': self})
         self.buffer = {}
 
         self.input_iba = input_iba
@@ -46,7 +47,8 @@ class BaseAttributor(metaclass=ABCMeta):
         default_args = {
             'input_tensor': input_tensor,
             'context': self,
-            # TODO check whether to pass capacity or sigmoid(self.feat_iba.alpha)
+            # TODO check whether to pass capacity or
+            #  sigmoid(self.feat_iba.alpha)
             'feat_mask': self.feat_iba.capacity(),
             'device': self.device
         }
@@ -62,7 +64,9 @@ class BaseAttributor(metaclass=ABCMeta):
                          logger=None):
         attr_cfg = deepcopy(attribution_cfg)
         if not self.use_softmax:
-            assert attr_cfg['feat_iba']['batch_size'] == attr_cfg['input_iba']['batch_size'], \
+            feat_iba_batch_size = attr_cfg['feat_iba']['batch_size']
+            input_iba_batch_size = attr_cfg['input_iba']['batch_size']
+            assert feat_iba_batch_size == input_iba_batch_size, \
                 "batch sizes of feat_iba and input_iba should be equal"
         closure = self.get_closure(
             self.classifier,
@@ -72,28 +76,27 @@ class BaseAttributor(metaclass=ABCMeta):
         if logger is None:
             logger = mmcv.get_logger('iba')
 
-        feat_mask = self.train_feat_iba(input_tensor,
-                                        closure,
-                                        attr_cfg['feat_iba'],
-                                        logger=logger)
+        feat_mask = self.train_feat_iba(
+            input_tensor, closure, attr_cfg['feat_iba'], logger=logger)
 
-        gen_input_mask = self.train_gan(input_tensor,
-                                        attr_cfg['gan'],
-                                        logger=logger)
+        gen_input_mask = self.train_gan(
+            input_tensor, attr_cfg['gan'], logger=logger)
 
-        input_mask = self.train_input_iba(input_tensor,
-                                          self.input_iba,
-                                          gen_input_mask,
-                                          closure,
-                                          attr_cfg['input_iba'],
-                                          logger=logger)
+        input_mask = self.train_input_iba(
+            input_tensor,
+            self.input_iba,
+            gen_input_mask,
+            closure,
+            attr_cfg['input_iba'],
+            logger=logger)
         feat_iba_capacity = self.feat_iba.capacity().sum(
             0).clone().detach().cpu().numpy()
         gen_input_mask = gen_input_mask.mean([0, 1]).cpu().numpy()
-        self.buffer.update(feat_mask=feat_mask,
-                           input_mask=input_mask,
-                           gen_input_mask=gen_input_mask,
-                           feat_iba_capacity=feat_iba_capacity)
+        self.buffer.update(
+            feat_mask=feat_mask,
+            input_mask=input_mask,
+            gen_input_mask=gen_input_mask,
+            feat_iba_capacity=feat_iba_capacity)
 
     @abstractmethod
     def train_feat_iba(self, input_tensor, closure, attr_cfg, logger=None):

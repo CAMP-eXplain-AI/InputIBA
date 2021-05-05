@@ -14,13 +14,14 @@ class BaseInputIBA(BaseIBA):
                  reverse_lambda=False,
                  combine_loss=False,
                  device='cuda:0'):
-        super(BaseInputIBA, self).__init__(sigma=sigma,
-                                           initial_alpha=initial_alpha,
-                                           input_mean=input_mean,
-                                           input_std=input_std,
-                                           reverse_lambda=reverse_lambda,
-                                           combine_loss=combine_loss,
-                                           device=device)
+        super(BaseInputIBA, self).__init__(
+            sigma=sigma,
+            initial_alpha=initial_alpha,
+            input_mean=input_mean,
+            input_std=input_std,
+            reverse_lambda=reverse_lambda,
+            combine_loss=combine_loss,
+            device=device)
         self.input_tensor = input_tensor
         self.input_mask = input_mask
 

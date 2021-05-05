@@ -5,13 +5,16 @@ import torch.nn as nn
 class BaseWelfordEstimator(nn.Module):
     """
     Estimates the mean and standard derivation.
-    For the algorithm see ``https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance``.
+    For the algorithm see
+    ``https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance``.
 
     Example:
-        Given a batch of images ``imgs`` with shape ``(10, 3, 64, 64)``, the mean and std could
-        be estimated as follows::
+        Given a batch of images ``imgs`` with shape ``(10, 3, 64, 64)``,
+        the mean and std could be estimated as follows::
 
-            # exemplary data source: 5 batches of size 10, filled with random data
+            # exemplary data source: 5 batches of size 10,
+            filled with random data
+
             batch_generator = (torch.randn(10, 3, 64, 64) for _ in range(5))
 
             estim = WelfordEstimator(3, 64, 64)

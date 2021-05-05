@@ -4,7 +4,8 @@ from abc import ABCMeta, abstractmethod
 class BaseEvaluation(metaclass=ABCMeta):
     """
     Base class for all evaluation methods
-    get attribution map and img as input, returns a dictionary contains evaluation result
+    get attribution map and img as input, returns a dictionary contains
+    evaluation result
     """
 
     @abstractmethod

@@ -18,9 +18,8 @@ class BaseWassersteinGAN(metaclass=ABCMeta):
         generator = deepcopy(generator)
         discriminator = deepcopy(discriminator)
 
-        self.generator = self.build_generator(input_tensor=input_tensor,
-                                              context=context,
-                                              cfg=generator)
+        self.generator = self.build_generator(
+            input_tensor=input_tensor, context=context, cfg=generator)
         self.generator = self.generator.to(device)
 
         self.feat_map = self.get_feat_map()
@@ -55,3 +54,11 @@ class BaseWassersteinGAN(metaclass=ABCMeta):
               verbose=False,
               logger=None):
         pass
+
+
+def _get_gan_log_string(epoch, epochs, num_iters, epoch_length, loss_d,
+                        loss_g):
+    log_str = f'GAN: epoch [{epoch}/{epochs}], '
+    log_str += f'[{num_iters % epoch_length}/{epoch_length}], '
+    log_str += f'D loss: {loss_d:.5f}, G loss: {loss_g:.5f}'
+    return log_str

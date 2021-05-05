@@ -21,15 +21,13 @@ def get_valid_set(dataset,
     if scores_file is not None:
         scores_dict = mmcv.load(scores_file)
         name_to_score_dict = {k: v['pred'] for k, v in scores_dict.items()}
-        valid_inds = filter_samples(dataset,
-                                    name_to_score_dict,
-                                    threshold=scores_threshold)
+        valid_inds = filter_samples(
+            dataset, name_to_score_dict, threshold=scores_threshold)
 
     if num_samples > 0:
         num_valid_samples = min(num_samples, len(valid_inds))
-        valid_inds = np.random.choice(valid_inds,
-                                      num_valid_samples,
-                                      replace=False)
+        valid_inds = np.random.choice(
+            valid_inds, num_valid_samples, replace=False)
     print(f'Total samples: {len(valid_inds)}')
     valid_set = Subset(dataset, valid_inds)
     return valid_set

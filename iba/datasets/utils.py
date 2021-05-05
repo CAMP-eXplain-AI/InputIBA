@@ -8,8 +8,9 @@ def load_voc_bboxes(xml_file, name_to_ind_dict, ignore_difficult=False):
     Args:
         xml_file (str): xml file path.
         name_to_ind_dict (dict): a dict mapping class names to integers.
-        ignore_difficult (bool, optional): if True, ignore the difficult bounding boxes. Otherwise, concatenate the
-            difficult boxes with the other boxes.
+        ignore_difficult (bool, optional): if True, ignore the difficult
+        bounding boxes. Otherwise, concatenate the difficult boxes with the
+        other boxes.
 
     Returns:
         (dict): contains two fields:
@@ -42,13 +43,13 @@ def load_voc_bboxes(xml_file, name_to_ind_dict, ignore_difficult=False):
             labels.append(label)
     if not bboxes:
         bboxes = np.zeros((0, 4))
-        labels = np.zeros((0,))
+        labels = np.zeros((0, ))
     else:
         bboxes = np.array(bboxes, ndmin=2)
         labels = np.array(labels, dtype=int)
     if not bboxes_ignore:
         bboxes_ignore = np.zeros((0, 4))
-        labels_ignore = np.zeros((0,), dtype=int)
+        labels_ignore = np.zeros((0, ), dtype=int)
     else:
         bboxes_ignore = np.array(bboxes_ignore, ndmin=2)
         labels_ignore = np.array(labels_ignore, dtype=int)

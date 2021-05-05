@@ -20,21 +20,23 @@ class VisionAttributor(BaseAttributor):
                  gan: dict,
                  use_softmax=True,
                  device='cuda:0'):
-        super(VisionAttributor, self).__init__(layer=layer,
-                                               classifier=classifier,
-                                               feat_iba=feat_iba,
-                                               input_iba=input_iba,
-                                               gan=gan,
-                                               use_softmax=use_softmax,
-                                               device=device)
+        super(VisionAttributor, self).__init__(
+            layer=layer,
+            classifier=classifier,
+            feat_iba=feat_iba,
+            input_iba=input_iba,
+            gan=gan,
+            use_softmax=use_softmax,
+            device=device)
 
     def train_feat_iba(self, input_tensor, closure, attr_cfg, logger=None):
         if input_tensor.dim() == 3:
             input_tensor = input_tensor.unsqueeze(0)
-        feat_mask = self.feat_iba.analyze(input_tensor=input_tensor,
-                                          model_loss_fn=closure,
-                                          logger=logger,
-                                          **attr_cfg)
+        feat_mask = self.feat_iba.analyze(
+            input_tensor=input_tensor,
+            model_loss_fn=closure,
+            logger=logger,
+            **attr_cfg)
         return feat_mask
 
     def train_input_iba(self,
@@ -45,17 +47,15 @@ class VisionAttributor(BaseAttributor):
                         attr_cfg,
                         logger=None):
         assert input_tensor.dim() == 3, \
-            f"GAN expect input_tensor to be 3-dimensional, but got a(n) {input_tensor.dim()}d tensor"
+            f"GAN expect input_tensor to be 3-dimensional, but got a(n) " \
+            f"{input_tensor.dim()}d tensor"
         default_args = {
             'input_tensor': input_tensor,
             'input_mask': gen_input_mask
         }
         input_iba = build_input_iba(input_iba_cfg, default_args=default_args)
         input_tensor = input_tensor.unsqueeze(0)
-        input_iba_heatmap = input_iba.analyze(input_tensor,
-                                              closure,
-                                              **attr_cfg,
-                                              logger=logger)
+        _ = input_iba.analyze(input_tensor, closure, **attr_cfg, logger=logger)
 
         input_mask = torch.sigmoid(input_iba.alpha).detach().cpu().mean(
             [0, 1]).numpy()
@@ -64,8 +64,11 @@ class VisionAttributor(BaseAttributor):
     @staticmethod
     def get_closure(classifier, target, use_softmax, batch_size=None):
         if use_softmax:
-            closure = lambda x: -torch.log_softmax(classifier(x), 1)[:, target
-                                                                    ].mean()
+
+            def closure(x):
+                loss = -torch.log_softmax(classifier(x), 1)[:, target]
+                loss = loss.mean()
+                return loss
         else:
             assert batch_size is not None
             # target is binary encoded and it is for a single sample

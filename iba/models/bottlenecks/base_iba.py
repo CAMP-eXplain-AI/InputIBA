@@ -85,8 +85,8 @@ class BaseIBA(nn.Module, metaclass=ABCMeta):
         return self.buffer_capacity.mean(dim=0)
 
     def _get_saliency(self, mode='saliency', shape=None):
-        assert mode in ('saliency', 'capacity'), f"mode should be either 'saliency' or " \
-                                                 f"'capacity', but got {mode}"
+        assert mode in ('saliency', 'capacity'), \
+            f"mode should be either 'saliency' or capacity', but got {mode}"
         capacity_np = self.capacity().detach().cpu().numpy()
         if mode == 'saliency':
             return to_saliency_map(capacity_np, shape)
@@ -96,8 +96,9 @@ class BaseIBA(nn.Module, metaclass=ABCMeta):
     @contextmanager
     def interrupt_execution(self):
         """
-        Interrupts the execution of the model, once PerSampleBottleneck is called. Useful
-        for estimation when the model has only be executed until the Per-Sample Bottleneck.
+        Interrupts the execution of the model, once PerSampleBottleneck is
+        called. Useful for estimation when the model has only be executed
+        until the Per-Sample Bottleneck.
 
         Example:
             Executes the model only until the bottleneck layer::

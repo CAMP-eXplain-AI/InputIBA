@@ -21,16 +21,14 @@ def parse_args():
     parser.add_argument('file_name', help='file name fo saving the results')
     parser.add_argument(
         '--scores-file',
-        help=
-        'File that records the predicted probability of corresponding target class'
-    )
+        help='File that records the predicted probability of corresponding '
+        'target class')
     parser.add_argument(
         '--scores-threshold',
         type=float,
         default=0.6,
-        help=
-        'Threshold for filtering the samples with low predicted target probabilities'
-    )
+        help='Threshold for filtering the samples with low predicted target '
+        'probabilities')
     parser.add_argument(
         '--num-samples',
         type=int,
@@ -59,18 +57,19 @@ def sanity_check(cfg,
     mmcv.mkdir_or_exist(work_dir)
     train_set = build_dataset(cfg.data['train'])
     val_set = build_dataset(cfg.data['val'])
-    val_set = get_valid_set(val_set,
-                            scores_file=scores_file,
-                            scores_threshold=scores_threshold,
-                            num_samples=num_samples)
+    val_set = get_valid_set(
+        val_set,
+        scores_file=scores_file,
+        scores_threshold=scores_threshold,
+        num_samples=num_samples)
 
     train_loader = DataLoader(train_set, **cfg.data['data_loader'])
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
 
-    attibuter = build_attributor(cfg.attributor,
-                                 default_args=dict(device=device))
+    attibuter = build_attributor(
+        cfg.attributor, default_args=dict(device=device))
     attibuter.estimate(train_loader, cfg.estimation_cfg)
     evaluator = SanityCheck(attibuter)
 
@@ -81,12 +80,13 @@ def sanity_check(cfg,
             targets = batch['target']
             input_names = batch['input_name']
 
-            for input_tensor, target, input_name in zip(inputs, targets,
-                                                        input_names):
+            for input_tensor, target, input_name in zip(
+                    inputs, targets, input_names):
                 input_tensor = input_tensor.to(device)
                 target = target.item()
-                heatmap = cv2.imread(osp.join(heatmap_dir, input_name + '.png'),
-                                     cv2.IMREAD_UNCHANGED)
+                heatmap = cv2.imread(
+                    osp.join(heatmap_dir, input_name + '.png'),
+                    cv2.IMREAD_UNCHANGED)
 
                 ssim_dict = evaluator.evaluate(
                     heatmap=heatmap,
@@ -110,15 +110,16 @@ def main():
     args = parse_args()
     cfg = mmcv.Config.fromfile(args.config)
     set_random_seed(args.seed)
-    sanity_check(cfg=cfg,
-                 heatmap_dir=args.heatmap_dir,
-                 work_dir=args.work_dir,
-                 file_name=args.file_name,
-                 scores_file=args.scores_file,
-                 scores_threshold=args.scores_threshold,
-                 num_samples=args.num_samples,
-                 save_heatmaps=args.save_heatmaps,
-                 device=f'cuda:{args.gpu_id}')
+    sanity_check(
+        cfg=cfg,
+        heatmap_dir=args.heatmap_dir,
+        work_dir=args.work_dir,
+        file_name=args.file_name,
+        scores_file=args.scores_file,
+        scores_threshold=args.scores_threshold,
+        num_samples=args.num_samples,
+        save_heatmaps=args.save_heatmaps,
+        device=f'cuda:{args.gpu_id}')
 
 
 if __name__ == '__main__':

@@ -16,9 +16,8 @@ import gc
 def parse_args():
     parser = ArgumentParser('train a model')
     parser.add_argument('config', help='configuration file')
-    parser.add_argument('--work-dir',
-                        help='working directory',
-                        default=os.getcwd())
+    parser.add_argument(
+        '--work-dir', help='working directory', default=os.getcwd())
     parser.add_argument('--gpu-id', help='gpu id', type=int, default=0)
     parser.add_argument(
         '--out-style',
@@ -52,15 +51,17 @@ def train(config,
     mmcv.mkdir_or_exist(osp.join(work_dir, 'feat_masks'))
 
     cfg.dump(osp.join(work_dir, 'config.py'))
-    logger = mmcv.get_logger('iba', log_file=osp.join(work_dir, 'log_file.log'))
+    logger = mmcv.get_logger(
+        'iba', log_file=osp.join(work_dir, 'log_file.log'))
     device = f'cuda:{gpu_id}'
-    train_attributor(cfg,
-                     logger,
-                     work_dir=work_dir,
-                     device=device,
-                     out_style=out_style,
-                     pbar=pbar,
-                     subset_file=subset_file)
+    train_attributor(
+        cfg,
+        logger,
+        work_dir=work_dir,
+        device=device,
+        out_style=out_style,
+        pbar=pbar,
+        subset_file=subset_file)
 
 
 def train_attributor(cfg: mmcv.Config,
@@ -71,7 +72,8 @@ def train_attributor(cfg: mmcv.Config,
                      pbar=False,
                      subset_file=None):
     assert out_style in ('single_folder', 'image_folder'), \
-        f"Invalid out_style, should be one of ('single_folder', 'image_folder'), but got {out_style}"
+        f"Invalid out_style, should be one of " \
+        f"('single_folder', 'image_folder'), but got {out_style}"
     train_set = build_dataset(cfg.data['train'])
     val_set = build_dataset(cfg.data['val'])
     if subset_file is not None:
@@ -82,8 +84,8 @@ def train_attributor(cfg: mmcv.Config,
     val_loader_cfg.update({'shuffle': False})
     val_loader = DataLoader(val_set, **val_loader_cfg)
 
-    attributor = build_attributor(cfg.attributor,
-                                  default_args=dict(device=device))
+    attributor = build_attributor(
+        cfg.attributor, default_args=dict(device=device))
     attributor.estimate(train_loader, cfg.estimation_cfg)
 
     if pbar:
@@ -99,10 +101,12 @@ def train_attributor(cfg: mmcv.Config,
                                                     input_names):
             input_tensor = input_tensor.to(device)
             if target.nelement() == 1:
-                # multi-class classification, target of one sample is an integer
+                # multi-class classification,
+                # target of one sample is an integer
                 target = target.item()
             else:
-                # multi-label classification, target of one sample is an one-hot vector
+                # multi-label classification,
+                # target of one sample is an one-hot vector
                 target = target.to(device)
 
             if out_style == 'single_folder':
@@ -110,9 +114,9 @@ def train_attributor(cfg: mmcv.Config,
                 input_mask_file = osp.join(work_dir, 'input_masks', input_name)
             else:
                 if isinstance(target, torch.Tensor) and target.nelement() > 1:
-                    raise RuntimeError(
-                        'For multi-label classification, saving the attribution maps with image folder'
-                        'style is not possible')
+                    raise RuntimeError('For multi-label classification, '
+                                       'saving the attribution maps with '
+                                       'image folder style is not possible')
                 if isinstance(val_set, Subset):
                     sub_dir = val_set.dataset.ind_to_cls[target]  # noqa
                 else:
@@ -126,16 +130,17 @@ def train_attributor(cfg: mmcv.Config,
                 feat_mask_file = osp.join(feat_mask_dir, input_name)
                 input_mask_file = osp.join(img_mask_dir, input_name)
 
-            attributor.make_attribution(input_tensor,
-                                        target,
-                                        attribution_cfg=cfg.attribution_cfg,
-                                        logger=logger)
-            attributor.show_feat_mask(out_file=feat_mask_file,
-                                      **cfg.attribution_cfg.get(
-                                          'feat_mask', {}))
-            attributor.show_input_mask(out_file=input_mask_file,
-                                       **cfg.attribution_cfg.get(
-                                           'input_mask', {}))
+            attributor.make_attribution(
+                input_tensor,
+                target,
+                attribution_cfg=cfg.attribution_cfg,
+                logger=logger)
+            attributor.show_feat_mask(
+                out_file=feat_mask_file,
+                **cfg.attribution_cfg.get('feat_mask', {}))
+            attributor.show_input_mask(
+                out_file=input_mask_file,
+                **cfg.attribution_cfg.get('input_mask', {}))
             gc.collect()
 
             if bar is not None:

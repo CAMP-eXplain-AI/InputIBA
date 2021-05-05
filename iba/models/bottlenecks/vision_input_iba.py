@@ -16,15 +16,16 @@ class VisionInputIBA(BaseInputIBA):
                  reverse_lambda=False,
                  combine_loss=False,
                  device='cuda:0'):
-        super(VisionInputIBA, self).__init__(input_tensor=input_tensor,
-                                             input_mask=input_mask,
-                                             sigma=sigma,
-                                             initial_alpha=initial_alpha,
-                                             input_mean=input_mean,
-                                             input_std=input_std,
-                                             reverse_lambda=reverse_lambda,
-                                             combine_loss=combine_loss,
-                                             device=device)
+        super(VisionInputIBA, self).__init__(
+            input_tensor=input_tensor,
+            input_mask=input_mask,
+            sigma=sigma,
+            initial_alpha=initial_alpha,
+            input_mean=input_mean,
+            input_std=input_std,
+            reverse_lambda=reverse_lambda,
+            combine_loss=combine_loss,
+            device=device)
         if self.alpha is None:
             self.init_alpha_and_kernel()
 
@@ -34,10 +35,9 @@ class VisionInputIBA(BaseInputIBA):
 
     def init_alpha_and_kernel(self):
         shape = self.input_mask.shape
-        self.alpha = nn.Parameter(torch.full(shape,
-                                             self.initial_alpha,
-                                             device=self.device),
-                                  requires_grad=True)
+        self.alpha = nn.Parameter(
+            torch.full(shape, self.initial_alpha, device=self.device),
+            requires_grad=True)
         if self.sigma is not None and self.sigma > 0:
             # Construct static conv layer with gaussian kernel
             kernel_size = int(round(
@@ -55,9 +55,9 @@ class VisionInputIBA(BaseInputIBA):
     def do_restrict_info(self, x, alpha):
         """ Selectively remove information from x by applying noise """
         if alpha is None:
-            raise RuntimeWarning(
-                "Alpha not initialized. Run _init() before using the bottleneck."
-            )
+            raise RuntimeWarning("Alpha not initialized. "
+                                 "Run init_alpha_and_kernel() "
+                                 "before using the bottleneck.")
 
         # Smoothen and expand alpha on batch dimension
         lamb = torch.sigmoid(alpha)
@@ -77,7 +77,8 @@ class VisionInputIBA(BaseInputIBA):
         ε = self.input_std * eps + self.input_mean
         λ = lamb
 
-        # TODO reverse_lambda and combined loss are only supported in original IBA
+        # TODO reverse_lambda and combined loss are only
+        #  supported in original IBA
         # but might be also possible to implement here
         if self.reverse_lambda:
             # TODO rewrite
@@ -102,8 +103,9 @@ class VisionInputIBA(BaseInputIBA):
             batch_size=10,
             logger=None,
             log_every_steps=-1):
-        assert input_tensor.shape[
-            0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]}"
+        assert input_tensor.shape[0] == 1, \
+            f"We can only fit one sample a time, " \
+            f"but got {input_tensor.shape[0]}"
         batch = input_tensor.expand(batch_size, -1, -1, -1)
 
         # Reset from previous run or modifications

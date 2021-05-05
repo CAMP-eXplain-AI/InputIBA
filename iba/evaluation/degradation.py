@@ -1,10 +1,10 @@
 import torch
-import torchvision
+import torch.nn.functional as F
 import numpy as np
 from scipy.integrate import trapezoid
 
 from iba.evaluation.base import BaseEvaluation
-from iba.evaluation.perturber import GridView, GridPerturber
+from iba.evaluation.perturber import GridPerturber
 
 
 class Degradation(BaseEvaluation):
@@ -40,16 +40,16 @@ class Degradation(BaseEvaluation):
         num_pixels = torch.numel(grid_heatmap)
         _, indices = torch.topk(grid_heatmap.flatten(), num_pixels)
         indices = np.unravel_index(indices.cpu().numpy(), grid_heatmap.size())
-        _, reverse_indices = torch.topk(grid_heatmap.flatten(),
-                                        num_pixels,
-                                        largest=False)
+        _, reverse_indices = torch.topk(
+            grid_heatmap.flatten(), num_pixels, largest=False)
         reverse_indices = np.unravel_index(reverse_indices.cpu().numpy(),
                                            grid_heatmap.size())
 
         # TODO to make it compatible with multi-label classification setting
-        # TODO to make baseline_score and morf_scores local variables rather than object attributes
+        # TODO to make baseline_score and morf_scores local variables
+        #  rather than object attributes
         # get baseline score
-        self.baseline_score = torch.nn.functional.softmax(
+        self.baseline_score = F.softmax(
             self.model(
                 image.unsqueeze(0).to(next(
                     self.model.parameters()).device)))[:, self.target]
@@ -71,17 +71,18 @@ class Degradation(BaseEvaluation):
                                                    self.img_history_lerf)
         LeRF_img = perturber.get_current()
 
-        #remove bias
+        # remove bias
         self.lerf_scores = self.lerf_scores - self.baseline_score
         self.morf_scores = self.morf_scores - self.baseline_score
 
         # calculate AUC
-        lerf_auc = trapezoid(self.lerf_scores,
-                             dx=1. / float(len(self.lerf_scores)))
-        morf_auc = trapezoid(self.morf_scores,
-                             dx=1. / float(len(self.morf_scores)))
+        lerf_auc = trapezoid(
+            self.lerf_scores, dx=1. / float(len(self.lerf_scores)))
+        morf_auc = trapezoid(
+            self.morf_scores, dx=1. / float(len(self.morf_scores)))
 
-        # deletion_img and insertion_img are final results, they are only used for debug purpose
+        # deletion_img and insertion_img are final results, they are only
+        # used for debug purpose
         return {
             "MoRF_scores": self.morf_scores,
             "LeRF_scores": self.lerf_scores,

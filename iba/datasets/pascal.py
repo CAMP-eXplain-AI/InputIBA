@@ -5,7 +5,6 @@ import cv2
 from PIL import Image
 import mmcv
 import numpy as np
-import torch
 from albumentations.core.composition import BboxParams
 from xml.etree import ElementTree as ET
 
@@ -31,9 +30,13 @@ class PascalVOC(BaseDataset):
                  test_mode=False):
         super(PascalVOC, self).__init__()
         if with_mask:
-            assert gt_mask_root is not None, f"If with_mask, gt_mask_root should not be None, but got {gt_mask_root}"
+            assert gt_mask_root is not None, \
+                f"If with_mask, gt_mask_root should not be None, " \
+                f"but got {gt_mask_root}"
         if force_one_hot:
-            assert preds_file is not None, f"If force_one_hot, pred_file should not be None, but got {preds_file}"
+            assert preds_file is not None, \
+                f"If force_one_hot, pred_file should not be None, " \
+                f"but got {preds_file}"
 
         self.img_root = img_root
         self.annot_root = annot_root
@@ -74,12 +77,11 @@ class PascalVOC(BaseDataset):
         labels = bbox_info['labels']
         if self.with_mask:
             masks = self.get_mask_info(img_name)
-            transformed = self.pipeline(image=img,
-                                        bboxes=bboxes,
-                                        labels=labels,
-                                        masks=masks)
+            transformed = self.pipeline(
+                image=img, bboxes=bboxes, labels=labels, masks=masks)
         else:
-            transformed = self.pipeline(image=img, bboxes=bboxes, labels=labels)
+            transformed = self.pipeline(
+                image=img, bboxes=bboxes, labels=labels)
         img = transformed['image']
         bboxes = np.array(transformed['bboxes']).astype(int)
         labels = np.array(transformed['labels']).astype(int)
@@ -88,7 +90,8 @@ class PascalVOC(BaseDataset):
         if self.force_one_hot:
             pred = np.array(self.preds[img_name]['pred'])
             if len(labels) > 0:
-                # among the gt classes, only take the class which the classifier predicts with highest probability
+                # among the gt classes, only take the class which the
+                # classifier predicts with highest probability
                 unique_labels = np.unique(labels)
                 pred = pred[unique_labels]
                 max_ind = np.argmax(pred)
@@ -96,7 +99,8 @@ class PascalVOC(BaseDataset):
                 bboxes = bboxes[labels == one_hot_cls]
                 labels = labels[labels == one_hot_cls]
             else:
-                # For background image, take the class with highest probability from all the classes
+                # For background image, take the class with highest
+                # probability from all the classes
                 one_hot_cls = np.argmax(pred)
                 labels = [one_hot_cls]
         res = dict(input=img, bboxes=bboxes, input_name=img_name)
@@ -149,20 +153,21 @@ class PascalVOC(BaseDataset):
                 labels.append(label)
         if not bboxes:
             bboxes = np.zeros((0, 4))
-            labels = np.zeros((0,))
+            labels = np.zeros((0, ))
         else:
             bboxes = np.array(bboxes, ndmin=2) - 1
             labels = np.array(labels)
         if not bboxes_ignore:
             bboxes_ignore = np.zeros((0, 4))
-            labels_ignore = np.zeros((0,))
+            labels_ignore = np.zeros((0, ))
         else:
             bboxes_ignore = np.array(bboxes_ignore, ndmin=2) - 1
             labels_ignore = np.array(labels_ignore)
-        ann = dict(bboxes=bboxes.astype(np.float32),
-                   labels=labels.astype(np.int64),
-                   bboxes_ignore=bboxes_ignore.astype(np.float32),
-                   labels_ignore=labels_ignore.astype(np.int64))
+        ann = dict(
+            bboxes=bboxes.astype(np.float32),
+            labels=labels.astype(np.int64),
+            bboxes_ignore=bboxes_ignore.astype(np.float32),
+            labels_ignore=labels_ignore.astype(np.int64))
         return ann
 
     def get_mask_info(self, img_name):

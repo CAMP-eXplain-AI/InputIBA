@@ -1,4 +1,4 @@
-named_modules=[
+named_modules = [
     'conv1',
     'bn1',
     'relu',

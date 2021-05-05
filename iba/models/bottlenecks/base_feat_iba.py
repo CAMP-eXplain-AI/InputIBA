@@ -22,13 +22,14 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
                  reverse_lambda=False,
                  combine_loss=False,
                  device='cuda:0'):
-        super(BaseFeatureIBA, self).__init__(sigma=sigma,
-                                             initial_alpha=initial_alpha,
-                                             input_mean=input_mean,
-                                             input_std=input_std,
-                                             reverse_lambda=reverse_lambda,
-                                             combine_loss=combine_loss,
-                                             device=device)
+        super(BaseFeatureIBA, self).__init__(
+            sigma=sigma,
+            initial_alpha=initial_alpha,
+            input_mean=input_mean,
+            input_std=input_std,
+            reverse_lambda=reverse_lambda,
+            combine_loss=combine_loss,
+            device=device)
         assert (layer is None) ^ (context is None)
         self.layer = layer
         self.context = context
@@ -63,9 +64,8 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
             self._hook_handle.remove()
             self._hook_handle = None
         else:
-            raise ValueError(
-                "Cannot detach hock. Either you never attached or already detached."
-            )
+            raise ValueError("Cannot detach hock. Either you never attached "
+                             "or already detached.")
 
     @abstractmethod
     def init_alpha_and_kernel(self):
@@ -76,13 +76,11 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
         pass
 
     def forward(self, x):
+        """You don't need to call this method manually. The iba acts as a
+        model layer, passing the information in `x` along to the next layer
+        either as-is or by restricting the flow of information. We use it
+        also to estimate the distribution of `x` passing through the layer.
         """
-                You don't need to call this method manually.
-
-                The iba acts as a model layer, passing the information in `x` along to the next layer
-                either as-is or by restricting the flow of infomration.
-                We use it also to estimate the distribution of `x` passing through the layer.
-                """
         if self._restrict_flow:
             return self.do_restrict_info(x, self.alpha)
         if self._estimate:

@@ -143,14 +143,14 @@ class IBA(nn.Module):
         We use the estimator to obtain shape and device.
         """
         if self.estimator.n_samples() <= 0:
-            raise RuntimeWarning("You need to estimate the feature distribution"
-                                 " before using the bottleneck.")
+            raise RuntimeWarning(
+                "You need to estimate the feature distribution"
+                " before using the bottleneck.")
         shape = self.estimator.shape
         device = self.estimator.device
-        self.alpha = nn.Parameter(torch.full(shape,
-                                             self.initial_alpha,
-                                             device=device),
-                                  requires_grad=True)
+        self.alpha = nn.Parameter(
+            torch.full(shape, self.initial_alpha, device=device),
+            requires_grad=True)
         if self.sigma is not None and self.sigma > 0:
             # Construct static conv layer with gaussian kernel
             kernel_size = int(round(
@@ -418,9 +418,10 @@ class IBA(nn.Module):
         opt_range = range(opt_steps)
         try:
             tqdm = get_tqdm()
-            opt_range = tqdm(opt_range,
-                             desc="Training Bottleneck",
-                             disable=not self.progbar)
+            opt_range = tqdm(
+                opt_range,
+                desc="Training Bottleneck",
+                disable=not self.progbar)
         except ImportError:
             if self.progbar:
                 warnings.warn("Cannot load tqdm! Sorry, no progress bar")

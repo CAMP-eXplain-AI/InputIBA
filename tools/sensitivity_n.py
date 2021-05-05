@@ -22,28 +22,29 @@ def parse_args():
     parser.add_argument('file_name', help='file name fo saving the results')
     parser.add_argument(
         '--scores-file',
-        help=
-        'File that records the predicted probability of corresponding target class'
-    )
+        help='File that records the predicted probability of '
+        'corresponding target class')
     parser.add_argument(
         '--scores-threshold',
         type=float,
         default=0.6,
-        help=
-        'Threshold for filtering the samples with low predicted target probabilities'
-    )
-    parser.add_argument('--log-n-max',
-                        type=float,
-                        default=4.5,
-                        help='maximal N of Sensitivity-N')
-    parser.add_argument('--log-n-ticks',
-                        type=float,
-                        default=0.1,
-                        help='Ticks for determining the Ns')
-    parser.add_argument('--num-masks',
-                        type=int,
-                        default=100,
-                        help='Number of random masks of Sensitivity-N')
+        help='Threshold for filtering the samples with low predicted target '
+        'probabilities')
+    parser.add_argument(
+        '--log-n-max',
+        type=float,
+        default=4.5,
+        help='maximal N of Sensitivity-N')
+    parser.add_argument(
+        '--log-n-ticks',
+        type=float,
+        default=0.1,
+        help='Ticks for determining the Ns')
+    parser.add_argument(
+        '--num-masks',
+        type=int,
+        default=100,
+        help='Number of random masks of Sensitivity-N')
     parser.add_argument(
         '--num-samples',
         type=int,
@@ -72,12 +73,14 @@ def sensitivity_n(cfg,
     # check if n is valid
     input_h, input_w = val_set[0]['input'].shape[-2:]
     max_allowed_n = np.log(input_h * input_w)
-    assert log_n_max < max_allowed_n, f"log_n_max must smaller than {max_allowed_n}, but got {log_n_max}"
+    assert log_n_max < max_allowed_n, \
+        f"log_n_max must smaller than {max_allowed_n}, but got {log_n_max}"
 
-    val_set = get_valid_set(val_set,
-                            scores_file=scores_file,
-                            scores_threshold=scores_threshold,
-                            num_samples=num_samples)
+    val_set = get_valid_set(
+        val_set,
+        scores_file=scores_file,
+        scores_threshold=scores_threshold,
+        num_samples=num_samples)
 
     val_loader_cfg = deepcopy(cfg.data['data_loader'])
     val_loader_cfg.update({'shuffle': False})
@@ -89,20 +92,15 @@ def sensitivity_n(cfg,
     results = {}
 
     try:
-        n_list = np.logspace(0,
-                             log_n_max,
-                             int(log_n_max / log_n_ticks),
-                             base=10.0,
-                             dtype=int)
+        n_list = np.logspace(
+            0, log_n_max, int(log_n_max / log_n_ticks), base=10.0, dtype=int)
         # to eliminate the duplicate elements caused by rounding
         n_list = np.unique(n_list)
         logger.info(f"n_list: [{', '.join(map(str,n_list))}]")
         pbar = tqdm(total=len(n_list) * len(val_loader))
         for n in n_list:
-            evaluator = SensitivityN(classifier,
-                                     input_size=(h, w),
-                                     n=n,
-                                     num_masks=num_masks)
+            evaluator = SensitivityN(
+                classifier, input_size=(h, w), n=n, num_masks=num_masks)
 
             corr_all = []
             for batch in val_loader:
@@ -117,12 +115,11 @@ def sensitivity_n(cfg,
                     heatmap = cv2.imread(
                         osp.join(heatmap_dir, input_name + '.png'),
                         cv2.IMREAD_UNCHANGED)
-                    heatmap = torch.from_numpy(heatmap).to(input_tensor) / 255.0
+                    heatmap = torch.from_numpy(heatmap).to(
+                        input_tensor) / 255.0
 
-                    res_single = evaluator.evaluate(heatmap,
-                                                    input_tensor,
-                                                    target,
-                                                    calculate_corr=True)
+                    res_single = evaluator.evaluate(
+                        heatmap, input_tensor, target, calculate_corr=True)
                     corr = res_single['correlation'][1, 0]
                     corr_all.append(corr)
                 pbar.update(1)
@@ -136,17 +133,18 @@ def main():
     args = parse_args()
     cfg = mmcv.Config.fromfile(args.config)
     set_random_seed(args.seed)
-    sensitivity_n(cfg=cfg,
-                  heatmap_dir=args.heatmap_dir,
-                  work_dir=args.work_dir,
-                  file_name=args.file_name,
-                  scores_file=args.scores_file,
-                  scores_threshold=args.scores_threshold,
-                  log_n_max=args.log_n_max,
-                  log_n_ticks=args.log_n_ticks,
-                  num_masks=args.num_masks,
-                  num_samples=args.num_samples,
-                  device=f'cuda:{args.gpu_id}')
+    sensitivity_n(
+        cfg=cfg,
+        heatmap_dir=args.heatmap_dir,
+        work_dir=args.work_dir,
+        file_name=args.file_name,
+        scores_file=args.scores_file,
+        scores_threshold=args.scores_threshold,
+        log_n_max=args.log_n_max,
+        log_n_ticks=args.log_n_ticks,
+        num_masks=args.num_masks,
+        num_samples=args.num_samples,
+        device=f'cuda:{args.gpu_id}')
 
 
 if __name__ == '__main__':

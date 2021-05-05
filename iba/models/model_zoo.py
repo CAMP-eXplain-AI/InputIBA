@@ -8,10 +8,15 @@ MODELS = Registry('models')
 
 def build_classifiers(cfg, default_args=None):
     cfg = deepcopy(cfg)
-    assert 'source' in cfg, "source is not specified, it can be one of ('custom', 'torchvision', 'timm)"
+    assert 'source' in cfg, \
+        "source is not specified, it can be one of " \
+        "('custom', 'torchvision','timm)"
+
     source = cfg.pop('source')
-    assert source in ('torchvision', 'custom', 'timm'), f"source should be on of ('custom', 'torchvision', 'timm), " \
-                                                        f"but got {source}"
+    assert source in ('torchvision', 'custom', 'timm'), \
+        f"source should be on of ('custom', 'torchvision', 'timm), but " \
+        f"got {source}"
+
     if source == 'torchvision':
         return build_torchvision_classifiers(cfg)
     elif source == 'timm':
@@ -26,8 +31,9 @@ def build_torchvision_classifiers(cfg):
     pretrained = cfg.pop('pretrained', True)
     assert isinstance(pretrained, (bool, str))
     _builder = getattr(models, model_name)
-    # if pretrained is a path, first build a randomly initialized model, then load the pretrained weight
-    # if pretrained is a bool, just call the torchvision's builder, and pass the boolean to the builder
+    # if pretrained is a path, first build a randomly initialized model,
+    # then load the pretrained weight; if pretrained is a bool, just call the
+    # torchvision's builder, and pass the boolean to the builder
     if isinstance(pretrained, str):
         cfg.update({"pretrained": False})
         model = _builder(**cfg)

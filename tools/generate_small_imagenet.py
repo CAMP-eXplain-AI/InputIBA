@@ -9,17 +9,21 @@ from tqdm import tqdm
 
 def parse_args():
     parser = ArgumentParser(
-        description='generate a smaller imagenet dataset from the original one')
-    parser.add_argument('src_root',
-                        type=str,
-                        help='root of image folders of original imagenet')
-    parser.add_argument('dst_root',
-                        type=str,
-                        help='root for saving the new generated image folders')
-    parser.add_argument('--n',
-                        type=int,
-                        default=10,
-                        help='number of samples per class to keep')
+        description='generate a smaller imagenet dataset from the original one'
+    )
+    parser.add_argument(
+        'src_root',
+        type=str,
+        help='root of image folders of original imagenet')
+    parser.add_argument(
+        'dst_root',
+        type=str,
+        help='root for saving the new generated image folders')
+    parser.add_argument(
+        '--n',
+        type=int,
+        default=10,
+        help='number of samples per class to keep')
     args = parser.parse_args()
     return args
 

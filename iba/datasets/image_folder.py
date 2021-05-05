@@ -9,7 +9,7 @@ import cv2
 @DATASETS.register_module()
 class ImageFolder(BaseDataset):
 
-    def __init__(self, img_root, pipeline, valid_formats=('png',)):
+    def __init__(self, img_root, pipeline, valid_formats=('png', )):
         assert isinstance(
             valid_formats,
             (list, tuple)), 'valid_formats must be either a list or tuple'
@@ -23,8 +23,9 @@ class ImageFolder(BaseDataset):
         image_paths = []
         for valid_format in valid_formats:
             image_paths.extend(
-                glob(osp.join(self.img_root, f'**/*.{valid_format}'),
-                     recursive=True))
+                glob(
+                    osp.join(self.img_root, f'**/*.{valid_format}'),
+                    recursive=True))
         self.image_paths = image_paths
         self.pipeline = build_pipeline(pipeline)
 

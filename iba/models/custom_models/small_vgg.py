@@ -6,13 +6,15 @@ from ..model_zoo import MODELS
 @MODELS.register_module()
 class SmallVGG(nn.Module):
     """
-    Smaller VGG model. Compared to VGG-11, this model removes the last two convolutional blocks,
+    Smaller VGG model. Compared to VGG-11, this model removes the last two
+    convolutional blocks,
     and remove the 4096x4096 hidden linear layer in the classifier.
 
     Args:
         num_classes (int): number of output classes.
         in_channels (int, optional): input image channels.
-        pretrained (str, optional): path to checkpoint. If None, the model will be randomly initialized.
+        pretrained (str, optional): path to checkpoint. If None, the model
+        will be randomly initialized.
 
     """
 
@@ -38,9 +40,9 @@ class SmallVGG(nn.Module):
             nn.ReLU(True),
         )
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
-        self.classifier = nn.Sequential(nn.Linear(512 * 7 * 7, 4096),
-                                        nn.ReLU(True), nn.Dropout(),
-                                        nn.Linear(4096, num_classes))
+        self.classifier = nn.Sequential(
+            nn.Linear(512 * 7 * 7, 4096), nn.ReLU(True), nn.Dropout(),
+            nn.Linear(4096, num_classes))
         self._initialize_weights(pretrained)
 
     def _initialize_weights(self, pretrained=None) -> None:
@@ -50,9 +52,8 @@ class SmallVGG(nn.Module):
         else:
             for m in self.modules():
                 if isinstance(m, nn.Conv2d):
-                    nn.init.kaiming_normal_(m.weight,
-                                            mode='fan_out',
-                                            nonlinearity='relu')
+                    nn.init.kaiming_normal_(
+                        m.weight, mode='fan_out', nonlinearity='relu')
                     if m.bias is not None:
                         nn.init.constant_(m.bias, 0)
                 elif isinstance(m, nn.BatchNorm2d):

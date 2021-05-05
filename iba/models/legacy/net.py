@@ -39,38 +39,38 @@ class Attributor:
     def estimate(self, data_loader, estimation_cfg):
         self.iba.sigma = None
         self.iba.reset_estimate()
-        self.iba.estimate(self.classifier,
-                          data_loader,
-                          device=self.device,
-                          **estimation_cfg)
+        self.iba.estimate(
+            self.classifier, data_loader, device=self.device, **estimation_cfg)
 
     def train_iba(self, img, closure, attr_cfg):
         if img.dim() == 3:
             img = img.unsqueeze(0)
-        iba_heatmap = self.iba.analyze(input_t=img,
-                                       model_loss_fn=closure,
-                                       **attr_cfg)
+        iba_heatmap = self.iba.analyze(
+            input_t=img, model_loss_fn=closure, **attr_cfg)
         return iba_heatmap
 
     def train_gan(self, img, attr_cfg, logger=None):
-        gan = WGAN_CP(context=self,
-                      img=img,
-                      feature_mask=self.iba.capacity(),
-                      feature_noise_mean=self.iba.estimator.mean(),
-                      feature_noise_std=self.iba.estimator.std(),
-                      device=self.device)
+        gan = WGAN_CP(
+            context=self,
+            img=img,
+            feature_mask=self.iba.capacity(),
+            feature_noise_mean=self.iba.estimator.mean(),
+            feature_noise_std=self.iba.estimator.std(),
+            device=self.device)
         gan.train(logger=logger, **attr_cfg)
         gen_img_mask = gan.generator.img_mask().clone().detach()
         return gen_img_mask
 
     def train_img_iba(self, img_iba_cfg, img, gen_img_mask, closure, attr_cfg):
-        img_iba = ImageIBA(img=img,
-                           img_mask=gen_img_mask,
-                           img_eps_mean=0.0,
-                           img_eps_std=1.0,
-                           device=self.device,
-                           **img_iba_cfg)
-        img_iba_heatmap = img_iba.analyze(img.unsqueeze(0), closure, **attr_cfg)
+        img_iba = ImageIBA(
+            img=img,
+            img_mask=gen_img_mask,
+            img_eps_mean=0.0,
+            img_eps_std=1.0,
+            device=self.device,
+            **img_iba_cfg)
+        img_iba_heatmap = img_iba.analyze(
+            img.unsqueeze(0), closure, **attr_cfg)
         img_mask = img_iba.sigmoid(img_iba.alpha).detach().cpu().mean(
             [0, 1]).numpy()
         return img_mask, img_iba_heatmap
@@ -79,7 +79,7 @@ class Attributor:
     def get_closure(classifier, target, use_softmax, batch_size=None):
         if use_softmax:
             closure = lambda x: -torch.log_softmax(classifier(x), 1)[:, target
-                                                                    ].mean()
+                                                                     ].mean()
         else:
             assert batch_size is not None
             # target is binary encoded and it is for a single sample
@@ -94,10 +94,11 @@ class Attributor:
         if not self.use_softmax:
             assert attr_cfg['iba']['batch_size'] == attr_cfg['img_iba']['batch_size'], \
                 "batch sizes of iba and img_iba should be equal"
-        closure = self.get_closure(self.classifier,
-                                   target,
-                                   self.use_softmax,
-                                   batch_size=attr_cfg['iba']['batch_size'])
+        closure = self.get_closure(
+            self.classifier,
+            target,
+            self.use_softmax,
+            batch_size=attr_cfg['iba']['batch_size'])
         if logger is None:
             logger = mmcv.get_logger('iba')
 
@@ -107,18 +108,21 @@ class Attributor:
         # get generated image mask (size of image size)
         gen_img_mask = self.train_gan(img, attr_cfg['gan'], logger=logger)
 
-        img_mask, img_iba_heatmap = self.train_img_iba(self.cfg['img_iba'], img,
-                                                       gen_img_mask, closure,
+        img_mask, img_iba_heatmap = self.train_img_iba(self.cfg['img_iba'],
+                                                       img, gen_img_mask,
+                                                       closure,
                                                        attr_cfg['img_iba'])
 
         # feature mask at feature size (without upscale)
-        iba_capacity = self.iba.capacity().sum(0).clone().detach().cpu().numpy()
+        iba_capacity = self.iba.capacity().sum(
+            0).clone().detach().cpu().numpy()
         gen_img_mask = gen_img_mask.cpu().mean([0, 1]).numpy()
-        self.buffer.update(iba_heatmap=iba_heatmap,
-                           img_iba_heatmap=img_iba_heatmap,
-                           img_mask=img_mask,
-                           gen_img_mask=gen_img_mask,
-                           iba_capacity=iba_capacity)
+        self.buffer.update(
+            iba_heatmap=iba_heatmap,
+            img_iba_heatmap=img_iba_heatmap,
+            img_mask=img_mask,
+            gen_img_mask=gen_img_mask,
+            iba_capacity=iba_capacity)
 
     def show_feat_mask(self, upscale=False, show=False, out_file=None):
         if not upscale:

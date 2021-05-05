@@ -20,9 +20,8 @@ def parse_args():
     parser = ArgumentParser('Train other baselines')
     parser.add_argument('config', help='config file')
     parser.add_argument('method', type=str, help='baseline method')
-    parser.add_argument('--work-dir',
-                        help='working directory',
-                        default=os.getcwd())
+    parser.add_argument(
+        '--work-dir', help='working directory', default=os.getcwd())
     parser.add_argument(
         '--saliency-layer',
         type=str,
@@ -48,7 +47,8 @@ def parse_args():
 
 class Baseline:
     method_pool = [
-        'ex_perturb', 'grad_cam', 'deep_shap', 'guided_bp', 'int_grad', 'random'
+        'ex_perturb', 'grad_cam', 'deep_shap', 'guided_bp', 'int_grad',
+        'random'
     ]
 
     def __init__(self, classifier, method, saliency_layer=None):
@@ -60,10 +60,8 @@ class Baseline:
             def make_attribution(classifier):
 
                 def attribution_func(input, target):
-                    saliency_map, _ = extremal_perturbation(classifier,
-                                                            input,
-                                                            target,
-                                                            areas=[0.3])
+                    saliency_map, _ = extremal_perturbation(
+                        classifier, input, target, areas=[0.3])
                     return saliency_map
 
                 return attribution_func
@@ -76,10 +74,11 @@ class Baseline:
             def make_attribution(classifier, saliency_layer):
 
                 def attribution_func(input, target):
-                    saliency_map = grad_cam(classifier,
-                                            input,
-                                            target,
-                                            saliency_layer=saliency_layer)
+                    saliency_map = grad_cam(
+                        classifier,
+                        input,
+                        target,
+                        saliency_layer=saliency_layer)
                     return saliency_map
 
                 return attribution_func
@@ -118,7 +117,8 @@ def train_baseline(cfg,
                    pbar=False,
                    subset_file=None):
     assert out_style in ('single_folder', 'image_folder'), \
-        f"Invalid out_style, should be one of ('single_folder', 'image_folder'), but got {out_style}"
+        f"Invalid out_style, should be one of " \
+        f"('single_folder', 'image_folder'), but got {out_style}"
     val_set = build_dataset(cfg.data['val'])
     if subset_file is not None:
         subset_inds = np.loadtxt(subset_file, dtype=int)
@@ -146,7 +146,7 @@ def train_baseline(cfg,
             target = target.item()
             if method == 'deep_shap':
                 base_distribution = input_tensor.new_zeros(
-                    (10,) + input_tensor.shape[1:])
+                    (10, ) + input_tensor.shape[1:])
                 attr_map = baseline.make_attribution(
                     input_tensor, target, baselines=base_distribution)
                 attr_map = attr_map.detach().cpu().numpy()
@@ -177,14 +177,15 @@ def main():
     args = parse_args()
     cfg = mmcv.Config.fromfile(args.config)
     mmcv.mkdir_or_exist(args.work_dir)
-    train_baseline(cfg=cfg,
-                   method=args.method,
-                   work_dir=args.work_dir,
-                   saliency_layer=args.saliency_layer,
-                   device=f'cuda:{args.gpu_id}',
-                   out_style=args.out_style,
-                   pbar=args.pbar,
-                   subset_file=args.subset_file)
+    train_baseline(
+        cfg=cfg,
+        method=args.method,
+        work_dir=args.work_dir,
+        saliency_layer=args.saliency_layer,
+        device=f'cuda:{args.gpu_id}',
+        out_style=args.out_style,
+        pbar=args.pbar,
+        subset_file=args.subset_file)
 
 
 if __name__ == '__main__':

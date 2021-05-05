@@ -19,14 +19,15 @@ class Generator(torch.nn.Module):
         # TODO make img_mask_param a Parameter
         if capacity is not None:
             image_mask_param = torch.tensor(
-                _to_saliency_map(capacity.cpu().detach().numpy(),
-                                 img.shape[1:],
-                                 data_format="channels_first")).to(device)
+                _to_saliency_map(
+                    capacity.cpu().detach().numpy(),
+                    img.shape[1:],
+                    data_format="channels_first")).to(device)
             self.img_mask_param = image_mask_param.expand(
                 img.shape[0], -1, -1).clone().unsqueeze(0)
         else:
-            self.img_mask_param = torch.zeros(img.shape,
-                                              dtype=torch.float).to(device)
+            self.img_mask_param = torch.zeros(
+                img.shape, dtype=torch.float).to(device)
         self.img_mask_param.requires_grad = True
         # self.mean = torch.tensor([0.485, 0.456, 0.406]).view(1,-1,1,1).to(dev)
         # TODO make mean and eps Parameters.
@@ -87,29 +88,32 @@ class Discriminator(torch.nn.Module):
         # Output_dim = 1
         self.main_module = nn.Sequential(
             # Image (Cx32x32)
-            nn.Conv2d(in_channels=channels,
-                      out_channels=channels * 2,
-                      kernel_size=4,
-                      stride=2,
-                      padding=1),
+            nn.Conv2d(
+                in_channels=channels,
+                out_channels=channels * 2,
+                kernel_size=4,
+                stride=2,
+                padding=1),
             nn.BatchNorm2d(num_features=channels * 2),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (256x16x16)
-            nn.Conv2d(in_channels=channels * 2,
-                      out_channels=channels * 4,
-                      kernel_size=4,
-                      stride=2,
-                      padding=1),
+            nn.Conv2d(
+                in_channels=channels * 2,
+                out_channels=channels * 4,
+                kernel_size=4,
+                stride=2,
+                padding=1),
             nn.BatchNorm2d(num_features=channels * 4),
             nn.LeakyReLU(0.2, inplace=True),
 
             # State (512x8x8)
-            nn.Conv2d(in_channels=channels * 4,
-                      out_channels=channels,
-                      kernel_size=3,
-                      stride=1,
-                      padding=1),
+            nn.Conv2d(
+                in_channels=channels * 4,
+                out_channels=channels,
+                kernel_size=3,
+                stride=1,
+                padding=1),
             nn.BatchNorm2d(num_features=channels),
             nn.LeakyReLU(0.2, inplace=True))
         # # output of main module --> State (1024x4x4)
@@ -148,10 +152,11 @@ class WGAN_CP(object):
         self.feature_noise_std = feature_noise_std
         self.device = device
 
-        self.generator = Generator(img=img,
-                                   context=context,
-                                   device=self.device,
-                                   capacity=feature_mask).to(self.device)
+        self.generator = Generator(
+            img=img,
+            context=context,
+            device=self.device,
+            capacity=feature_mask).to(self.device)
         self.feature_map = self.generator.get_feature_map()
 
         # channel is determined from feature map
@@ -213,8 +218,8 @@ class WGAN_CP(object):
             "params": self.generator.img_mask_param,
             "lr": 0.003
         }])
-        optimizer_D = torch.optim.RMSprop(self.discriminator.parameters(),
-                                          lr=lr)
+        optimizer_D = torch.optim.RMSprop(
+            self.discriminator.parameters(), lr=lr)
 
         # training
         batches_done = 0

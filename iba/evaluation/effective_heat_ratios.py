@@ -20,16 +20,21 @@ class EffectiveHeatRatios(BaseEvaluation):
 
         Args:
             heatmap (np.ndarray): heat map with shape (H, W).
-            roi (list | np.ndarray | tuple): region of interes, can be a bounding box of format (x1, y1, x2, y2)
+            roi (list | np.ndarray | tuple): region of interes, can be a
+                bounding box of format (x1, y1, x2, y2)
                 or a binary mask with the same shape as `heatmap`.
-            return_curve (bool, optional):  if True, return the whole curve of EHR.
-            weight_by_heat (bool, optional): if True, weight the pixels in the roi by their heats.
+            return_curve (bool, optional):  if True, return the whole curve
+                of EHR.
+            weight_by_heat (bool, optional): if True, weight the pixels in
+                the roi by their heats.
 
         Returns:
             dict: a dictionary containing following fields:
                 - auc: area under the EHR curve.
-                - quantiles: quantiles of the EHR curve, only returned when `return_curve` is True.
-                - ratios: ratios of the EHR curve, only returned when `return_curve` is True.
+                - quantiles: quantiles of the EHR curve, only returned when
+                    `return_curve` is True.
+                - ratios: ratios of the EHR curve, only returned when
+                    `return_curve` is True.
         """
         if heatmap.ndim == 3:
             heatmap = heatmap.mean(0)
@@ -48,9 +53,9 @@ class EffectiveHeatRatios(BaseEvaluation):
 
         if heatmap.max() > 1.0:
             if heatmap.dtype == float:
-                warnings.warn(
-                    "Maximal value of heatmap is larger than 1, and dtype of heatmap is float. "
-                    "Please normalize the heatmap to range [0, 1] first.")
+                warnings.warn("Maximal value of heatmap is larger than 1, "
+                              "and dtype of heatmap is float.Please normalize "
+                              "the heatmap to range [0, 1] first.")
             heatmap = heatmap.astype(float) / 255.0
         poi_mask = heatmap >= self.base_threshold
         heatmap[~poi_mask] = 0.0

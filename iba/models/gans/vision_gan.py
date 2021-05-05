@@ -1,7 +1,7 @@
 import torch
 from torch.optim import RMSprop
 from torch.utils.data import TensorDataset, DataLoader
-from .base_gan import BaseWassersteinGAN
+from .base_gan import BaseWassersteinGAN, _get_gan_log_string
 from .builder import build_generator, build_discriminator, GANS
 from mmcv import get_logger
 import random
@@ -17,12 +17,13 @@ class VisionWGAN(BaseWassersteinGAN):
                  context,
                  feat_mask=None,
                  device='cuda:0'):
-        super(VisionWGAN, self).__init__(input_tensor=input_tensor,
-                                         context=context,
-                                         generator=generator,
-                                         discriminator=discriminator,
-                                         feat_mask=feat_mask,
-                                         device=device)
+        super(VisionWGAN, self).__init__(
+            input_tensor=input_tensor,
+            context=context,
+            generator=generator,
+            discriminator=discriminator,
+            feat_mask=feat_mask,
+            device=device)
 
     def build_generator(self, input_tensor, context, cfg):
         default_args = {
@@ -58,10 +59,11 @@ class VisionWGAN(BaseWassersteinGAN):
         dataset = torch.cat(dataset, dim=0)
         dataset = dataset.detach()
         tensor_dataset = TensorDataset(dataset)
-        dataloader = DataLoader(dataset=tensor_dataset,
-                                batch_size=batch_size,
-                                shuffle=True,
-                                num_workers=0)
+        dataloader = DataLoader(
+            dataset=tensor_dataset,
+            batch_size=batch_size,
+            shuffle=True,
+            num_workers=0)
         return dataloader
 
     def train(self,
@@ -95,7 +97,7 @@ class VisionWGAN(BaseWassersteinGAN):
         optimizer_D = RMSprop(self.discriminator.parameters(), lr=lr)
 
         # training
-        batches_done = 0
+        num_iters = 0
         for epoch in range(epochs):
             for i, data in enumerate(data_loader):
 
@@ -136,11 +138,13 @@ class VisionWGAN(BaseWassersteinGAN):
                     loss_G.backward()
                     optimizer_G.step()
                     if verbose:
-                        log_str = f'GAN: epoch [{epoch + 1}/{epochs}], '
-                        log_str += f'[{batches_done % len(data_loader)}/{len(data_loader)}], '
-                        log_str += f'D loss: {loss_D.item():.5f}, G loss: {loss_G.item():.5f}'
+                        log_str = _get_gan_log_string(epoch + 1, epochs,
+                                                      num_iters + 1,
+                                                      len(data_loader),
+                                                      loss_D.item(),
+                                                      loss_G.item())
                         logger.info(log_str)
-                batches_done += 1
+                num_iters += 1
 
         del data_loader
         self.generator.clear()

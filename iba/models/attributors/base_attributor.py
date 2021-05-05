@@ -87,7 +87,8 @@ class BaseAttributor(metaclass=ABCMeta):
                                           closure,
                                           attr_cfg['input_iba'],
                                           logger=logger)
-        feat_iba_capacity = self.feat_iba.capacity().sum(0).clone().detach().cpu().numpy()
+        feat_iba_capacity = self.feat_iba.capacity().sum(
+            0).clone().detach().cpu().numpy()
         gen_input_mask = gen_input_mask.mean([0, 1]).cpu().numpy()
         self.buffer.update(feat_mask=feat_mask,
                            input_mask=input_mask,
@@ -95,11 +96,7 @@ class BaseAttributor(metaclass=ABCMeta):
                            feat_iba_capacity=feat_iba_capacity)
 
     @abstractmethod
-    def train_feat_iba(self,
-                       input_tensor,
-                       closure,
-                       attr_cfg,
-                       logger=None):
+    def train_feat_iba(self, input_tensor, closure, attr_cfg, logger=None):
         pass
 
     @abstractmethod

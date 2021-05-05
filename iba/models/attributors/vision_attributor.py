@@ -28,11 +28,7 @@ class VisionAttributor(BaseAttributor):
                                                use_softmax=use_softmax,
                                                device=device)
 
-    def train_feat_iba(self,
-                       input_tensor,
-                       closure,
-                       attr_cfg,
-                       logger=None):
+    def train_feat_iba(self, input_tensor, closure, attr_cfg, logger=None):
         if input_tensor.dim() == 3:
             input_tensor = input_tensor.unsqueeze(0)
         feat_mask = self.feat_iba.analyze(input_tensor=input_tensor,

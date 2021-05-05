@@ -82,7 +82,8 @@ class VisionFeatureIBA(BaseFeatureIBA):
                 imgs = batch['input']
             if self.estimator.n_samples() > n_samples:
                 break
-            with torch.no_grad(), self.interrupt_execution(), self.enable_estimation():
+            with torch.no_grad(), self.interrupt_execution(
+            ), self.enable_estimation():
                 model(imgs.to(self.device))
                 if bar:
                     bar.update(len(imgs))
@@ -155,7 +156,8 @@ class VisionFeatureIBA(BaseFeatureIBA):
             min_std=0.01,
             logger=None,
             log_every_steps=-1):
-        assert input_tensor.shape[0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]} samples"
+        assert input_tensor.shape[
+            0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]} samples"
         if logger is None:
             logger = mmcv.get_logger('iba')
 

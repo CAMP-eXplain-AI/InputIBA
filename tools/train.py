@@ -20,22 +20,30 @@ def parse_args():
                         help='working directory',
                         default=os.getcwd())
     parser.add_argument('--gpu-id', help='gpu id', type=int, default=0)
-    parser.add_argument('--out-style',
-                        help='Structure of output folders that store the attribution maps',
-                        choices=['image_folder', 'single_folder'],
-                        default='single_folder')
-    parser.add_argument('--pbar',
-                        action='store_true',
-                        help='Whether to use a progressbar to track the main loop')
-    parser.add_argument('--subset-file',
-                        help='A txt file, where each line stores the sample index in subset. '
-                             'Attribution is only applied on this subset')
+    parser.add_argument(
+        '--out-style',
+        help='Structure of output folders that store the attribution maps',
+        choices=['image_folder', 'single_folder'],
+        default='single_folder')
+    parser.add_argument(
+        '--pbar',
+        action='store_true',
+        help='Whether to use a progressbar to track the main loop')
+    parser.add_argument(
+        '--subset-file',
+        help='A txt file, where each line stores the sample index in subset. '
+        'Attribution is only applied on this subset')
 
     args = parser.parse_args()
     return args
 
 
-def train(config, work_dir, gpu_id=0, out_style='single_folder', pbar=False, subset_file=None):
+def train(config,
+          work_dir,
+          gpu_id=0,
+          out_style='single_folder',
+          pbar=False,
+          subset_file=None):
     cfg = mmcv.Config.fromfile(config)
     mmcv.mkdir_or_exist(work_dir)
     if len(os.listdir(work_dir)) > 0:
@@ -106,7 +114,7 @@ def train_attributor(cfg: mmcv.Config,
                         'For multi-label classification, saving the attribution maps with image folder'
                         'style is not possible')
                 if isinstance(val_set, Subset):
-                    sub_dir = val_set.dataset.ind_to_cls[target]    # noqa
+                    sub_dir = val_set.dataset.ind_to_cls[target]  # noqa
                 else:
                     sub_dir = val_set.ind_to_cls[target]
 

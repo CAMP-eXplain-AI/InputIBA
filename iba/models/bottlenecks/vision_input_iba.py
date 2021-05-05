@@ -102,7 +102,8 @@ class VisionInputIBA(BaseInputIBA):
             batch_size=10,
             logger=None,
             log_every_steps=-1):
-        assert input_tensor.shape[0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]}"
+        assert input_tensor.shape[
+            0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]}"
         batch = input_tensor.expand(batch_size, -1, -1, -1)
 
         # Reset from previous run or modifications

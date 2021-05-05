@@ -83,9 +83,15 @@ class VisionWGAN(BaseWassersteinGAN):
 
         # Optimizers
         optimizer_G = RMSprop([{
-            "params": self.generator.mean, "lr": 0.1},
-            {"params": self.generator.eps, "lr": 0.05},
-            {"params": self.generator.input_mask_param, "lr": 0.003}])
+            "params": self.generator.mean,
+            "lr": 0.1
+        }, {
+            "params": self.generator.eps,
+            "lr": 0.05
+        }, {
+            "params": self.generator.input_mask_param,
+            "lr": 0.003
+        }])
         optimizer_D = RMSprop(self.discriminator.parameters(), lr=lr)
 
         # training

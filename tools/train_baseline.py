@@ -20,22 +20,28 @@ def parse_args():
     parser = ArgumentParser('Train other baselines')
     parser.add_argument('config', help='config file')
     parser.add_argument('method', type=str, help='baseline method')
-    parser.add_argument('--work-dir', help='working directory', default=os.getcwd())
-    parser.add_argument('--saliency-layer',
-                        type=str,
-                        default='features.30',
-                        help='Saliency layer of Grad-Cam, only useful when method is grad_cam')
+    parser.add_argument('--work-dir',
+                        help='working directory',
+                        default=os.getcwd())
+    parser.add_argument(
+        '--saliency-layer',
+        type=str,
+        default='features.30',
+        help='Saliency layer of Grad-Cam, only useful when method is grad_cam')
     parser.add_argument('--gpu-id', type=int, default=0, help='GPU Id')
-    parser.add_argument('--out-style',
-                        help='Structure of output folders that store the attribution maps',
-                        choices=['image_folder', 'single_folder'],
-                        default='single_folder')
-    parser.add_argument('--pbar',
-                        action='store_true',
-                        help='Whether to use a progressbar to track the main loop')
-    parser.add_argument('--subset-file',
-                        help='A txt file, where each line stores the sample index in subset. '
-                             'Attribution is only applied on this subset')
+    parser.add_argument(
+        '--out-style',
+        help='Structure of output folders that store the attribution maps',
+        choices=['image_folder', 'single_folder'],
+        default='single_folder')
+    parser.add_argument(
+        '--pbar',
+        action='store_true',
+        help='Whether to use a progressbar to track the main loop')
+    parser.add_argument(
+        '--subset-file',
+        help='A txt file, where each line stores the sample index in subset. '
+        'Attribution is only applied on this subset')
     args = parser.parse_args()
     return args
 
@@ -154,7 +160,7 @@ def train_baseline(cfg,
                 out_file = osp.join(work_dir, input_name)
             else:
                 if isinstance(val_set, Subset):
-                    sub_dir = val_set.dataset.ind_to_cls[target]    # noqa
+                    sub_dir = val_set.dataset.ind_to_cls[target]  # noqa
                 else:
                     sub_dir = val_set.ind_to_cls[target]
                 mmcv.mkdir_or_exist(osp.join(work_dir, sub_dir))

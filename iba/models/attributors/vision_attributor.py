@@ -28,16 +28,26 @@ class VisionAttributor(BaseAttributor):
                                                use_softmax=use_softmax,
                                                device=device)
 
-    def train_feat_iba(self, input_tensor, closure, attr_cfg):
+    def train_feat_iba(self,
+                       input_tensor,
+                       closure,
+                       attr_cfg,
+                       logger=None):
         if input_tensor.dim() == 3:
             input_tensor = input_tensor.unsqueeze(0)
         feat_mask = self.feat_iba.analyze(input_tensor=input_tensor,
                                           model_loss_fn=closure,
+                                          logger=logger,
                                           **attr_cfg)
         return feat_mask
 
-    def train_input_iba(self, input_tensor, input_iba_cfg, gen_input_mask,
-                        closure, attr_cfg):
+    def train_input_iba(self,
+                        input_tensor,
+                        input_iba_cfg,
+                        gen_input_mask,
+                        closure,
+                        attr_cfg,
+                        logger=None):
         assert input_tensor.dim() == 3, \
             f"GAN expect input_tensor to be 3-dimensional, but got a(n) {input_tensor.dim()}d tensor"
         default_args = {
@@ -46,7 +56,10 @@ class VisionAttributor(BaseAttributor):
         }
         input_iba = build_input_iba(input_iba_cfg, default_args=default_args)
         input_tensor = input_tensor.unsqueeze(0)
-        input_iba_heatmap = input_iba.analyze(input_tensor, closure, **attr_cfg)
+        input_iba_heatmap = input_iba.analyze(input_tensor,
+                                              closure,
+                                              **attr_cfg,
+                                              logger=logger)
 
         input_mask = torch.sigmoid(input_iba.alpha).detach().cpu().mean(
             [0, 1]).numpy()

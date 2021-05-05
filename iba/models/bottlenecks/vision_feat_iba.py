@@ -1,9 +1,11 @@
+import mmcv
 import torch
 import torch.nn as nn
 import warnings
-from ..utils import get_tqdm, _SpatialGaussianKernel
+from ..utils import _SpatialGaussianKernel
 from .base_feat_iba import BaseFeatureIBA
 from ..estimators import VisionWelfordEstimator
+from tqdm import tqdm
 
 
 class VisionFeatureIBA(BaseFeatureIBA):
@@ -64,16 +66,10 @@ class VisionFeatureIBA(BaseFeatureIBA):
                  model,
                  dataloader,
                  n_samples=10000,
-                 progbar=False,
+                 verbose=False,
                  reset=True):
-        progbar = progbar if progbar is not None else self.progbar
-        if progbar:
-            try:
-                tqdm = get_tqdm()
-                bar = tqdm(dataloader, total=n_samples)
-            except ImportError:
-                warnings.warn("Cannot load tqdm! Sorry, no progress bar")
-                bar = None
+        if verbose:
+            bar = tqdm(dataloader, total=n_samples)
         else:
             bar = None
 
@@ -86,11 +82,10 @@ class VisionFeatureIBA(BaseFeatureIBA):
                 imgs = batch['input']
             if self.estimator.n_samples() > n_samples:
                 break
-            with torch.no_grad(), self.interrupt_execution(
-            ), self.enable_estimation():
+            with torch.no_grad(), self.interrupt_execution(), self.enable_estimation():
                 model(imgs.to(self.device))
-            if bar:
-                bar.update(len(imgs))
+                if bar:
+                    bar.update(len(imgs))
         if bar:
             bar.close()
 
@@ -157,8 +152,12 @@ class VisionFeatureIBA(BaseFeatureIBA):
             opt_steps=10,
             lr=1.0,
             batch_size=10,
-            min_std=0.01):
-        assert input_tensor.shape[0] == 1, "We can only fit one sample a time"
+            min_std=0.01,
+            logger=None,
+            log_every_steps=-1):
+        assert input_tensor.shape[0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]} samples"
+        if logger is None:
+            logger = mmcv.get_logger('iba')
 
         batch = input_tensor.expand(batch_size, -1, -1, -1)
 
@@ -175,38 +174,29 @@ class VisionFeatureIBA(BaseFeatureIBA):
             self._active_neurons_threshold).float()
         self.input_std = torch.max(std, min_std * torch.ones_like(std))
 
-        self.loss = []
-        self.alpha_grads = []
-        self.model_loss = []
-        self.information_loss = []
-
-        opt_range = range(opt_steps)
-        try:
-            tqdm = get_tqdm()
-            opt_range = tqdm(opt_range,
-                             desc="Training Bottleneck",
-                             disable=not self.progbar)
-        except ImportError:
-            if self.progbar:
-                warnings.warn("Cannot load tqdm! Sorry, no progress bar")
-                self.progbar = False
+        self.reset_loss_buffers()
 
         with self.restrict_flow():
-            for _ in opt_range:
+            for i in range(opt_steps):
                 optimizer.zero_grad()
-                model_loss = model_loss_fn(batch)
+                cls_loss = model_loss_fn(batch)
                 # Taking the mean is equivalent of scaling the sum with 1/K
-                information_loss = self.capacity().mean()
+                info_loss = self.capacity().mean()
                 if self.reverse_lambda:
-                    loss = -model_loss + beta * information_loss
+                    loss = -cls_loss + beta * info_loss
                 else:
-                    loss = model_loss + beta * information_loss
+                    loss = cls_loss + beta * info_loss
                 loss.backward()
                 optimizer.step()
 
-                self.alpha_grads.append(self.alpha.grad.cpu().numpy())
-                self.loss.append(loss.item())
-                self.model_loss.append(model_loss.item())
-                self.information_loss.append(information_loss.item())
+                self.loss_buffer.append(loss.item())
+                self.cls_loss_buffer.append(cls_loss.item())
+                self.info_loss_buffer.append(info_loss.item())
+                if log_every_steps > 0 and (i + 1) % log_every_steps == 0:
+                    log_str = f'Feature IBA: step [{i + 1}/ {opt_steps}], '
+                    log_str += f'loss: {self.loss_buffer[-1]:.5f}, '
+                    log_str += f'cls loss: {self.cls_loss_buffer[-1]:.5f}, '
+                    log_str += f'info loss: {self.info_loss_buffer[-1]:.5f}'
+                    logger.info(log_str)
 
         return self._get_saliency(mode=mode, shape=input_tensor.shape[2:])

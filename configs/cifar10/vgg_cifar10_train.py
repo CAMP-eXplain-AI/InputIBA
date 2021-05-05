@@ -26,7 +26,7 @@ attributor = dict(
 
 estimation_cfg = dict(
     n_samples=1000,
-    progbar=False,
+    verbose=False,
 )
 
 attribution_cfg = dict(

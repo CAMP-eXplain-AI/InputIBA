@@ -4,7 +4,7 @@ pretrained = 'workdirs/ckpts/resnet8_cifar10.pth'
 
 attributor = dict(
     type='VisionAttributor',
-    layer='layer2',
+    layer='layer1',
     use_softmax=True,
     classifier=dict(
         source='custom',
@@ -29,13 +29,14 @@ attributor = dict(
 
 estimation_cfg = dict(
     n_samples=1000,
-    progbar=False,
+    verbose=False,
 )
 
 attribution_cfg = dict(
     feat_iba=dict(
         batch_size=10,
-        beta=20),
+        beta=30,
+        log_every_steps=1),
     gan=dict(
         dataset_size=200,
         sub_dataset_size=20,
@@ -46,10 +47,11 @@ attribution_cfg = dict(
         critic_iter=5,
         verbose=False),
     input_iba=dict(
-        beta=20.0,
+        beta=100,
         opt_steps=60,
         lr=1.0,
-        batch_size=10),
+        batch_size=10,
+        log_every_steps=5),
     feat_mask=dict(
         upscale=True,
         show=False),

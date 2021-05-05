@@ -12,7 +12,6 @@ class BaseIBA(nn.Module, metaclass=ABCMeta):
                  initial_alpha=5.0,
                  input_mean=None,
                  input_std=None,
-                 progbar=False,
                  reverse_lambda=False,
                  combine_loss=False,
                  device='cuda:0'):
@@ -29,15 +28,27 @@ class BaseIBA(nn.Module, metaclass=ABCMeta):
         self.alpha = None
         self.smooth = None
 
-        self.loss = []
-        self.alpha_grads = []
-        self.model_loss = []
-        self.information_loss = []
+        self.loss_buffer = []
+        self.cls_loss_buffer = []
+        self.info_loss_buffer = []
 
-        self.progbar = progbar
         self.reverse_lambda = reverse_lambda
         self.combine_loss = combine_loss
         self.device = device
+
+    def reset_loss_buffers(self):
+        self.loss_buffer.clear()
+        self.cls_loss_buffer.clear()
+        self.info_loss_buffer.clear()
+
+    def get_loss_history(self):
+        return self.loss_buffer
+
+    def get_cls_loss_history(self):
+        return self.cls_loss_buffer
+
+    def get_info_loss_history(self):
+        return self.info_loss_buffer
 
     @abstractmethod
     def reset_alpha(self):
@@ -64,6 +75,8 @@ class BaseIBA(nn.Module, metaclass=ABCMeta):
                 opt_steps=10,
                 lr=1.0,
                 batch_size=10,
+                logger=None,
+                log_every_steps=-1,
                 *args,
                 **kwargs):
         pass

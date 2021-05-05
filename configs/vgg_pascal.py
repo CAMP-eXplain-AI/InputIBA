@@ -27,13 +27,14 @@ attributor = dict(
 
 estimation_cfg = dict(
     n_samples=1000,
-    progbar=False,
+    verbose=False,
 )
 
 attribution_cfg = dict(
     feat_iba=dict(
         batch_size=10,
-        beta=10.0),
+        beta=10.0,
+        log_every_steps=1),
     gan=dict(
         dataset_size=200,
         sub_dataset_size=20,
@@ -47,7 +48,8 @@ attribution_cfg = dict(
         beta=10.0,
         opt_steps=60,
         lr=1.0,
-        batch_size=10),
+        batch_size=10,
+        log_every_steps=5),
     feat_mask=dict(
         upscale=True,
         show=False),

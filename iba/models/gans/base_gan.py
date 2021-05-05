@@ -45,7 +45,6 @@ class BaseWassersteinGAN(metaclass=ABCMeta):
 
     @abstractmethod
     def train(self,
-              logger=None,
               dataset_size=200,
               sub_dataset_size=20,
               lr=5e-5,
@@ -53,5 +52,6 @@ class BaseWassersteinGAN(metaclass=ABCMeta):
               weight_clip=0.1,
               epochs=200,
               critic_iter=5,
-              verbose=False):
+              verbose=False,
+              logger=None):
         pass

@@ -72,18 +72,22 @@ class BaseAttributor(metaclass=ABCMeta):
         if logger is None:
             logger = mmcv.get_logger('iba')
 
-        feat_mask = self.train_feat_iba(input_tensor, closure,
-                                        attr_cfg['feat_iba'])
+        feat_mask = self.train_feat_iba(input_tensor,
+                                        closure,
+                                        attr_cfg['feat_iba'],
+                                        logger=logger)
 
         gen_input_mask = self.train_gan(input_tensor,
                                         attr_cfg['gan'],
                                         logger=logger)
 
-        input_mask = self.train_input_iba(input_tensor, self.input_iba,
-                                          gen_input_mask, closure,
-                                          attr_cfg['input_iba'])
-        feat_iba_capacity = self.feat_iba.capacity().sum(
-            0).clone().detach().cpu().numpy()
+        input_mask = self.train_input_iba(input_tensor,
+                                          self.input_iba,
+                                          gen_input_mask,
+                                          closure,
+                                          attr_cfg['input_iba'],
+                                          logger=logger)
+        feat_iba_capacity = self.feat_iba.capacity().sum(0).clone().detach().cpu().numpy()
         gen_input_mask = gen_input_mask.mean([0, 1]).cpu().numpy()
         self.buffer.update(feat_mask=feat_mask,
                            input_mask=input_mask,
@@ -91,12 +95,21 @@ class BaseAttributor(metaclass=ABCMeta):
                            feat_iba_capacity=feat_iba_capacity)
 
     @abstractmethod
-    def train_feat_iba(self, input_tensor, closure, attr_cfg):
+    def train_feat_iba(self,
+                       input_tensor,
+                       closure,
+                       attr_cfg,
+                       logger=None):
         pass
 
     @abstractmethod
-    def train_input_iba(self, input_tensor, input_iba_cfg, gen_input_mask,
-                        closure, attr_cfg):
+    def train_input_iba(self,
+                        input_tensor,
+                        input_iba_cfg,
+                        gen_input_mask,
+                        closure,
+                        attr_cfg,
+                        logger=None):
         pass
 
     @staticmethod

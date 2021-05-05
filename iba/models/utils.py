@@ -137,16 +137,6 @@ def _to_saliency_map(capacity, shape=None, data_format='channels_last'):
         return saliency_map
 
 
-def get_tqdm():
-    """Tries to import ``tqdm`` from ``tqdm.auto`` if fails uses cli ``tqdm``."""
-    try:
-        from tqdm.auto import tqdm
-        return tqdm
-    except ImportError:
-        from tqdm import tqdm
-        return tqdm
-
-
 def ifnone(a, b):
     """If a is None return b."""
     if a is None:

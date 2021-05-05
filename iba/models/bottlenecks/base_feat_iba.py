@@ -19,7 +19,6 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
                  initial_alpha=5.0,
                  input_mean=None,
                  input_std=None,
-                 progbar=False,
                  reverse_lambda=False,
                  combine_loss=False,
                  device='cuda:0'):
@@ -27,7 +26,6 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
                                              initial_alpha=initial_alpha,
                                              input_mean=input_mean,
                                              input_std=input_std,
-                                             progbar=progbar,
                                              reverse_lambda=reverse_lambda,
                                              combine_loss=combine_loss,
                                              device=device)
@@ -110,7 +108,7 @@ class BaseFeatureIBA(BaseIBA, metaclass=ABCMeta):
                  model,
                  dataloader,
                  n_samples=10000,
-                 progbar=False,
+                 verbose=False,
                  reset=True):
         pass
 

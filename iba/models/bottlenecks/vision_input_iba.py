@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from .base_input_iba import BaseInputIBA
-from ..utils import _SpatialGaussianKernel, get_tqdm, ifnone
-import warnings
+from ..utils import _SpatialGaussianKernel, ifnone
 
 
 class VisionInputIBA(BaseInputIBA):
@@ -15,7 +13,6 @@ class VisionInputIBA(BaseInputIBA):
                  initial_alpha=5.0,
                  input_mean=None,
                  input_std=None,
-                 progbar=False,
                  reverse_lambda=False,
                  combine_loss=False,
                  device='cuda:0'):
@@ -25,7 +22,6 @@ class VisionInputIBA(BaseInputIBA):
                                              initial_alpha=initial_alpha,
                                              input_mean=input_mean,
                                              input_std=input_std,
-                                             progbar=progbar,
                                              reverse_lambda=reverse_lambda,
                                              combine_loss=combine_loss,
                                              device=device)
@@ -103,49 +99,41 @@ class VisionInputIBA(BaseInputIBA):
             beta=10.0,
             opt_steps=10,
             lr=1.0,
-            batch_size=10):
-        assert input_tensor.shape[
-            0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]}"
+            batch_size=10,
+            logger=None,
+            log_every_steps=-1):
+        assert input_tensor.shape[0] == 1, f"We can only fit one sample a time, but got {input_tensor.shape[0]}"
         batch = input_tensor.expand(batch_size, -1, -1, -1)
 
         # Reset from previous run or modifications
         self.reset_alpha()
         optimizer = torch.optim.Adam(lr=lr, params=[self.alpha])
 
-        self.loss = []
-        self.alpha_grads = []
-        self.model_loss = []
-        self.information_loss = []
-
-        opt_range = range(opt_steps)
-        try:
-            tqdm = get_tqdm()
-            opt_range = tqdm(opt_range,
-                             desc="Training Bottleneck",
-                             disable=not self.progbar)
-        except ImportError:
-            if self.progbar:
-                warnings.warn("Cannot load tqdm! Sorry, no progress bar")
-                self.progbar = False
+        self.reset_loss_buffers()
 
         with self.restrict_flow():
-            for _ in opt_range:
+            for i in range(opt_steps):
                 optimizer.zero_grad()
                 masked_img = self.forward(batch)
-                model_loss = model_loss_fn(masked_img)
+                cls_loss = model_loss_fn(masked_img)
                 # Taking the mean is equivalent of scaling the sum with 1/K
-                information_loss = self.capacity().mean()
+                info_loss = self.capacity().mean()
                 if self.reverse_lambda:
-                    loss = -model_loss + beta * information_loss
+                    loss = -cls_loss + beta * info_loss
                 else:
-                    loss = model_loss + beta * information_loss
+                    loss = cls_loss + beta * info_loss
                 loss.backward(retain_graph=True)
                 optimizer.step()
 
-                self.alpha_grads.append(self.alpha.grad.cpu().numpy())
-                self.loss.append(loss.item())
-                self.model_loss.append(model_loss.item())
-                self.information_loss.append(information_loss.item())
+                self.loss_buffer.append(loss.item())
+                self.cls_loss_buffer.append(cls_loss.item())
+                self.info_loss_buffer.append(info_loss.item())
+                if log_every_steps > 0 and (i + 1) % log_every_steps == 0:
+                    log_str = f'Input IBA: step [{i + 1}/ {opt_steps}], '
+                    log_str += f'loss: {self.loss_buffer[-1]:.5f}, '
+                    log_str += f'cls loss: {self.cls_loss_buffer[-1]:.5f}, '
+                    log_str += f'info loss: {self.info_loss_buffer[-1]:.5f}'
+                    logger.info(log_str)
 
         return self._get_saliency(mode=mode)
 

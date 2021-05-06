@@ -29,12 +29,12 @@ class SanityCheck(BaseEvaluation):
     def __init__(self, attributor: BaseAttributor):
         self.attributor = attributor
         self.ori_state_dict = deepcopy(self.attributor.classifier.state_dict())
+        # layer names of classifier
         self.model_layers = self.filter_names(
             [n[0] for n in self.attributor.classifier.named_modules()])
         self.logger = get_logger('iba')
 
     def reload(self):
-        self.logger.info('Reload state dict')
         self.attributor.classifier.load_state_dict(self.ori_state_dict)
         self.attributor.classifier.to(self.attributor.device)
         self.attributor.classifier.eval()
@@ -49,6 +49,7 @@ class SanityCheck(BaseEvaluation):
             attribution_cfg,
             perturb_layers,
             check='gan',
+            verbose=False,
             save_dir=None,
             save_heatmaps=False):
         """Apply sanity check to the attribution method with a single image.
@@ -69,6 +70,9 @@ class SanityCheck(BaseEvaluation):
                 model.
             check (str, optional): which component to check, can be either
                 'gan' or 'input_iba'.
+            verbose (bool, optional): if True, log the messages during
+            perturbation and re-attribution process. The messages contain
+            e.g. which layers are perturbed, etc.
             save_dir (str, optional): directory for saving the results.
                 Only useful when `save_heatmaps` is True.
             save_heatmaps (bool, optional): if True, save the heatmaps
@@ -94,7 +98,8 @@ class SanityCheck(BaseEvaluation):
         for layer in perturb_layers:
             # reload state_dict
             self.reload()
-            self.logger.info(f'Perturb {layer} and subsequent layers')
+            if verbose:
+                self.logger.info(f'Perturb {layer} and subsequent layers')
             p_layers = []
             for m in model_layers:
                 if layer != m:
@@ -102,8 +107,9 @@ class SanityCheck(BaseEvaluation):
                 else:
                     break
             p_layers.append(layer)
-            self.logger.info(
-                f"Following layers will be perturbed: [{', '.join(p_layers)}]")
+            if verbose:
+                self.logger.info(f"Following layers will be perturbed: "
+                                 f"[{', '.join(p_layers)}]")
             ssim_val = self.sanity_check_single(
                 input_tensor=input_tensor,
                 target=target,
@@ -113,7 +119,8 @@ class SanityCheck(BaseEvaluation):
                 check=check,
                 save_dir=save_dir,
                 save_heatmaps=save_heatmaps)
-            self.logger.info(f'ssim_val: {ssim_val}')
+            if verbose:
+                self.logger.info(f'ssim_val: {ssim_val}')
             ssim_all.append(ssim_val)
         if save_heatmaps:
             self.attributor.show_mask(
@@ -137,7 +144,7 @@ class SanityCheck(BaseEvaluation):
             batch_size=attr_cfg['feat_iba']['batch_size'])
 
         _ = self.attributor.train_feat_iba(
-            input_tensor, closure, attr_cfg['iba'], logger=self.logger)
+            input_tensor, closure, attr_cfg['feat_iba'], logger=self.logger)
         if check == 'gan':
             perturb_model(self.attributor.classifier, perturb_layers)
             is_perturbed = True
@@ -153,7 +160,6 @@ class SanityCheck(BaseEvaluation):
 
         input_mask = self.attributor.train_input_iba(
             input_tensor,
-            self.attributor.input_iba,
             gen_input_mask=gen_input_mask,
             closure=closure,
             attr_cfg=attr_cfg['input_iba'],

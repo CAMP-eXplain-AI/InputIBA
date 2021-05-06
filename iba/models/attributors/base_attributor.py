@@ -84,7 +84,6 @@ class BaseAttributor(metaclass=ABCMeta):
 
         input_mask = self.train_input_iba(
             input_tensor,
-            self.input_iba,
             gen_input_mask,
             closure,
             attr_cfg['input_iba'],
@@ -105,7 +104,6 @@ class BaseAttributor(metaclass=ABCMeta):
     @abstractmethod
     def train_input_iba(self,
                         input_tensor,
-                        input_iba_cfg,
                         gen_input_mask,
                         closure,
                         attr_cfg,

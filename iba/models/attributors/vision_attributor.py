@@ -41,7 +41,6 @@ class VisionAttributor(BaseAttributor):
 
     def train_input_iba(self,
                         input_tensor,
-                        input_iba_cfg,
                         gen_input_mask,
                         closure,
                         attr_cfg,
@@ -53,7 +52,7 @@ class VisionAttributor(BaseAttributor):
             'input_tensor': input_tensor,
             'input_mask': gen_input_mask
         }
-        input_iba = build_input_iba(input_iba_cfg, default_args=default_args)
+        input_iba = build_input_iba(self.input_iba, default_args=default_args)
         input_tensor = input_tensor.unsqueeze(0)
         _ = input_iba.analyze(input_tensor, closure, **attr_cfg, logger=logger)
 

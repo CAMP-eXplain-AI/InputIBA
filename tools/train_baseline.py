@@ -154,7 +154,6 @@ def train_baseline(cfg,
                 attr_map = baseline.make_attribution(
                     input_tensor, target).detach().cpu().numpy()
             attr_map = attr_map.mean((0, 1))
-            attr_map = attr_map / attr_map.max()
 
             if out_style == 'single_folder':
                 out_file = osp.join(work_dir, input_name)

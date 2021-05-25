@@ -4,6 +4,7 @@ from ..bottlenecks import build_input_iba
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import os.path as osp
 import mmcv
 from PIL import Image
@@ -77,7 +78,10 @@ class VisionAttributor(BaseAttributor):
             raise NotImplementedError('Currently only support softmax')
         return closure
 
-    def show_feat_mask(self, upscale=False, show=False, out_file=None):
+    def show_feat_mask(self,
+                       upscale=False,
+                       show=False,
+                       out_file=None):
         if not upscale:
             mask = self.buffer['iba_capacity']
         else:
@@ -85,39 +89,41 @@ class VisionAttributor(BaseAttributor):
         mask = mask / mask.max()
         self.show_mask(mask, show=show, out_file=out_file)
 
-    def show_gen_input_mask(self, show=False, out_file=None):
+    def show_gen_input_mask(self,
+                            show=False,
+                            out_file=None):
         mask = self.buffer['gen_input_mask']
-        self.show_mask(mask, show=show, out_file=out_file)
+        self.show_mask(mask,
+                       show=show,
+                       out_file=out_file)
 
-    def show_input_mask(self, show=False, out_file=None):
+    def show_input_mask(self,
+                        show=False,
+                        out_file=None):
         mask = self.buffer['input_mask']
-        self.show_mask(mask, show=show, out_file=out_file)
+        self.show_mask(mask,
+                       show=show,
+                       out_file=out_file)
 
     @staticmethod
-    def show_img(img,
-                 mean=(0.485, 0.456, 0.406),
-                 std=(0.229, 0.224, 0.225),
-                 show=False,
-                 out_file=None):
-        if isinstance(img, torch.Tensor):
-            assert img.max().item() < 1
-            mean = torch.tensor(mean).to(img)
-            std = torch.tensor(std).to(img)
-        else:
-            assert img.max() < 1
-            mean = np.array(mean)
-            std = np.array(std)
-        img = img * std + mean
-        if isinstance(img, torch.Tensor):
-            img = img.cpu().numpy()
-        VisionAttributor.show_mask(img, show=show, out_file=out_file)
+    def show_mask(mask,
+                  show=False,
+                  out_file=None):
+        assert mask.dtype in (float, np.float32, np.float16, np.float128)
+        # copy mask for showing images and storing to JPEG files, since
+        # it uses min-max normalize to rescale mask to [0, 1] for saving as
+        # png files, while it uses CenteredNorm to normalize masks to [0, 1]
+        # for JPEG files.
+        mask_raw = np.copy(mask)
 
-    @staticmethod
-    def show_mask(mask, show=False, out_file=None):
-        if mask.dtype in (float, np.float32, np.float16, np.float128):
-            assert mask.max() <= 1.0
-            mask = (mask * 255).astype(np.uint8)
-        plt.imshow(mask)
+        # min max norm to [0, 1]
+        if mask.min() < 0:
+            mask = (mask - mask.min()) / (mask.max() -mask.min())
+        mask = (mask * 255).astype(np.uint8)
+
+        plt.imshow(mask_raw,
+                   cmap='bwr',
+                   norm=colors.CenteredNorm(0))
         plt.axis('off')
 
         if out_file is not None:
@@ -125,7 +131,8 @@ class VisionAttributor(BaseAttributor):
             mmcv.mkdir_or_exist(dir_name)
             mask = Image.fromarray(mask, mode='L')
             mask.save(out_file + '.png')
-            plt.savefig(out_file + '.JPEG', bbox_inches='tight', pad_inches=0)
+            plt.savefig(out_file + '.JPEG', bbox_inches='tight',
+                        pad_inches=0)
             if not show:
                 plt.close()
         if show:

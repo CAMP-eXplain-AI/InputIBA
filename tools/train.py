@@ -5,6 +5,7 @@ import warnings
 from argparse import ArgumentParser
 from copy import deepcopy
 import mmcv
+from mmcv.runner.utils import set_random_seed
 from iba.models import build_attributor
 from tqdm import tqdm
 from iba.datasets import build_dataset
@@ -32,6 +33,11 @@ def parse_args():
         '--subset-file',
         help='A txt file, where each line stores the sample index in subset. '
         'Attribution is only applied on this subset')
+    parser.add_argument(
+        '--seed',
+        type=int,
+        default=2021,
+        help='Random seed')
 
     args = parser.parse_args()
     return args
@@ -152,6 +158,7 @@ def train_attributor(cfg: mmcv.Config,
 def main():
     args = parse_args()
     args = vars(args)
+    set_random_seed(seed=args.pop('seed'))
     train(**args)
 
 

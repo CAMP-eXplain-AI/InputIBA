@@ -79,11 +79,11 @@ class VisionAttributor(BaseAttributor):
         return closure
 
     def show_feat_mask(self,
-                       upscale=False,
+                       upscale=True,
                        show=False,
                        out_file=None):
         if not upscale:
-            mask = self.buffer['iba_capacity']
+            mask = self.buffer['feat_iba_capacity']
         else:
             mask = self.buffer['feat_mask']
         mask = mask / mask.max()
@@ -114,14 +114,17 @@ class VisionAttributor(BaseAttributor):
         # it uses min-max normalize to rescale mask to [0, 1] for saving as
         # png files, while it uses CenteredNorm to normalize masks to [0, 1]
         # for JPEG files.
-        mask_raw = np.copy(mask)
+        mask_to_show = np.copy(mask)
 
         # min max norm to [0, 1]
         if mask.min() < 0:
             mask = (mask - mask.min()) / (mask.max() -mask.min())
         mask = (mask * 255).astype(np.uint8)
 
-        plt.imshow(mask_raw,
+        norm = colors.CenteredNorm(0)
+        cm = plt.cm.get_cmap('bwr')
+        mask_to_show = cm(norm(mask_to_show))
+        plt.imshow(mask_to_show,
                    cmap='bwr',
                    norm=colors.CenteredNorm(0))
         plt.axis('off')
@@ -131,9 +134,9 @@ class VisionAttributor(BaseAttributor):
             mmcv.mkdir_or_exist(dir_name)
             mask = Image.fromarray(mask, mode='L')
             mask.save(out_file + '.png')
-            plt.savefig(out_file + '.JPEG', bbox_inches='tight',
-                        pad_inches=0)
-            if not show:
-                plt.close()
-        if show:
+            plt.imsave(out_file + '.JPEG',
+                       mask_to_show)
+        if not show:
+            plt.close()
+        else:
             plt.show()

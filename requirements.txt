@@ -1,7 +1,12 @@
-albumentations
+pytest
+numpy
+opencv-python
 torch
+torchvision
+albumentations
 mmcv
 tqdm
-torchvision
-opencv-python
 timm
+scipy
+matplotlib
+Pillow

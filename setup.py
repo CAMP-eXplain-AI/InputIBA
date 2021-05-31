@@ -11,7 +11,8 @@ setuptools.setup(
     description="Information Bottlenecks for Attribution (iba)",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    packages=setuptools.find_packages(exclude=['tests', 'notebooks', 'tools']),
+    packages=setuptools.find_packages(exclude=[
+        'configs', 'notebooks', 'tools', 'resources']),
     python_requires='>=3.7',
     keywords=['Deep Learning', 'Attribution', 'XAI'],
 )

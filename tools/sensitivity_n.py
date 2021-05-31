@@ -69,25 +69,25 @@ def sensitivity_n(cfg,
                   device='cuda:0'):
     logger = mmcv.get_logger('iba')
     mmcv.mkdir_or_exist(work_dir)
-    val_set = build_dataset(cfg.data['val'])
+    attr_set = build_dataset(cfg.data['attribution'])
     # check if n is valid
-    input_h, input_w = val_set[0]['input'].shape[-2:]
+    input_h, input_w = attr_set[0]['input'].shape[-2:]
     max_allowed_n = np.log(input_h * input_w)
     assert log_n_max < max_allowed_n, \
         f"log_n_max must smaller than {max_allowed_n}, but got {log_n_max}"
 
-    val_set = get_valid_set(
-        val_set,
+    attr_set = get_valid_set(
+        attr_set,
         scores_file=scores_file,
         scores_threshold=scores_threshold,
         num_samples=num_samples)
 
-    val_loader_cfg = deepcopy(cfg.data['data_loader'])
-    val_loader_cfg.update({'shuffle': False})
-    val_loader = DataLoader(val_set, **val_loader_cfg)
+    attr_loader_cfg = deepcopy(cfg.data['data_loader'])
+    attr_loader_cfg.update({'shuffle': False})
+    attr_loader = DataLoader(attr_set, **attr_loader_cfg)
     classifier = build_classifiers(cfg.attributor['classifier']).to(device)
 
-    sample = val_set[0]['input']
+    sample = attr_set[0]['input']
     h, w = sample.shape[1:]
     results = {}
 
@@ -97,13 +97,13 @@ def sensitivity_n(cfg,
         # to eliminate the duplicate elements caused by rounding
         n_list = np.unique(n_list)
         logger.info(f"n_list: [{', '.join(map(str,n_list))}]")
-        pbar = tqdm(total=len(n_list) * len(val_loader))
+        pbar = tqdm(total=len(n_list) * len(attr_loader))
         for n in n_list:
             evaluator = SensitivityN(
                 classifier, input_size=(h, w), n=n, num_masks=num_masks)
 
             corr_all = []
-            for batch in val_loader:
+            for batch in attr_loader:
                 inputs = batch['input']
                 targets = batch['target']
                 input_names = batch['input_name']

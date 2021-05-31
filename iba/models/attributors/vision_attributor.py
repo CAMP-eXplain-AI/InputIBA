@@ -78,10 +78,7 @@ class VisionAttributor(BaseAttributor):
             raise NotImplementedError('Currently only support softmax')
         return closure
 
-    def show_feat_mask(self,
-                       upscale=True,
-                       show=False,
-                       out_file=None):
+    def show_feat_mask(self, upscale=True, show=False, out_file=None):
         if not upscale:
             mask = self.buffer['feat_iba_capacity']
         else:
@@ -89,26 +86,16 @@ class VisionAttributor(BaseAttributor):
         mask = mask / mask.max()
         self.show_mask(mask, show=show, out_file=out_file)
 
-    def show_gen_input_mask(self,
-                            show=False,
-                            out_file=None):
+    def show_gen_input_mask(self, show=False, out_file=None):
         mask = self.buffer['gen_input_mask']
-        self.show_mask(mask,
-                       show=show,
-                       out_file=out_file)
+        self.show_mask(mask, show=show, out_file=out_file)
 
-    def show_input_mask(self,
-                        show=False,
-                        out_file=None):
+    def show_input_mask(self, show=False, out_file=None):
         mask = self.buffer['input_mask']
-        self.show_mask(mask,
-                       show=show,
-                       out_file=out_file)
+        self.show_mask(mask, show=show, out_file=out_file)
 
     @staticmethod
-    def show_mask(mask,
-                  show=False,
-                  out_file=None):
+    def show_mask(mask, show=False, out_file=None):
         assert mask.dtype in (float, np.float32, np.float16, np.float128)
         # copy mask for showing images and storing to JPEG files, since
         # it uses min-max normalize to rescale mask to [0, 1] for saving as
@@ -118,15 +105,13 @@ class VisionAttributor(BaseAttributor):
 
         # min max norm to [0, 1]
         if mask.min() < 0:
-            mask = (mask - mask.min()) / (mask.max() -mask.min())
+            mask = (mask - mask.min()) / (mask.max() - mask.min())
         mask = (mask * 255).astype(np.uint8)
 
         norm = colors.CenteredNorm(0)
         cm = plt.cm.get_cmap('bwr')
         mask_to_show = cm(norm(mask_to_show))
-        plt.imshow(mask_to_show,
-                   cmap='bwr',
-                   norm=colors.CenteredNorm(0))
+        plt.imshow(mask_to_show, cmap='bwr', norm=colors.CenteredNorm(0))
         plt.axis('off')
 
         if out_file is not None:
@@ -134,8 +119,7 @@ class VisionAttributor(BaseAttributor):
             mmcv.mkdir_or_exist(dir_name)
             mask = Image.fromarray(mask, mode='L')
             mask.save(out_file + '.png')
-            plt.imsave(out_file + '.JPEG',
-                       mask_to_show)
+            plt.imsave(out_file + '.JPEG', mask_to_show)
         if not show:
             plt.close()
         else:

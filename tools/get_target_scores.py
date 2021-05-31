@@ -10,7 +10,7 @@ import torch
 
 def parse_args():
     parser = ArgumentParser(
-        'Get score of target class for each sample in the validation set')
+        'Get score of target class for each sample in the attribution set')
     parser.add_argument('config', help='configuration file')
     parser.add_argument('work_dir', help='working directory')
     parser.add_argument(
@@ -26,15 +26,15 @@ def get_target_scores(cfg, work_dir, file_name, device='cuda:0'):
         "Currently only support multi-class classification settings, " \
         "so use_softmax must be True."
     mmcv.mkdir_or_exist(work_dir)
-    val_set = build_dataset(cfg.data['val'])
-    val_loader = DataLoader(val_set, **cfg.data['data_loader'])
+    attr_set = build_dataset(cfg.data['attribution'])
+    attr_loader = DataLoader(attr_set, **cfg.data['data_loader'])
 
     classifer = build_classifiers(cfg.attributor['classifier']).to(device)
     classifer.eval()
 
     res = {}
     with torch.no_grad():
-        for batch in tqdm(val_loader):
+        for batch in tqdm(attr_loader):
             inputs = batch['input'].to(device)
             targets = batch['target'].to(device)
             input_names = batch['input_name']

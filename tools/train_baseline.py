@@ -119,24 +119,24 @@ def train_baseline(cfg,
     assert out_style in ('single_folder', 'image_folder'), \
         f"Invalid out_style, should be one of " \
         f"('single_folder', 'image_folder'), but got {out_style}"
-    val_set = build_dataset(cfg.data['val'])
+    attr_set = build_dataset(cfg.data['attribution'])
     if subset_file is not None:
         subset_inds = np.loadtxt(subset_file, dtype=int)
-        val_set = Subset(val_set, indices=subset_inds)
-    val_loader_cfg = deepcopy(cfg.data['data_loader'])
-    val_loader_cfg.update({'shuffle': False})
-    val_loader = DataLoader(val_set, **val_loader_cfg)
+        attr_set = Subset(attr_set, indices=subset_inds)
+    attr_loader_cfg = deepcopy(cfg.data['data_loader'])
+    attr_loader_cfg.update({'shuffle': False})
+    attr_loader = DataLoader(attr_set, **attr_loader_cfg)
 
     classifier = build_classifiers(cfg.attributor['classifier']).to(device)
     classifier.eval()
     baseline = Baseline(classifier, method, saliency_layer)
 
     if pbar:
-        bar = tqdm(val_loader, total=len(val_loader))
+        bar = tqdm(attr_loader, total=len(attr_loader))
     else:
         bar = None
 
-    for batch in val_loader:
+    for batch in attr_loader:
         inputs = batch['input']
         targets = batch['target']
         input_names = batch['input_name']
@@ -158,10 +158,10 @@ def train_baseline(cfg,
             if out_style == 'single_folder':
                 out_file = osp.join(work_dir, input_name)
             else:
-                if isinstance(val_set, Subset):
-                    sub_dir = val_set.dataset.ind_to_cls[target]  # noqa
+                if isinstance(attr_set, Subset):
+                    sub_dir = attr_set.dataset.ind_to_cls[target]  # noqa
                 else:
-                    sub_dir = val_set.ind_to_cls[target]
+                    sub_dir = attr_set.ind_to_cls[target]
                 mmcv.mkdir_or_exist(osp.join(work_dir, sub_dir))
                 out_file = osp.join(work_dir, sub_dir, input_name)
             VisionAttributor.show_mask(attr_map, show=False, out_file=out_file)

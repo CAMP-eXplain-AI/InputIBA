@@ -55,27 +55,27 @@ def sanity_check(cfg,
                  save_heatmaps=False,
                  device='cuda:0'):
     mmcv.mkdir_or_exist(work_dir)
-    train_set = build_dataset(cfg.data['train'])
-    val_set = build_dataset(cfg.data['val'])
-    val_set = get_valid_set(
-        val_set,
+    est_set = build_dataset(cfg.data['estimation'])
+    attr_set = build_dataset(cfg.data['attribution'])
+    attr_set = get_valid_set(
+        attr_set,
         scores_file=scores_file,
         scores_threshold=scores_threshold,
         num_samples=num_samples)
 
-    train_loader = DataLoader(train_set, **cfg.data['data_loader'])
-    val_loader_cfg = deepcopy(cfg.data['data_loader'])
-    val_loader_cfg.update({'shuffle': False})
-    val_loader = DataLoader(val_set, **val_loader_cfg)
+    est_loader = DataLoader(est_set, **cfg.data['data_loader'])
+    attr_loader_cfg = deepcopy(cfg.data['data_loader'])
+    attr_loader_cfg.update({'shuffle': False})
+    attr_loader = DataLoader(attr_set, **attr_loader_cfg)
 
     attibuter = build_attributor(
         cfg.attributor, default_args=dict(device=device))
-    attibuter.estimate(train_loader, cfg.estimation_cfg)
+    attibuter.estimate(est_loader, cfg.estimation_cfg)
     evaluator = SanityCheck(attibuter)
 
     results = {}
     try:
-        for batch in tqdm(val_loader, total=len(val_loader)):
+        for batch in tqdm(attr_loader, total=len(attr_loader)):
             inputs = batch['input']
             targets = batch['target']
             input_names = batch['input_name']

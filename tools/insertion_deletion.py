@@ -66,17 +66,17 @@ def insertion_deletion(cfg,
                        sigma=5.0,
                        device='cuda:0'):
     mmcv.mkdir_or_exist(work_dir)
-    val_set = build_dataset(cfg.data['val'])
+    attr_set = build_dataset(cfg.data['attribution'])
 
-    val_set = get_valid_set(
-        val_set,
+    attr_set = get_valid_set(
+        attr_set,
         scores_file=scores_file,
         scores_threshold=scores_threshold,
         num_samples=num_samples)
 
-    val_loader_cfg = deepcopy(cfg.data['data_loader'])
-    val_loader_cfg.update({'shuffle': False})
-    val_loader = DataLoader(val_set, **val_loader_cfg)
+    attr_loader_cfg = deepcopy(cfg.data['data_loader'])
+    attr_loader_cfg.update({'shuffle': False})
+    attr_loader = DataLoader(attr_set, **attr_loader_cfg)
 
     classifer = build_classifiers(cfg.attributor['classifier']).to(device)
     evaluator = InsertionDeletion(
@@ -84,7 +84,7 @@ def insertion_deletion(cfg,
 
     results = {}
     try:
-        for batch in tqdm(val_loader, total=len(val_loader)):
+        for batch in tqdm(attr_loader, total=len(attr_loader)):
             inputs = batch['input']
             targets = batch['target']
             input_names = batch['input_name']

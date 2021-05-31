@@ -28,20 +28,22 @@ class ImageNet(BaseDataset):
 
     Args:
         img_root (str): root of the images.
-        annot_root (str): root of the bounding box annotations
         ind_to_cls_file(str): json file that contains key-value pairs that
-        map indices to class names or sub-folder names.
+            map indices to class names or sub-folder names.
         pipeline (list): pipeline to transform the images.
+        annot_root (str): root of the bounding box annotations
         with_bbox (bool): if True, load the bounding boxes.
     """
 
     def __init__(self,
                  img_root,
-                 annot_root,
                  ind_to_cls_file,
                  pipeline,
+                 annot_root=None,
                  with_bbox=False):
         super(ImageNet, self).__init__()
+        if with_bbox:
+            assert annot_root is not None
         self.img_root = img_root
         self.annot_root = annot_root
         self.with_bbox = with_bbox
@@ -55,6 +57,7 @@ class ImageNet(BaseDataset):
         # use albumentations.Compose
         self.image_paths = glob(
             osp.join(self.img_root, '**/*.JPEG'), recursive=True)
+
         if self.with_bbox:
             annot_files = glob(
                 osp.join(self.annot_root, '**/*.xml'), recursive=True)

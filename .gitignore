@@ -13,3 +13,4 @@ configs/extra_experiments/
 .pytest_cache/
 .coverage
 scripts/
+rsync_exclude.txt

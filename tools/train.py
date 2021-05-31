@@ -15,7 +15,8 @@ import gc
 
 
 def parse_args():
-    parser = ArgumentParser('train a model')
+    parser = ArgumentParser('train the attributior and get the attribution '
+                            'maps')
     parser.add_argument('config', help='configuration file')
     parser.add_argument(
         '--work-dir', help='working directory', default=os.getcwd())
@@ -33,11 +34,7 @@ def parse_args():
         '--subset-file',
         help='A txt file, where each line stores the sample index in subset. '
         'Attribution is only applied on this subset')
-    parser.add_argument(
-        '--seed',
-        type=int,
-        default=2021,
-        help='Random seed')
+    parser.add_argument('--seed', type=int, default=2021, help='Random seed')
 
     args = parser.parse_args()
     return args
@@ -80,26 +77,26 @@ def train_attributor(cfg: mmcv.Config,
     assert out_style in ('single_folder', 'image_folder'), \
         f"Invalid out_style, should be one of " \
         f"('single_folder', 'image_folder'), but got {out_style}"
-    train_set = build_dataset(cfg.data['train'])
-    val_set = build_dataset(cfg.data['val'])
+    est_set = build_dataset(cfg.data['estimation'])
+    attr_set = build_dataset(cfg.data['attribution'])
     if subset_file is not None:
         subset_inds = np.loadtxt(subset_file, dtype=int)
-        val_set = Subset(val_set, indices=subset_inds)
-    train_loader = DataLoader(train_set, **cfg.data['data_loader'])
-    val_loader_cfg = deepcopy(cfg.data['data_loader'])
-    val_loader_cfg.update({'shuffle': False})
-    val_loader = DataLoader(val_set, **val_loader_cfg)
+        attr_set = Subset(attr_set, indices=subset_inds)
+    est_loader = DataLoader(est_set, **cfg.data['data_loader'])
+    attr_loader_cfg = deepcopy(cfg.data['data_loader'])
+    attr_loader_cfg.update({'shuffle': False})
+    attr_loader = DataLoader(attr_set, **attr_loader_cfg)
 
     attributor = build_attributor(
         cfg.attributor, default_args=dict(device=device))
-    attributor.estimate(train_loader, cfg.estimation_cfg)
+    attributor.estimate(est_loader, cfg.estimation_cfg)
 
     if pbar:
-        bar = tqdm(val_loader, total=len(val_loader))
+        bar = tqdm(attr_loader, total=len(attr_loader))
     else:
         bar = None
 
-    for batch in val_loader:
+    for batch in attr_loader:
         inputs = batch['input']
         targets = batch['target']
         input_names = batch['input_name']
@@ -123,10 +120,10 @@ def train_attributor(cfg: mmcv.Config,
                     raise RuntimeError('For multi-label classification, '
                                        'saving the attribution maps with '
                                        'image folder style is not possible')
-                if isinstance(val_set, Subset):
-                    sub_dir = val_set.dataset.ind_to_cls[target]  # noqa
+                if isinstance(attr_set, Subset):
+                    sub_dir = attr_set.dataset.ind_to_cls[target]  # noqa
                 else:
-                    sub_dir = val_set.ind_to_cls[target]
+                    sub_dir = attr_set.ind_to_cls[target]
 
                 img_mask_dir = osp.join(work_dir, 'input_masks', sub_dir)
                 feat_mask_dir = osp.join(work_dir, 'feat_masks', sub_dir)

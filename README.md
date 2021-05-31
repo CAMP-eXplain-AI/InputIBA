@@ -1,25 +1,91 @@
-# Information Bottleneck Attribution (to be renamed)
+# Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information
+
+This repository is the official implementation.
+
 <p align="center"> 
-    <img alt="Example GIF" width="300" src="demo.gif"><br>
+    <img alt="Example GIF" width="300" src="resources/demo.gif"><br>
     Example Image Mask
 </p>
 
-
 ---
-## Installation
+## Requirements
 1. Install `torch` and `torchvision` following the official instructions of [pytorch](https://pytorch.org/get-started/locally/)
 
 2. Install `mmcv` or `mmcv-full` following the official instructions of [mmcv](https://github.com/open-mmlab/mmcv).
 
 3. Install additional requirements with `pip install -r requirements.txt`.
 
-4. Install the package in develop mode: `python setup.py develop`.
+4. Install the package in develop mode: `python setup.py develop`. 
 
 
 ## Run Attribution
-1. create a working directory, say `work_dir`
-2. run training script with specified configuration file:
+1. Download ImageNet train or validation set. Format the set to 
+   `torchvison.dataset.ImageFolder` style if necessary. Use 
+   [this script](tools/generate_small_imagenet.py) to generate two small 
+   sets: estimation set and attribution set. The estimation set is for 
+   estimation the mean and standard deviation of hidden features, while the 
+   attribution set consists of images for the neural network to explain. 
+   **TODO add link to preprocessed dataset**. Copy
+   [this json file](resources/imagenet_class_index.json) to the data set root.
+   The dataset should have following structure:
+   ```shell 
+   .
+   |-- annotations
+   |   `-- attribution
+   |   |   |-- n01440764
+   |   |   |-- n01443537
+   |   |   |-- n01484850
+   |   |   ...  
+   |-- imagenet_class_index.json
+   `-- images
+       |-- attribution
+       |   |-- n01440764
+       |   |-- n01443537
+       |   |-- n01484850
+       |   ...
+       `-- estimation 
+       |   |-- n01440764
+       |   |-- n01443537
+       |   |-- n01484850
+       |   ...
+   ```
+   **Note** that the `annotations/` directory is only necessary for evaluating 
+   localization ability of attribution methods (EHR proposed in the paper). 
+   
+2. Create a directory under this repository: `mkdir data`, and link the 
+   imagenet data path to `data/imagenet` : 
+   `ln -s path/to/imagenet_data/ data/imagenet`.
+3. Create a working directory, say `work_dir`.
+4. Run training script with specified configuration file (e.g. 
+   [vgg16_imagenet](configs/vgg_imagenet.py)):
     ```shell
-    python tools/train.py path/to/config_file.py --work-dir work_dir --gpu-id 0
+   python tools/train.py 
+       configs/vgg_imagenet.py \
+       --work-dir work_dir \
+       --gpu-id 0 \
+       --pbar 
     ```
-3. Check the results saved in `work_dir`.
+5. Check the results saved in `work_dir`: `input_masks/` consists of 
+   the final attribution maps, while `feat_masks/` consists of the 
+   attribution maps produced by the feature IBA (the original 
+   [IBA](https://arxiv.org/abs/2001.00396))
+ 
+## Pre-trained Models
+Like many attribution methods, our method can only be applied in a per-image 
+manner. For each new image, the `Attributor` will train new components 
+(`FeatureIBA`, `WGAN`, `InputIBA`). 
+Thus, there 
+is no 
+need to provide 
+any 
+pre-trained 
+models.
+   
+## Example Results
+Here is an example of our method compared with other attribution methods:
+![Example Result](resources/methods.pdf)
+
+## License
+This repository is released under the MIT license.
+
+

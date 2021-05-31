@@ -62,19 +62,19 @@ def evaluate_ehr(cfg,
                  weight=True):
     mmcv.mkdir_or_exist(work_dir)
 
-    val_set = build_dataset(cfg.data['val'])
-    val_set = get_valid_set(
-        val_set,
+    attr_set = build_dataset(cfg.data['attribution'])
+    attr_set = get_valid_set(
+        attr_set,
         scores_file=scores_file,
         scores_threshold=scores_threshold,
         num_samples=num_samples)
 
     evaluator = EffectiveHeatRatios(base_threshold=base_threshold)
-    assert roi in val_set[0].keys(
+    assert roi in attr_set[0].keys(
     ), f'dataset samples must contain the key: {roi}'
 
     res_dict = {}
-    for i, sample in tqdm(enumerate(val_set)):
+    for i, sample in tqdm(enumerate(attr_set)):
         input_name = sample['input_name']
         target = sample['target']
         roi_array = sample[roi]

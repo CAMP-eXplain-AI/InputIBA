@@ -1,12 +1,10 @@
-pytest
+albumentations
+matplotlib
+mmcv
 numpy
 opencv-python
+scipy
+timm
 torch
 torchvision
-albumentations
-mmcv
 tqdm
-timm
-scipy
-matplotlib
-Pillow

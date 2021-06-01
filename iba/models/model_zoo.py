@@ -10,7 +10,7 @@ def build_classifiers(cfg, default_args=None):
     cfg = deepcopy(cfg)
     assert 'source' in cfg, \
         "source is not specified, it can be one of " \
-        "('custom', 'torchvision','timm)"
+        "('custom', 'torchvision','timm')"
 
     source = cfg.pop('source')
     assert source in ('torchvision', 'custom', 'timm'), \

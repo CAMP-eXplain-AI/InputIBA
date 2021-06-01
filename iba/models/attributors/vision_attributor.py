@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import os.path as osp
 import mmcv
-from PIL import Image
+import cv2
 
 
 @ATTRIBUTORS.register_module()
@@ -117,8 +117,7 @@ class VisionAttributor(BaseAttributor):
         if out_file is not None:
             dir_name = osp.abspath(osp.dirname(out_file))
             mmcv.mkdir_or_exist(dir_name)
-            mask = Image.fromarray(mask, mode='L')
-            mask.save(out_file + '.png')
+            cv2.imwrite(out_file + '.png', mask)
             plt.imsave(out_file + '.JPEG', mask_to_show)
         if not show:
             plt.close()

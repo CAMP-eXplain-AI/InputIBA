@@ -3,6 +3,9 @@ from .builder import GENERATORS, DISCRIMINATORS, GANS, build_generator, \
 from .vision_generator import VisionGenerator
 from .vision_discriminator import VisionDiscriminator
 from .vision_gan import VisionWGAN
+from .nlp_generator import NLPGenerator
+from .nlp_discriminator import NLPDiscriminator
+from .nlp_gan import NLPWGAN
 
 __all__ = [
     'GENERATORS',
@@ -14,4 +17,7 @@ __all__ = [
     'VisionGenerator',
     'VisionDiscriminator',
     'VisionWGAN',
+    'NLPGenerator',
+    'NLPDiscriminator',
+    'NLPWGAN',
 ]

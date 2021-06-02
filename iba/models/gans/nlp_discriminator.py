@@ -3,7 +3,7 @@ from .builder import DISCRIMINATORS
 
 
 @DISCRIMINATORS.register_module()
-class Discriminator(nn.Module):
+class NLPDiscriminator(nn.Module):
 
     def __init__(self, hidden_dim):
         super().__init__()

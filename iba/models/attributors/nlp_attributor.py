@@ -78,3 +78,16 @@ class NLPAttributor(BaseAttributor):
             assert isinstance(target, torch.Tensor) and target.max() <= 1 and target.dim() == 1
             raise NotImplementedError('Currently only support softmax')
         return closure
+
+    def show_feat_mask(self, **kwargs):
+        pass
+
+    def show_gen_input_mask(self, **kwargs):
+        pass
+
+    def show_input_mask(self, **kwargs):
+        pass
+
+    @staticmethod
+    def show_mask(mask, **kwargs):
+        pass

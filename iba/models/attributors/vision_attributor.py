@@ -96,16 +96,10 @@ class VisionAttributor(BaseAttributor):
 
     @staticmethod
     def show_mask(mask, show=False, out_file=None):
-        assert mask.dtype in (float, np.float32, np.float16, np.float128)
-        # copy mask for showing images and storing to JPEG files, since
-        # it uses min-max normalize to rescale mask to [0, 1] for saving as
-        # png files, while it uses CenteredNorm to normalize masks to [0, 1]
-        # for JPEG files.
         mask_to_show = np.copy(mask)
+        if mask.dtype in (float, np.float32, np.float16, np.float128):
+            mask = (mask * 255).astype(np.uint8)
 
-        # min max norm to [0, 1]
-        if mask.min() < 0:
-            mask = (mask - mask.min()) / (mask.max() - mask.min())
         mask = (mask * 255).astype(np.uint8)
 
         norm = colors.CenteredNorm(0)

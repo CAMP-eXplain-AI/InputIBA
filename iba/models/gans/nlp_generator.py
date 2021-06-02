@@ -42,7 +42,7 @@ class WordEmbeddingMasker(nn.Module):
 
 
 @GENERATORS.register_module()
-class VisionGenerator(BaseGenerator):
+class NLPGenerator(BaseGenerator):
     # generator takes random noise as input, learnable parameter is the img mask.
     # masked img (with noise added) go through the original network and generate masked feature map
     def __init__(self, input_tensor, context, device='cuda:0', capacity=None):

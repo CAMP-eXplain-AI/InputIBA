@@ -83,7 +83,7 @@ class NLPFeatureIBA(BaseFeatureIBA):
         if self.alpha is None:
             self.init_alpha_and_kernel()
 
-    def _do_restrict_information(self, x, alpha):
+    def do_restrict_info(self, x, alpha):
         """ Selectively remove information from x by applying noise """
         if alpha is None:
             raise RuntimeWarning(

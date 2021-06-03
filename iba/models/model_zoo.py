@@ -1,4 +1,6 @@
+import os
 from torchvision import models
+from .custom_models.deep_lstm import DeepLSTM
 import torch
 from copy import deepcopy
 from mmcv import Registry, build_from_cfg
@@ -10,17 +12,19 @@ def build_classifiers(cfg, default_args=None):
     cfg = deepcopy(cfg)
     assert 'source' in cfg, \
         "source is not specified, it can be one of " \
-        "('custom', 'torchvision','timm)"
+        "('custom', 'torchvision','timm')"
 
     source = cfg.pop('source')
-    assert source in ('torchvision', 'custom', 'timm'), \
-        f"source should be on of ('custom', 'torchvision', 'timm), but " \
+    assert source in ('torchvision', 'custom', 'timm', 'nlp'), \
+        f"source should be on of ('custom', 'torchvision', 'timm', 'nlp'), but " \
         f"got {source}"
 
     if source == 'torchvision':
         return build_torchvision_classifiers(cfg)
     elif source == 'timm':
         return build_timm_classifiers(cfg)
+    elif source == 'nlp':
+        return build_lstm_classifiers(cfg)
     else:
         return build_from_cfg(cfg, MODELS, default_args=default_args)
 
@@ -42,6 +46,30 @@ def build_torchvision_classifiers(cfg):
     else:
         cfg.update({'pretrained': pretrained})
         model = _builder(**cfg)
+    return model
+
+
+def build_lstm_classifiers(cfg):
+    INPUT_DIM = 25002
+    EMBEDDING_DIM = 100
+    HIDDEN_DIM = 256
+    OUTPUT_DIM = 1
+    N_LAYERS = 1
+    BIDIRECTIONAL = False
+    DROPOUT = 0.5
+    PAD_IDX = 1
+
+    model = DeepLSTM(INPUT_DIM,
+                EMBEDDING_DIM,
+                HIDDEN_DIM,
+                OUTPUT_DIM,
+                N_LAYERS,
+                BIDIRECTIONAL,
+                DROPOUT,
+                PAD_IDX)
+
+    # select a model to analyse
+    model.load_state_dict(torch.load(os.path.join(os.getcwd(), cfg.pop("pretrained"))))
     return model
 
 

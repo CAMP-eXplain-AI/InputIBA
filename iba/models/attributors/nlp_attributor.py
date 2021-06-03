@@ -54,6 +54,7 @@ class NLPAttributor(BaseAttributor):
         #     f"GAN expect input_tensor to be 3-dimensional, but got a(n) " \
         #     f"{input_tensor.dim()}d tensor"
         default_args = {
+            'context': self,
             'input_tensor': input_tensor,
             'input_mask': gen_input_mask
         }

@@ -45,14 +45,14 @@ class NLPWGAN(BaseWassersteinGAN):
         num_sub_dataset = int(dataset_size / sub_dataset_size)
         dataset = []
         for idx_subset in range(num_sub_dataset):
-            sub_dataset = self.feature_map.expand(
+            sub_dataset = self.feat_map.expand(
                 -1, sub_dataset_size, -1)
             noise = torch.zeros_like(sub_dataset).normal_()
             std = random.uniform(0, 5)
             mean = random.uniform(-2, 2)
             noise = std * noise + mean
-            sub_dataset = self.feature_mask.unsqueeze(1) * sub_dataset + (
-                    1 - self.feature_mask.unsqueeze(1)) * noise
+            sub_dataset = self.feat_mask.unsqueeze(1) * sub_dataset + (
+                    1 - self.feat_mask.unsqueeze(1)) * noise
             dataset.append(sub_dataset)
 
         dataset = torch.cat(dataset, dim=1)
@@ -85,7 +85,7 @@ class NLPWGAN(BaseWassersteinGAN):
         # Initialize generator and discriminator
         if logger is None:
             logger = get_logger('iba')
-        data_loader = self._build_data(dataset_size, sub_dataset_size,
+        data_loader = self.build_data(dataset_size, sub_dataset_size,
                                        batch_size)
 
         # Optimizers
@@ -113,7 +113,7 @@ class NLPWGAN(BaseWassersteinGAN):
                 optimizer_D.zero_grad()
 
                 # Sample noise as generator input
-                z = torch.zeros_like(self.img).float()
+                z = torch.zeros_like(self.input_tensor).float()
                 z = z.unsqueeze(-1).unsqueeze(-1).expand(data.shape[0], data.shape[1],  100).clone().normal_().to(self.device)
                 # z = z.unsqueeze(0).expand(data.shape[0], -1, -1,
                 #                           -1).clone().normal_().to(self.device)

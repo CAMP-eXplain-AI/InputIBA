@@ -47,8 +47,7 @@ class NLPGenerator(BaseGenerator):
     # masked img (with noise added) go through the original network and generate masked feature map
     def __init__(self, input_tensor, context, device='cuda:0', capacity=None):
         super().__init__(input_tensor, context, device=device)
-
-        # use img size
+        self.input_tensor = input_tensor
         # TODO make img_mask_param a Parameter
         if capacity is not None:
             #TODO review
@@ -83,15 +82,18 @@ class NLPGenerator(BaseGenerator):
             self.context.classifier,
             "embedding").register_forward_hook(_ForwardHookWrapper(self.masker, 'output'))
 
+        # placeholder for input mask parameters
+        self.input_mask_param = self.word_embedding_mask_param
+
     def forward(self, gaussian):
         self.masker.set_gaussian_noise(gaussian)
-        _ = self.context.classifier(self.img.unsqueeze(1).expand(-1, gaussian.shape[1]), torch.tensor([self.img.shape[0]]).expand(gaussian.shape[1]).to('cpu'))
+        _ = self.context.classifier(self.input_tensor.unsqueeze(1).expand(-1, gaussian.shape[1]), torch.tensor([self.input_tensor.shape[0]]).expand(gaussian.shape[1]).to('cpu'))
         feature_map_padded, feature_map_lengths = nn.utils.rnn.pad_packed_sequence(self.feature_map[0])
         return feature_map_padded
 
     @torch.no_grad()
     def get_feature_map(self):
-        _ = self.context.classifier(self.img.unsqueeze(1), torch.tensor([self.img.shape[0]]).expand(1).to('cpu'))
+        _ = self.context.classifier(self.input_tensor.unsqueeze(1), torch.tensor([self.input_tensor.shape[0]]).expand(1).to('cpu'))
         feature_map_padded, feature_map_lengths = nn.utils.rnn.pad_packed_sequence(self.feature_map[0])
         return feature_map_padded
 

@@ -15,9 +15,10 @@ class BaseAttributor(metaclass=ABCMeta):
                  input_iba: dict,
                  gan: dict,
                  use_softmax=True,
+                 eval_model=True,
                  device='cuda:0'):
         self.device = device
-        self.classifier = self.build_classifier(classifier, device=self.device)
+        self.classifier = self.build_classifier(classifier, device=self.device, eval=eval_model)
         self.layer = layer
         self.use_softmax = use_softmax
 
@@ -28,11 +29,12 @@ class BaseAttributor(metaclass=ABCMeta):
         self.input_iba = input_iba
         self.gan = gan
 
-    def build_classifier(self, classifier_cfg, device='cuda:0'):
+    def build_classifier(self, classifier_cfg, device='cuda:0', eval=True):
         classifier = build_classifiers(classifier_cfg).to(device)
-        classifier.eval()
-        for p in classifier.parameters():
-            p.requires_grad = False
+        if eval:
+            classifier.eval()
+            for p in classifier.parameters():
+                p.requires_grad = False
         return classifier
 
     def clear_buffer(self):

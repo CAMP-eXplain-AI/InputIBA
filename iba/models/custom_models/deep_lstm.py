@@ -1,10 +1,8 @@
 import os
 import torch
 from torch import nn
-from ..model_zoo import MODELS
 
 
-@MODELS.register_module()
 class DeepLSTM(nn.Module):
     def __init__(self, vocab_size=25002, embedding_dim=100, hidden_dim=256, output_dim=1, n_layers=4,
                  bidirectional=False, dropout=0.5, pad_idx=1, pretrained=None):

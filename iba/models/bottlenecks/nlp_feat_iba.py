@@ -18,8 +18,13 @@ class NLPFeatureIBA(BaseFeatureIBA):
         super(NLPFeatureIBA, self).__init__(**kwargs)
 
     @torch.no_grad()
-    def reset_alpha(self):
+    def reset_alpha(self, sentence_length):
         self.alpha.fill_(self.initial_alpha)
+
+        self.alpha = nn.Parameter(torch.full(self.alpha.expand(sentence_length, 1, -1).shape,
+                                             self.initial_alpha,
+                                             device=self.estimator.device),
+                                  requires_grad=True)
 
     def init_alpha_and_kernel(self):
         # TODO to check if it is necessary to keep it in base class, currently found no difference
@@ -83,6 +88,14 @@ class NLPFeatureIBA(BaseFeatureIBA):
         if self.alpha is None:
             self.init_alpha_and_kernel()
 
+    def capacity(self):
+        """
+        Returns a tensor with the capacity from the last input, averaged
+        over the redundant batch dimension.
+        Shape is ``(self.channels, self.height, self.width)``
+        """
+        return self.buffer_capacity.mean(dim=1)
+
     def do_restrict_info(self, x, alpha):
         """ Selectively remove information from x by applying noise """
         if alpha is None:
@@ -90,29 +103,29 @@ class NLPFeatureIBA(BaseFeatureIBA):
                 "Alpha not initialized. Run _init() before using the bottleneck."
             )
 
-        if self._mean is None:
-            self._mean = self.estimator.mean()
+        if self.input_mean is None:
+            self.input_mean = self.estimator.mean()
 
-        if self._std is None:
-            self._std = self.estimator.std()
+        if self.input_std is None:
+            self.input_std = self.estimator.std()
 
-        if self._active_neurons is None:
-            self._active_neurons = self.estimator.active_neurons()
+        if self.active_neurons is None:
+            self.active_neurons = self.estimator.active_neurons()
 
         # get output
         output, hidden_and_cell = x
         output_padded, text_lengths = nn.utils.rnn.pad_packed_sequence(output)
 
         # Smoothen and expand alpha on batch dimension
-        lamb = self.sigmoid(alpha)
+        lamb = torch.sigmoid(alpha)
         lamb = lamb.expand(output_padded.shape[0], 1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
-        self._buffer_capacity = self._kl_div(output_padded, lamb, self._mean.expand(output_padded.shape[0], 1, -1),
-                                             self._std.expand(output_padded.shape[0], 1, -1)) * self._active_neurons
+        self._buffer_capacity = self.kl_div(output_padded, lamb, self.input_mean.expand(output_padded.shape[0], 1, -1),
+                                            self.input_std.expand(output_padded.shape[0], 1, -1)) * self.active_neurons
 
         eps = output_padded.data.new(output_padded.size()).normal_()
-        ε = self._std * eps + self._mean
+        ε = self.input_std * eps + self.input_mean
         λ = lamb
         if self.reverse_lambda:
             z = λ * ε + (1 - λ) * output_padded
@@ -122,7 +135,7 @@ class NLPFeatureIBA(BaseFeatureIBA):
             z = torch.cat((z_positive, z_negative))
         else:
             z = λ * output_padded + (1 - λ) * ε
-        z *= self._active_neurons
+        z *= self.active_neurons
 
         # Sample new output values from p(z|x)
 

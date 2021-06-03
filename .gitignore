@@ -5,13 +5,15 @@ notebooks/
 
 __pycache__/
 *.egg-info/
-.ipynb_checkpoints
-.idea
 
 workdirs/
 data
 configs/extra_experiments/
-.pytest_cache/
-.coverage
 scripts/
 rsync_exclude.txt
+
+.ipynb_checkpoints
+.idea
+.pytest_cache/
+.coverage
+.vector_cache/

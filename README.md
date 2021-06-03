@@ -9,7 +9,8 @@ This repository is the official implementation.
 
 ---
 ## Requirements
-1. Install `torch` and `torchvision` following the official instructions of [pytorch](https://pytorch.org/get-started/locally/)
+1. Install `torch` and `torchvision` (and `torchtext` for NLP tasks) 
+   following the official instructions of [pytorch](https://pytorch.org/get-started/locally/)
 
 2. Install `mmcv` or `mmcv-full` following the official instructions of [mmcv](https://github.com/open-mmlab/mmcv).
 

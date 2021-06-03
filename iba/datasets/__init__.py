@@ -1,7 +1,8 @@
 from .builder import DATASETS, PIPELINES, build_dataset, build_pipeline
 from .imagenet import ImageNet
 from .image_folder import ImageFolder
-from .utils import load_voc_bboxes
+from .imdb import IMDBDataset
+from .utils import load_voc_bboxes, nlp_collate_fn
 
 __all__ = [
     'DATASETS',
@@ -10,5 +11,7 @@ __all__ = [
     'build_pipeline',
     'ImageNet',
     'ImageFolder',
+    'IMDBDataset',
     'load_voc_bboxes',
+    'nlp_collate_fn',
 ]

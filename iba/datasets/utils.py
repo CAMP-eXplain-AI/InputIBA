@@ -1,5 +1,7 @@
 from xml.etree import ElementTree as ET
 import numpy as np
+from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data.dataloader import default_collate
 
 
 def load_voc_bboxes(xml_file, name_to_ind_dict, ignore_difficult=False):
@@ -57,3 +59,13 @@ def load_voc_bboxes(xml_file, name_to_ind_dict, ignore_difficult=False):
         bboxes = np.concatenate([bboxes, bboxes_ignore], axis=0)
         labels = np.concatenate([labels, labels_ignore], axis=0)
     return dict(bboxes=bboxes, labels=labels)
+
+
+def nlp_collate_fn(batch):
+    # partition the batch into text batch and the rest
+    text_batch = [x.pop('input') for x in batch]
+    text_batch = pad_sequence(text_batch)
+    # use default collate function to collate the rest
+    batch = default_collate(batch)
+    batch.update({'input': text_batch})
+    return batch

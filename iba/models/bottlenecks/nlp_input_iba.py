@@ -17,7 +17,8 @@ class NLPInputIBA(BaseInputIBA):
                  input_std=None,
                  reverse_lambda=False,
                  combine_loss=False,
-                 device='cuda:0'):
+                 device='cuda:0',
+                 context=None):
         super(NLPInputIBA, self).__init__(
             input_tensor=input_tensor,
             input_mask=input_mask,
@@ -28,6 +29,7 @@ class NLPInputIBA(BaseInputIBA):
             reverse_lambda=reverse_lambda,
             combine_loss=combine_loss,
             device=device)
+        self.context = context
 
         # input for NLP task is the embedding space, which needs a hook to extract
         if self.context is not None:
@@ -130,8 +132,7 @@ class NLPInputIBA(BaseInputIBA):
         with self.restrict_flow():
             for i in range(opt_steps):
                 optimizer.zero_grad()
-                masked_img = self.forward(batch)
-                cls_loss = model_loss_fn(masked_img)
+                cls_loss = model_loss_fn(batch)
                 # Taking the mean is equivalent of scaling the sum with 1/K
                 info_loss = self.capacity().mean()
                 if self.reverse_lambda:

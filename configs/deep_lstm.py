@@ -1,13 +1,13 @@
 _base_ = ['_base_/imagenet.py']
 
-pretrained = '../ckpts/deep_lstm.pth'
+pretrained = 'ckpts/deep_lstm.pth'
 
 attributor = dict(
     type='NLPAttributor',
-    layer='rnn_2',
+    layer='rnn_4',
     use_softmax=True,
     classifier=dict(
-        source='custom',
+        source='nlp',
         type='DeepLSTM',
         pretrained=pretrained),
     feat_iba=dict(

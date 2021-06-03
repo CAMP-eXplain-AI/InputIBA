@@ -31,11 +31,11 @@ class NLPInputIBA(BaseInputIBA):
             device=device)
         self.context = context
 
-        # input for NLP task is the embedding space, which needs a hook to extract
+        # input for NLP task is the embedding space,
+        # which needs a hook to extract
         if self.context is not None:
-            self._hook_handle = get_module(
-                self.context.classifier,
-                'embedding').register_forward_hook(
+            layer = get_module(self.context.classifier, 'embedding')
+            self._hook_handle = layer.register_forward_hook(
                 _ForwardHookWrapper(self, 'output'))
         elif self.layer is not None:
             self._hook_handle = self.layer.register_forward_hook(

@@ -2,12 +2,8 @@ from .base_attributor import BaseAttributor
 from .builder import ATTRIBUTORS
 from ..bottlenecks import build_input_iba
 import torch
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import os.path as osp
-import mmcv
-from PIL import Image
+import torch.nn.functional as F
+import warnings
 
 
 @ATTRIBUTORS.register_module()
@@ -20,7 +16,12 @@ class NLPAttributor(BaseAttributor):
                  input_iba: dict,
                  gan: dict,
                  use_softmax=True,
+                 eval_classifier=False,
                  device='cuda:0'):
+        if eval_classifier:
+            warnings.warn('Recurrent models need to be in train mode, '
+                          'in order to allow gradient backpropagation, '
+                          f'but got eval_classifier: {eval_classifier}')
         super(NLPAttributor, self).__init__(
             layer=layer,
             classifier=classifier,
@@ -34,8 +35,6 @@ class NLPAttributor(BaseAttributor):
         if input_tensor.dim() == 1:
             input_tensor = input_tensor.unsqueeze(1)
 
-        # recurrent model need to be in train mode to backprop
-        self.classifier.train()
         feat_mask = self.feat_iba.analyze(
             input_tensor=input_tensor,
             model_loss_fn=closure,
@@ -69,14 +68,19 @@ class NLPAttributor(BaseAttributor):
     @staticmethod
     def get_closure(classifier, target, use_softmax, batch_size=None):
         if use_softmax:
-            bce_loss = torch.nn.BCEWithLogitsLoss()
+            # TODO use_softmax is True, but use BCE loss
+            # TODO only for current version, fix this in the future
             # sentence length is part of model's input
-            closure = lambda x: bce_loss(classifier(x, torch.tensor([x.shape[0]]).expand(x.shape[1])), target)
-
+            def closure(x):
+                text_lengths = torch.tensor([x.shape[0]]).expand(x.shape[1])
+                pred = classifier(x, text_lengths)
+                return F.binary_cross_entropy_with_logits(pred, target)
         else:
             assert batch_size is not None
             # target is binary encoded and it is for a single sample
-            assert isinstance(target, torch.Tensor) and target.max() <= 1 and target.dim() == 1
+            assert isinstance(
+                target,
+                torch.Tensor) and target.max() <= 1 and target.dim() == 1
             raise NotImplementedError('Currently only support softmax')
         return closure
 

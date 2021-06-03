@@ -6,8 +6,10 @@ attributor = dict(
     type='NLPAttributor',
     layer='rnn_4',
     use_softmax=True,
+    # Recurrent model need to be in train model to allow for back propagation
+    eval_classifier=False,
     classifier=dict(
-        source='nlp',
+        source='custom',
         type='DeepLSTM',
         pretrained=pretrained),
     feat_iba=dict(

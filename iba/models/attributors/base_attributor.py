@@ -15,10 +15,13 @@ class BaseAttributor(metaclass=ABCMeta):
                  input_iba: dict,
                  gan: dict,
                  use_softmax=True,
-                 eval_model=True,
+                 eval_classifier=True,
                  device='cuda:0'):
         self.device = device
-        self.classifier = self.build_classifier(classifier, device=self.device, eval=eval_model)
+        self.classifier = self.build_classifier(
+            classifier,
+            device=self.device,
+            eval=eval_classifier)
         self.layer = layer
         self.use_softmax = use_softmax
 

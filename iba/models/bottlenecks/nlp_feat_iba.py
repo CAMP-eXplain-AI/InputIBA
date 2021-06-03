@@ -21,13 +21,16 @@ class NLPFeatureIBA(BaseFeatureIBA):
     def reset_alpha(self, sentence_length):
         self.alpha.fill_(self.initial_alpha)
 
-        self.alpha = nn.Parameter(torch.full(self.alpha.expand(sentence_length, 1, -1).shape,
-                                             self.initial_alpha,
-                                             device=self.estimator.device),
-                                  requires_grad=True)
+        self.alpha = nn.Parameter(
+            torch.full(
+                self.alpha.expand(sentence_length, 1, -1).shape,
+                self.initial_alpha,
+                device=self.estimator.device),
+            requires_grad=True)
 
     def init_alpha_and_kernel(self):
-        # TODO to check if it is necessary to keep it in base class, currently found no difference
+        # TODO to check if it is necessary to keep it in base class,
+        #  currently found no difference
         if self.estimator.n_samples() <= 0:
             raise RuntimeWarning(
                 "You need to estimate the feature distribution"
@@ -99,9 +102,7 @@ class NLPFeatureIBA(BaseFeatureIBA):
     def do_restrict_info(self, x, alpha):
         """ Selectively remove information from x by applying noise """
         if alpha is None:
-            raise RuntimeWarning(
-                "Alpha not initialized. Run _init() before using the bottleneck."
-            )
+            raise RuntimeWarning("Alpha not initialized")
 
         if self.input_mean is None:
             self.input_mean = self.estimator.mean()
@@ -121,8 +122,11 @@ class NLPFeatureIBA(BaseFeatureIBA):
         lamb = lamb.expand(output_padded.shape[0], 1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
-        self._buffer_capacity = self.kl_div(output_padded, lamb, self.input_mean.expand(output_padded.shape[0], 1, -1),
-                                            self.input_std.expand(output_padded.shape[0], 1, -1)) * self.active_neurons
+        self._buffer_capacity = self.kl_div(
+            output_padded, lamb,
+            self.input_mean.expand(output_padded.shape[0], 1, -1),
+            self.input_std.expand(output_padded.shape[0], 1,
+                                  -1)) * self.active_neurons
 
         eps = output_padded.data.new(output_padded.size()).normal_()
         ε = self.input_std * eps + self.input_mean
@@ -144,7 +148,8 @@ class NLPFeatureIBA(BaseFeatureIBA):
             z = torch.clamp(z, 0.0)
 
         # pack value again to pass to later layer
-        z_packed = (nn.utils.rnn.pack_padded_sequence(z, text_lengths), hidden_and_cell)
+        z_packed = (nn.utils.rnn.pack_padded_sequence(z, text_lengths),
+                    hidden_and_cell)
         return z_packed
 
     def analyze(  # noqa

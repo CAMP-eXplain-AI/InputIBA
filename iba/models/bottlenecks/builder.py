@@ -13,6 +13,7 @@ INPUT_IBAS.register_module(module=VisionInputIBA)
 FEATURE_IBAS.register_module(module=NLPFeatureIBA)
 INPUT_IBAS.register_module(module=NLPInputIBA)
 
+
 def build_feat_iba(cfg, default_args=None):
     return build_from_cfg(cfg, FEATURE_IBAS, default_args=default_args)
 

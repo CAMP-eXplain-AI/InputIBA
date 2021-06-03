@@ -1,4 +1,5 @@
-import torchtext
+import io
+import torch
 from torchtext.utils import download_from_url, extract_archive
 from torchtext.data.datasets_utils import _RawTextIterableDataset
 from torchtext.data.datasets_utils import _wrap_split_argument
@@ -7,12 +8,9 @@ from torchtext.vocab import Vocab, GloVe
 from torchtext.data.utils import get_tokenizer
 from torch.utils.data import IterableDataset
 from collections import Counter
-import io
-import torch
 import os.path as osp
 from .base import BaseDataset
 from .builder import DATASETS
-
 
 NUM_LINES = {'train': 25000, 'test': 25000}
 MD5 = '7c2ac02c03563afcf9b574c7e56c153a'
@@ -24,9 +22,7 @@ class IMDBDataset(BaseDataset, IterableDataset):
 
     cls_to_ind = {'pos': 1, 'neg': 0}
 
-    def __init__(self,
-                 root,
-                 split='train'):
+    def __init__(self, root, split='train'):
         super(IMDBDataset, self).__init__()
         self.ind_to_cls = {v: k for k, v in self.cls_to_ind.items()}
 
@@ -44,28 +40,31 @@ class IMDBDataset(BaseDataset, IterableDataset):
 
     def text_to_tensor(self, text):
         return [self.vocab[t] for t in self.tokenizer(text)]
-        
+
     def __iter__(self):
         for sample in self._imdb_dataset:
             input_text = sample['input']
             target = sample['target']
             input_name = sample['input_name']
 
-            input_tensor = torch.tensor(self.text_to_tensor(input_text),
-                                        dtype=torch.long)
+            input_tensor = torch.tensor(
+                self.text_to_tensor(input_text), dtype=torch.long)
             target = self.cls_to_ind[target]
             input_name = osp.splitext(osp.basename(input_name))[0]
             input_length = input_tensor.shape[0]
 
-            yield {'input': input_tensor,
-                   'target': target,
-                   'input_name': input_name,
-                   'input_length': input_length}
+            yield {
+                'input': input_tensor,
+                'target': target,
+                'input_name': input_name,
+                'input_length': input_length
+            }
 
     @staticmethod
     @_add_docstring_header(num_lines=NUM_LINES, num_classes=2)
     @_wrap_split_argument(('train', 'test'))
     def _imdb(root, split):
+
         def generate_imdb_data(key, extracted_files):
             for fname in extracted_files:
                 if 'urls' in fname:
@@ -73,14 +72,14 @@ class IMDBDataset(BaseDataset, IterableDataset):
                 elif key in fname and ('pos' in fname or 'neg' in fname):
                     with io.open(fname, encoding="utf8") as f:
                         label = 'pos' if 'pos' in fname else 'neg'
-                        yield {'input': f.read(),
-                               'target': label,
-                               'input_name': fname}
+                        yield {
+                            'input': f.read(),
+                            'target': label,
+                            'input_name': fname
+                        }
 
-        dataset_tar = download_from_url(URL,
-                                        root=root,
-                                        hash_value=MD5,
-                                        hash_type='md5')
+        dataset_tar = download_from_url(
+            URL, root=root, hash_value=MD5, hash_type='md5')
         extracted_files = extract_archive(dataset_tar)
         iterator = generate_imdb_data(split, extracted_files)
         return _RawTextIterableDataset('IMDB', NUM_LINES[split], iterator)

@@ -18,6 +18,8 @@ def parse_args():
     parser.add_argument(
         'file_name', help='file name for saving the result file')
     parser.add_argument(
+        '--weight', action='store_true', help='weight the pixels by the heat')
+    parser.add_argument(
         '--scores-file',
         help='File that records the predicted probability of corresponding '
         'target class')
@@ -44,8 +46,6 @@ def parse_args():
         default='bboxes',
         choices=['bboxes', 'masks'],
         help='region of interest')
-    parser.add_argument(
-        '--weight', action='store_true', help='weight the pixels by the heat')
     args = parser.parse_args()
     return args
 

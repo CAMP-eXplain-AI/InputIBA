@@ -20,7 +20,7 @@ class NLPSensitivityN(BaseEvaluation):
         self.indices, self.masks = self._generate_random_masks(
             num_masks, text_size, device=self.device)
 
-    def evaluate(   # noqa
+    def evaluate(  # noqa
             self,
             heatmap: torch.Tensor,
             text: torch.Tensor,
@@ -43,12 +43,16 @@ class NLPSensitivityN(BaseEvaluation):
         input_text = pertubated_text + [text_embedding]
         with torch.no_grad():
             input_text = torch.stack(input_text, dim=1).to(self.device)
-            text_lengths = torch.tensor([input_text.shape[0]]).expand(input_text.shape[1])
-            output = self.classifier.forward_no_embedding(input_text, text_lengths)
+            text_lengths = torch.tensor([input_text.shape[0]
+                                         ]).expand(input_text.shape[1])
+            output = self.classifier.forward_no_embedding(
+                input_text, text_lengths)
         output_pertubated = output[:-1]
         output_clean = output[-1:]
 
-        diff = -(output_clean[:, 0] - output_pertubated[:, 0]) if target == 0 else (output_clean[:, 0] - output_pertubated[:, 0])
+        diff = -(output_clean[:, 0] -
+                 output_pertubated[:, 0]) if target == 0 else (
+                     output_clean[:, 0] - output_pertubated[:, 0])
         score_diffs = diff.cpu().numpy()
         sum_attributions = sum_attributions.cpu().numpy()
 
@@ -76,7 +80,8 @@ class NLPSensitivityN(BaseEvaluation):
         indices = []
         masks = []
         for _ in range(num_masks):
-            idxs = np.unravel_index(np.random.choice(text_size, self.n, replace=False), text_size)
+            idxs = np.unravel_index(
+                np.random.choice(text_size, self.n, replace=False), text_size)
             indices.append(idxs)
             mask = np.zeros(text_size)
             mask[idxs] = 1

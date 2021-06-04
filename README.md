@@ -55,7 +55,7 @@ This repository is the official implementation.
    
    We also provide a preprocessed small ImageNet dataset, which can be 
    downloaded from 
-   [this link](https://drive.google.com/file/d/1r6stGpiJYSW-JVcnr2OIPkHJA4YdfiSN/view?usp=sharing)
+   [this link](https://drive.google.com/file/d/1LBKQ4BR3zepfnQAKCumkABHYjXBanBBL/view?usp=sharing)
    
 2. Create a directory under this repository: `mkdir data`, and link the 
    imagenet data path to `data/imagenet` : 
@@ -64,7 +64,7 @@ This repository is the official implementation.
 4. Run training script with specified configuration file (e.g. 
    [vgg16_imagenet](configs/vgg_imagenet.py)) to train the attributor:
     ```shell
-   python tools/train.py 
+   python tools/vision/train.py 
        configs/vgg_imagenet.py \
        --work-dir work_dir \
        --gpu-id 0 \

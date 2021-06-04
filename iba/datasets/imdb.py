@@ -22,11 +22,7 @@ class IMDBDataset(BaseDataset, IterableDataset):
 
     cls_to_ind = {'pos': 1, 'neg': 0}
 
-    def __init__(self,
-                 root,
-                 vector_cache,
-                 split='train',
-                 select_cls=None):
+    def __init__(self, root, vector_cache, split='train', select_cls=None):
         super(IMDBDataset, self).__init__()
         self.ind_to_cls = {v: k for k, v in self.cls_to_ind.items()}
 
@@ -67,11 +63,13 @@ class IMDBDataset(BaseDataset, IterableDataset):
                 input_name = osp.splitext(osp.basename(input_name))[0]
                 input_length = input_tensor.shape[0]
 
-                yield {'input': input_tensor,
-                       'target': target,
-                       'input_name': input_name,
-                       'input_length': input_length,
-                       'input_text': input_text}
+                yield {
+                    'input': input_tensor,
+                    'target': target,
+                    'input_name': input_name,
+                    'input_length': input_length,
+                    'input_text': input_text
+                }
 
     @staticmethod
     @_add_docstring_header(num_lines=NUM_LINES, num_classes=2)
@@ -85,9 +83,11 @@ class IMDBDataset(BaseDataset, IterableDataset):
                 elif key in fname and ('pos' in fname or 'neg' in fname):
                     with io.open(fname, encoding="utf8") as f:
                         label = 'pos' if 'pos' in fname else 'neg'
-                        yield {'input': f.read(),
-                               'target': label,
-                               'input_name': fname}
+                        yield {
+                            'input': f.read(),
+                            'target': label,
+                            'input_name': fname
+                        }
 
         dataset_tar = download_from_url(
             URL, root=root, hash_value=MD5, hash_type='md5')

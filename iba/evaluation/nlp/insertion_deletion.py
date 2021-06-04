@@ -45,18 +45,22 @@ class NLPInsertionDeletion(BaseEvaluation):
         text_embedding = self.classifier.forward_embedding_only(text)
 
         # apply deletion game
-        deletion_perturber = WordPerturber(text_embedding, torch.zeros_like(text_embedding))
+        deletion_perturber = WordPerturber(text_embedding,
+                                           torch.zeros_like(text_embedding))
         deletion_scores = self._procedure_perturb(deletion_perturber,
-                                                  int(num_pixels*0.4), indices, target)
+                                                  int(num_pixels * 0.4),
+                                                  indices, target)
 
         # apply insertion game
-        insertion_perturber = WordPerturber(torch.zeros_like(text_embedding), text_embedding)
+        insertion_perturber = WordPerturber(
+            torch.zeros_like(text_embedding), text_embedding)
         insertion_scores = self._procedure_perturb(insertion_perturber,
-                                                   int(num_pixels*0.4), indices, target)
+                                                   int(num_pixels * 0.4),
+                                                   indices, target)
 
         # calculate AUC
-        insertion_auc = trapezoid(insertion_scores,
-                                  dx=1. / len(insertion_scores))
+        insertion_auc = trapezoid(
+            insertion_scores, dx=1. / len(insertion_scores))
         deletion_auc = trapezoid(deletion_scores, dx=1. / len(deletion_scores))
 
         # deletion_text and insertion_text are final results, they are only used for debug purpose
@@ -85,7 +89,8 @@ class NLPInsertionDeletion(BaseEvaluation):
         while replaced_pixels < num_pixels:
             perturbed_texts = []
             for i in range(32):
-                batch = min(num_pixels - replaced_pixels, self.pixel_batch_size)
+                batch = min(num_pixels - replaced_pixels,
+                            self.pixel_batch_size)
 
                 # perturb # of pixel_batch_size pixels
                 for pixel in range(batch):
@@ -103,9 +108,13 @@ class NLPInsertionDeletion(BaseEvaluation):
 
             # stack at dim 1 (due to NLP)
             perturbed_texts = torch.stack(perturbed_texts, dim=1)
-            text_lengths = torch.tensor([perturbed_texts.shape[0]]).expand(perturbed_texts.shape[1])
-            logits = self.classifier.forward_no_embedding(perturbed_texts.to(device), text_lengths)
-            score_after = torch.sigmoid(logits) if target else 1-torch.sigmoid(logits)
+            text_lengths = torch.tensor([perturbed_texts.shape[0]
+                                         ]).expand(perturbed_texts.shape[1])
+            logits = self.classifier.forward_no_embedding(
+                perturbed_texts.to(device), text_lengths)
+            score_after = torch.sigmoid(
+                logits) if target else 1 - torch.sigmoid(logits)
             scores_after_perturb = np.concatenate(
-                (scores_after_perturb, score_after.squeeze(1).detach().cpu().numpy()))
+                (scores_after_perturb,
+                 score_after.squeeze(1).detach().cpu().numpy()))
         return scores_after_perturb

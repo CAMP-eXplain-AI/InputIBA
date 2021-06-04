@@ -6,7 +6,6 @@ vector_cache = 'data/vector_cache/'
 data = dict(
     data_loader=dict(
         batch_size=8,
-        shuffle=True,
         num_workers=0),
     estimation=dict(
         type=dataset_type,

@@ -34,7 +34,9 @@ class NLPAttributor(BaseAttributor):
             input_iba=input_iba,
             gan=gan,
             use_softmax=use_softmax,
+            eval_classifier=False,
             device=device)
+        self.text = None
 
     def set_text(self, text):
         self.text = text
@@ -92,34 +94,61 @@ class NLPAttributor(BaseAttributor):
             raise NotImplementedError('Currently only support softmax')
         return closure
 
-    def show_feat_mask(self, tokenizer=None, upscale=False, show=False, out_file=None):
+    def show_feat_mask(self,
+                       tokenizer=None,
+                       upscale=False,
+                       show=False,
+                       out_file=None):
         if not upscale:
             mask = self.buffer['feat_iba_capacity']
         else:
             mask = self.buffer['feat_mask']
-        self.show_mask(mask, text=self.text, tokenizer=tokenizer, show=show, out_file=out_file)
+        self.show_mask(
+            mask,
+            text=self.text,
+            tokenizer=tokenizer,
+            show=show,
+            out_file=out_file)
 
     def show_gen_input_mask(self, tokenizer=None, show=False, out_file=None):
         mask = self.buffer['gen_input_mask']
-        self.show_mask(mask, text=self.text, tokenizer=tokenizer, show=show, out_file=out_file)
+        self.show_mask(
+            mask,
+            text=self.text,
+            tokenizer=tokenizer,
+            show=show,
+            out_file=out_file)
 
     def show_input_mask(self, tokenizer=None, show=False, out_file='/content'):
         mask = self.buffer['input_mask']
-        self.show_mask(mask, text=self.text, tokenizer=tokenizer, show=show, out_file=out_file)
+        self.show_mask(
+            mask,
+            text=self.text,
+            tokenizer=tokenizer,
+            show=show,
+            out_file=out_file)
 
     @staticmethod
     def show_mask(mask, text=None, tokenizer=None, show=False, out_file=None):
 
         mask = mask / mask.max()
         if show:
+
             def highlighter(word, word_mask):
-                colors = ["#ffffff", "#ffcccc", "#ff9999", '#ff6666', '#ff3333', '#ff0000']
+                colors = [
+                    "#ffffff", "#ffcccc", "#ff9999", '#ff6666', '#ff3333',
+                    '#ff0000'
+                ]
                 if int(word_mask * (len(colors) - 1)) < len(colors):
                     color = colors[int(word_mask * (len(colors) - 1))]
-                    word = '<span style="background-color:' + color + '">' + word + '</span>'
+                    word = '<span style="background-color:' \
+                           + color + '">' + word + '</span>'
                 return word
 
-            highlighted_text = ' '.join([highlighter(word, word_mask) for (word, word_mask) in zip(tokenizer(text), mask)])
+            highlighted_text = ' '.join([
+                highlighter(word, word_mask)
+                for (word, word_mask) in zip(tokenizer(text), mask)
+            ])
 
             display(HTML(highlighted_text))
 

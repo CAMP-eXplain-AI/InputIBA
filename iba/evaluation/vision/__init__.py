@@ -4,10 +4,7 @@ from .insertion_deletion import VisionInsertionDeletion
 from .sanity_check import SanityCheck
 from .sensitivity_n import VisionSensitivityN
 
-
-__all__ = ['Degradation',
-           'EffectiveHeatRatios',
-           'VisionInsertionDeletion',
-           'SanityCheck',
-           'VisionSensitivityN']
-
+__all__ = [
+    'Degradation', 'EffectiveHeatRatios', 'VisionInsertionDeletion',
+    'SanityCheck', 'VisionSensitivityN'
+]

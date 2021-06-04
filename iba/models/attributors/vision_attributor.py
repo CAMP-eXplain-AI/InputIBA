@@ -100,8 +100,6 @@ class VisionAttributor(BaseAttributor):
         if mask.dtype in (float, np.float32, np.float16, np.float128):
             mask = (mask * 255).astype(np.uint8)
 
-        mask = (mask * 255).astype(np.uint8)
-
         norm = colors.CenteredNorm(0)
         cm = plt.cm.get_cmap('bwr')
         mask_to_show = cm(norm(mask_to_show))

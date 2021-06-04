@@ -1,4 +1,5 @@
 albumentations
+captum
 matplotlib
 mmcv
 numpy
@@ -6,6 +7,7 @@ opencv-python
 scipy
 timm
 torch
+torchray
 torchvision
 torchtext
 tqdm

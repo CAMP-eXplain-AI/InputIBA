@@ -17,6 +17,17 @@ class NLPFeatureIBA(BaseFeatureIBA):
     def __init__(self, **kwargs):
         super(NLPFeatureIBA, self).__init__(**kwargs)
 
+    def _get_saliency(self, mode='saliency', shape=None):
+        capacity_np = self.capacity().detach().cpu().numpy()
+        if mode == "saliency":
+            # In bits, summed over hidden dims
+            return capacity_np.sum(1)
+        elif mode == "capacity":
+            # In bits, not summed, not scaled
+            return capacity_np / float(np.log(2))
+        else:
+            raise ValueError
+
     @torch.no_grad()
     def reset_alpha(self, sentence_length):
         self.alpha.fill_(self.initial_alpha)
@@ -66,7 +77,12 @@ class NLPFeatureIBA(BaseFeatureIBA):
         if reset:
             self.reset_estimator()
         for batch in dataloader:
-            if isinstance(batch, tuple) or isinstance(batch, list):
+            if isinstance(batch, dict):
+                label = batch['target']
+                text = batch['input']
+                text_lengths = batch['input_length']
+                fname = batch['input_name']
+            elif isinstance(batch, tuple) or isinstance(batch, list):
                 (label, text, text_lengths, fname) = batch
             else:
                 # if torchtext.legacy is used for dataset
@@ -122,7 +138,7 @@ class NLPFeatureIBA(BaseFeatureIBA):
         lamb = lamb.expand(output_padded.shape[0], 1, -1)
         lamb = self.smooth(lamb) if self.smooth is not None else lamb
 
-        self._buffer_capacity = self.kl_div(
+        self.buffer_capacity = self.kl_div(
             output_padded, lamb,
             self.input_mean.expand(output_padded.shape[0], 1, -1),
             self.input_std.expand(output_padded.shape[0], 1,

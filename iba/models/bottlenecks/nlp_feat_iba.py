@@ -30,11 +30,9 @@ class NLPFeatureIBA(BaseFeatureIBA):
 
     @torch.no_grad()
     def reset_alpha(self, sentence_length):
-        self.alpha.fill_(self.initial_alpha)
-
         self.alpha = nn.Parameter(
             torch.full(
-                self.alpha.expand(sentence_length, 1, -1).shape,
+                (sentence_length, 1, self.estimator.shape[0]),
                 self.initial_alpha,
                 device=self.estimator.device),
             requires_grad=True)

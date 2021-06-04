@@ -1,6 +1,11 @@
 from .base_attributor import BaseAttributor
 from .builder import ATTRIBUTORS
 from ..bottlenecks import build_input_iba
+from IPython.core.display import display, HTML
+from PIL import Image
+import os.path as osp
+import mmcv
+import numpy as np
 import torch
 import torch.nn.functional as F
 import warnings
@@ -30,6 +35,9 @@ class NLPAttributor(BaseAttributor):
             gan=gan,
             use_softmax=use_softmax,
             device=device)
+
+    def set_text(self, text):
+        self.text = text
 
     def train_feat_iba(self, input_tensor, closure, attr_cfg, logger=None):
         if input_tensor.dim() == 1:
@@ -84,15 +92,41 @@ class NLPAttributor(BaseAttributor):
             raise NotImplementedError('Currently only support softmax')
         return closure
 
-    def show_feat_mask(self, **kwargs):
-        pass
+    def show_feat_mask(self, tokenizer=None, upscale=False, show=False, out_file=None):
+        if not upscale:
+            mask = self.buffer['feat_iba_capacity']
+        else:
+            mask = self.buffer['feat_mask']
+        self.show_mask(mask, text=self.text, tokenizer=tokenizer, show=show, out_file=out_file)
 
-    def show_gen_input_mask(self, **kwargs):
-        pass
+    def show_gen_input_mask(self, tokenizer=None, show=False, out_file=None):
+        mask = self.buffer['gen_input_mask']
+        self.show_mask(mask, text=self.text, tokenizer=tokenizer, show=show, out_file=out_file)
 
-    def show_input_mask(self, **kwargs):
-        pass
+    def show_input_mask(self, tokenizer=None, show=False, out_file='/content'):
+        mask = self.buffer['input_mask']
+        self.show_mask(mask, text=self.text, tokenizer=tokenizer, show=show, out_file=out_file)
 
     @staticmethod
-    def show_mask(mask, **kwargs):
-        pass
+    def show_mask(mask, text=None, tokenizer=None, show=False, out_file=None):
+
+        mask = mask / mask.max()
+        if show:
+            def highlighter(word, word_mask):
+                colors = ["#ffffff", "#ffcccc", "#ff9999", '#ff6666', '#ff3333', '#ff0000']
+                if int(word_mask * (len(colors) - 1)) < len(colors):
+                    color = colors[int(word_mask * (len(colors) - 1))]
+                    word = '<span style="background-color:' + color + '">' + word + '</span>'
+                return word
+
+            highlighted_text = ' '.join([highlighter(word, word_mask) for (word, word_mask) in zip(tokenizer(text), mask)])
+
+            display(HTML(highlighted_text))
+
+        if out_file is not None:
+            mask = (mask * 255).astype(np.uint8)
+            mask = np.resize(np.expand_dims(mask, 0), (50, mask.shape[0]))
+            dir_name = osp.abspath(osp.dirname(out_file))
+            mmcv.mkdir_or_exist(dir_name)
+            mask = Image.fromarray(mask, mode='L')
+            mask.save(out_file + '.png')

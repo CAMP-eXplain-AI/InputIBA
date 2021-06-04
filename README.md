@@ -100,10 +100,13 @@ This repository is the official implementation.
    the final attribution maps (at word level), while `feat_masks/` contains 
    the attribution maps produced by the IB at feature map level.
 
+### Jupytor Notebook as Tutorial
+The above scripts works for batch generation of attribution. We also provide two jupyter notebooks for NLP and Computer Vision task under `tutorials/`, the tutorial notebooks provide a interactive way to generate attribution for a single sample (image/text).
+
 ## Pre-trained Models
 Like many attribution methods, our method can only be applied in a per-image 
 manner. For each new image, the `Attributor` will train new components 
-(`FeatureIBA`, `WGAN`, `InputIBA`). 
+(`FeatureIBA`, `WGAN`, `InputIBA`). Attribution methods are used for explain already trained models.
 Thus, there is no need to provide any pre-trained models here.
 
 ## Run Evaluation

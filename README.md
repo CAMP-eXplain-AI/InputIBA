@@ -159,7 +159,7 @@ python tools/vision/sensitivity_n.py \
   --num-masks 100 \
   --num-samples 1000
 ```
-2. Check results in `workdirs/vgg_imagenet/sensitivity_n/`
+2. Check results in `workdirs/vgg_imagenet/sensitivity_n/`.
 
 
 #### EHR
@@ -173,9 +173,32 @@ python tools/vision/evaluate_ehr.py \
   --weight \
   --scores-file workdirs/vgg_imagenet/target_scores/target_scores.json \
 ```
-2. Check the files in `workdirs/vgg_imagenet/ehr/`
+2. Check the files in `workdirs/vgg_imagenet/ehr/`.
 
-### NLP task
+### NLP: Insertion Deletion, Sensitivity-N
+Assume `workdirs/lstm_imdb/input_masks/` stores the final attribution maps.
+#### Insertion Deletion
+1. Run:
+```shell
+python tools/nlp/nlp_insertion_deletion.py \
+  configs/deep_lstm.py \
+  workdirs/lstm_imdb/input_masks/ \
+  workdirs/lstm_imdb/insertion_deletion/ \
+  lstm_insertion_deletion.json
+```
+2. Check the results in `workdirs/lstm_imdb/insertion_deletion/`.
+
+#### Sensitivity-N
+1. Run:
+```shell
+python tools/nlp/nlp_sensitivity_n.py \
+  configs/deep_lstm.py \
+  workdirs/lstm_imdb/input_masks/ \
+  workdirs/lstm_imdb/sensitivity_n/ \
+  lstm_sensitivity_n.json \
+  --num-masks 100
+```
+2. Check the results in `work_dirs/lstm_imdb/sensitivity_n/`.
 
 ## Example Results
 Here is an example of attribution maps produced by various attribution 

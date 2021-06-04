@@ -22,12 +22,12 @@ class IMDBDataset(BaseDataset, IterableDataset):
 
     cls_to_ind = {'pos': 1, 'neg': 0}
 
-    def __init__(self, root, split='train'):
+    def __init__(self, root, split='train', cls_label=None):
         super(IMDBDataset, self).__init__()
         self.ind_to_cls = {v: k for k, v in self.cls_to_ind.items()}
 
         # build vocabulary and tokenizer
-        _imdb_dataset = self._imdb(root, split)
+        _imdb_dataset = self._imdb(root, split, cls_label=cls_label)
         vec = GloVe(name='6B', dim=100)
         self.tokenizer = get_tokenizer('basic_english')
         counter = Counter()
@@ -54,6 +54,7 @@ class IMDBDataset(BaseDataset, IterableDataset):
             input_length = input_tensor.shape[0]
 
             yield {
+                'input_text': input_text,
                 'input': input_tensor,
                 'target': target,
                 'input_name': input_name,
@@ -63,20 +64,37 @@ class IMDBDataset(BaseDataset, IterableDataset):
     @staticmethod
     @_add_docstring_header(num_lines=NUM_LINES, num_classes=2)
     @_wrap_split_argument(('train', 'test'))
-    def _imdb(root, split):
+    def _imdb(root, split, cls_label=None):
 
         def generate_imdb_data(key, extracted_files):
             for fname in extracted_files:
                 if 'urls' in fname:
                     continue
-                elif key in fname and ('pos' in fname or 'neg' in fname):
-                    with io.open(fname, encoding="utf8") as f:
-                        label = 'pos' if 'pos' in fname else 'neg'
-                        yield {
-                            'input': f.read(),
-                            'target': label,
-                            'input_name': fname
-                        }
+                elif key in fname:
+                    if cls_label is None and ('pos' in fname or 'neg' in fname):
+                        with io.open(fname, encoding="utf8") as f:
+                            label = 'pos' if 'pos' in fname else 'neg'
+                            yield {
+                                'input': f.read(),
+                                'target': label,
+                                'input_name': fname
+                            }
+                    elif cls_label == 'pos' and ('pos' in fname):
+                        with io.open(fname, encoding="utf8") as f:
+                            label = 'pos'
+                            yield {
+                                'input': f.read(),
+                                'target': label,
+                                'input_name': fname
+                            }
+                    elif cls_label == 'neg' and ('neg' in fname):
+                        with io.open(fname, encoding="utf8") as f:
+                            label = 'neg'
+                            yield {
+                                'input': f.read(),
+                                'target': label,
+                                'input_name': fname
+                            }
 
         dataset_tar = download_from_url(
             URL, root=root, hash_value=MD5, hash_type='md5')

@@ -1,4 +1,4 @@
-_base_ = ['_base_/imagenet.py']
+_base_ = ['_base_/imdb.py']
 
 pretrained = 'ckpts/deep_lstm.pth'
 

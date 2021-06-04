@@ -12,7 +12,7 @@ class DeepLSTM(nn.Module):
                  vocab_size=25002,
                  embedding_dim=100,
                  hidden_dim=256,
-                 n_layers=4,
+                 num_layers=1,
                  bidirectional=False,
                  dropout=0.5,
                  pad_idx=1,
@@ -30,25 +30,25 @@ class DeepLSTM(nn.Module):
         self.rnn_1 = nn.LSTM(
             embedding_dim,
             hidden_dim,
-            num_layers=n_layers,
+            num_layers=num_layers,
             bidirectional=bidirectional,
             dropout=dropout)
         self.rnn_2 = nn.LSTM(
             hidden_dim,
             hidden_dim,
-            num_layers=n_layers,
+            num_layers=num_layers,
             bidirectional=bidirectional,
             dropout=dropout)
         self.rnn_3 = nn.LSTM(
             hidden_dim,
             hidden_dim,
-            num_layers=n_layers,
+            num_layers=num_layers,
             bidirectional=bidirectional,
             dropout=dropout)
         self.rnn_4 = nn.LSTM(
             hidden_dim,
             hidden_dim,
-            num_layers=n_layers,
+            num_layers=num_layers,
             bidirectional=bidirectional,
             dropout=dropout)
 

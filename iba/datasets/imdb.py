@@ -22,13 +22,26 @@ class IMDBDataset(BaseDataset, IterableDataset):
 
     cls_to_ind = {'pos': 1, 'neg': 0}
 
-    def __init__(self, root, split='train', cls_label=None):
+    def __init__(self,
+                 root,
+                 vector_cache,
+                 split='train',
+                 select_cls=None):
         super(IMDBDataset, self).__init__()
         self.ind_to_cls = {v: k for k, v in self.cls_to_ind.items()}
 
+        if select_cls is not None:
+            assert select_cls in self.cls_to_ind, \
+                f"select_cls must be None or one of " \
+                f"{list(self.cls_to_ind.keys())}, but got {select_cls}"
+            select_cls = [select_cls]
+        else:
+            select_cls = list(self.cls_to_ind.keys())
+        self.select_cls = select_cls
+
         # build vocabulary and tokenizer
-        _imdb_dataset = self._imdb(root, split, cls_label=cls_label)
-        vec = GloVe(name='6B', dim=100)
+        _imdb_dataset = self._imdb(root, split)
+        vec = GloVe(name='6B', dim=100, cache=vector_cache)
         self.tokenizer = get_tokenizer('basic_english')
         counter = Counter()
         for data in _imdb_dataset:
@@ -45,56 +58,36 @@ class IMDBDataset(BaseDataset, IterableDataset):
         for sample in self._imdb_dataset:
             input_text = sample['input']
             target = sample['target']
-            input_name = sample['input_name']
+            if target in self.select_cls:
+                input_name = sample['input_name']
 
-            input_tensor = torch.tensor(
-                self.text_to_tensor(input_text), dtype=torch.long)
-            target = self.cls_to_ind[target]
-            input_name = osp.splitext(osp.basename(input_name))[0]
-            input_length = input_tensor.shape[0]
+                input_tensor = torch.tensor(
+                    self.text_to_tensor(input_text), dtype=torch.long)
+                target = self.cls_to_ind[target]
+                input_name = osp.splitext(osp.basename(input_name))[0]
+                input_length = input_tensor.shape[0]
 
-            yield {
-                'input_text': input_text,
-                'input': input_tensor,
-                'target': target,
-                'input_name': input_name,
-                'input_length': input_length
-            }
+                yield {'input': input_tensor,
+                       'target': target,
+                       'input_name': input_name,
+                       'input_length': input_length,
+                       'input_text': input_text}
 
     @staticmethod
     @_add_docstring_header(num_lines=NUM_LINES, num_classes=2)
     @_wrap_split_argument(('train', 'test'))
-    def _imdb(root, split, cls_label=None):
+    def _imdb(root, split):
 
         def generate_imdb_data(key, extracted_files):
             for fname in extracted_files:
                 if 'urls' in fname:
                     continue
-                elif key in fname:
-                    if cls_label is None and ('pos' in fname or 'neg' in fname):
-                        with io.open(fname, encoding="utf8") as f:
-                            label = 'pos' if 'pos' in fname else 'neg'
-                            yield {
-                                'input': f.read(),
-                                'target': label,
-                                'input_name': fname
-                            }
-                    elif cls_label == 'pos' and ('pos' in fname):
-                        with io.open(fname, encoding="utf8") as f:
-                            label = 'pos'
-                            yield {
-                                'input': f.read(),
-                                'target': label,
-                                'input_name': fname
-                            }
-                    elif cls_label == 'neg' and ('neg' in fname):
-                        with io.open(fname, encoding="utf8") as f:
-                            label = 'neg'
-                            yield {
-                                'input': f.read(),
-                                'target': label,
-                                'input_name': fname
-                            }
+                elif key in fname and ('pos' in fname or 'neg' in fname):
+                    with io.open(fname, encoding="utf8") as f:
+                        label = 'pos' if 'pos' in fname else 'neg'
+                        yield {'input': f.read(),
+                               'target': label,
+                               'input_name': fname}
 
         dataset_tar = download_from_url(
             URL, root=root, hash_value=MD5, hash_type='md5')

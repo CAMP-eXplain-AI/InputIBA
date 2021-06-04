@@ -20,6 +20,9 @@ This repository is the official implementation.
 
 
 ## Run Attribution
+We provide two jupyter notebooks [here](tutorials/vision_attribution.ipynb) 
+and [here](tutorials/nlp_attribution.ipynb) for showing how to run 
+attribution on single samples.
 
 ### Computer Vision Task: Image Classification
 1. Download ImageNet validation set. Format the sets to 

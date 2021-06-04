@@ -6,6 +6,7 @@ from ..utils import _SpatialGaussianKernel
 from .base_feat_iba import BaseFeatureIBA
 from ..estimators import NLPWelfordEstimator
 from tqdm import tqdm
+import numpy as np
 
 
 class NLPFeatureIBA(BaseFeatureIBA):

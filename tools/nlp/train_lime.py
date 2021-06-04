@@ -37,6 +37,7 @@ DATASET_NAME = "IMDB"
 @_add_docstring_header(num_lines=NUM_LINES, num_classes=2)
 @_wrap_split_argument(('train', 'test'))
 def IMDB(root, split, cls=None):
+
     def generate_imdb_data(key, extracted_files):
         for fname in extracted_files:
             if 'urls' in fname:
@@ -55,14 +56,15 @@ def IMDB(root, split, cls=None):
                         label = 'neg'
                         yield label, f.read(), fname
 
-    dataset_tar = download_from_url(URL, root=root,
-                                    hash_value=MD5, hash_type='md5')
+    dataset_tar = download_from_url(
+        URL, root=root, hash_value=MD5, hash_type='md5')
     extracted_files = extract_archive(dataset_tar)
     iterator = generate_imdb_data(split, extracted_files)
     return _RawTextIterableDataset(DATASET_NAME, NUM_LINES[split], iterator)
 
 
-cfg = mmcv.Config.fromfile('/content/drive/MyDrive/informationbottleneck_merge/configs/deep_lstm.py')
+cfg = mmcv.Config.fromfile(
+    '/content/drive/MyDrive/informationbottleneck_merge/configs/deep_lstm.py')
 dev = torch.device('cuda:0')
 
 # load the data
@@ -86,21 +88,29 @@ for (label, line) in vocab_iter:
 vocab = Vocab(counter, max_size=25000)
 vocab.load_vectors(vec)
 
+
 def text_pipeline_lime(text):
     return [vocab[token] for token in tokenizer(text)]
 
 
 def model_pred(model):
+
     def pred(texts):
         text_list = []
         for text in texts:
-            processed_text = torch.tensor(text_pipeline_lime(text), dtype=torch.int64)
+            processed_text = torch.tensor(
+                text_pipeline_lime(text), dtype=torch.int64)
             text_list.append(processed_text)
         padded_text_list = pad_sequence(text_list)
-        result = torch.sigmoid(model(padded_text_list, torch.tensor([padded_text_list.shape[0]]).expand(padded_text_list.shape[1])))
-        pos_result = 1-result
+        result = torch.sigmoid(
+            model(
+                padded_text_list,
+                torch.tensor([padded_text_list.shape[0]
+                              ]).expand(padded_text_list.shape[1])))
+        pos_result = 1 - result
         label = torch.cat([result, pos_result], dim=1)
         return label.detach().numpy()
+
     return pred
 
 
@@ -110,7 +120,7 @@ def normalize_saliency(exp):
     saliency = [i[1] for i in exp.as_list(label=0)]
     saliency = torch.tensor(saliency)
     saliency -= saliency.min()
-    saliency /= (saliency.max()/0.8)
+    saliency /= (saliency.max() / 0.8)
     saliency += 0.2
     return saliency
 
@@ -119,18 +129,17 @@ def parse_args():
     parser = ArgumentParser('Generate attribution masks using LIME')
     parser.add_argument('config', help='config file of the attribution method')
     parser.add_argument('work_dir', help='directory to save the result file')
-    parser.add_argument('--num-samples',
-                        type=int,
-                        default=2000,
-                        help='Number of samples to evaluate, 0 means checking all the samples')
+    parser.add_argument(
+        '--num-samples',
+        type=int,
+        default=2000,
+        help='Number of samples to evaluate, 0 means checking all the samples')
     args = parser.parse_args()
     return args
 
 
 # get masks
-def generate_lime_masks(cfg=cfg,
-                  work_dir=None,
-                  num_samples=2000):
+def generate_lime_masks(cfg=cfg, work_dir=None, num_samples=2000):
     tokenizer = get_tokenizer('basic_english')
     train_iter = IMDB(split='test', cls='pos')
     model = build_classifiers(cfg.attributor['classifier'])
@@ -143,7 +152,14 @@ def generate_lime_masks(cfg=cfg,
         mask_file = os.path.join(work_dir, filename)
         if not os.path.isfile(mask_file + '.png'):
             num_label = 0 if 'neg' else 1
-            exp = explainer.explain_instance(text, model_pred(model), labels=[num_label, ], num_samples=200, num_features=20)
+            exp = explainer.explain_instance(
+                text,
+                model_pred(model),
+                labels=[
+                    num_label,
+                ],
+                num_samples=200,
+                num_features=20)
 
             # normalize saliency
             saliency = normalize_saliency(exp)
@@ -151,7 +167,7 @@ def generate_lime_masks(cfg=cfg,
             # generate input mask given lime result
             feature = [i[0] for i in exp.as_list(label=0)]
             tokenized_text = [token for token in tokenizer(text)]
-            word_saliency = torch.zeros((len(tokenized_text),))
+            word_saliency = torch.zeros((len(tokenized_text), ))
             for feat_index, feat in enumerate(feature):
                 for index, word in enumerate(tokenized_text):
                     if feat.lower() == word:
@@ -170,9 +186,8 @@ def generate_lime_masks(cfg=cfg,
 def main():
     args = parse_args()
     cfg = mmcv.Config.fromfile(args.config)
-    generate_lime_masks(cfg=cfg,
-                  work_dir=args.work_dir,
-                  num_samples=args.num_samples)
+    generate_lime_masks(
+        cfg=cfg, work_dir=args.work_dir, num_samples=args.num_samples)
 
 
 if __name__ == '__main__':

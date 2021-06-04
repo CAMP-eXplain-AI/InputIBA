@@ -112,9 +112,11 @@ def sensitivity_n(cfg,
                         inputs, targets, input_names):
                     input_tensor = input_tensor.to(device)
                     target = target.item()
-                    heatmap = cv2.imread(
-                        osp.join(heatmap_dir, input_name + '.png'),
-                        cv2.IMREAD_UNCHANGED)
+
+                    heatmap_path = osp.join(heatmap_dir, input_name + '.png')
+                    assert osp.exists(heatmap_path), \
+                        f'File {heatmap_path} does not exist or is empty'
+                    heatmap = cv2.imread(heatmap_path, cv2.IMREAD_UNCHANGED)
                     heatmap = torch.from_numpy(heatmap).to(
                         input_tensor) / 255.0
 
@@ -124,8 +126,14 @@ def sensitivity_n(cfg,
                     corr_all.append(corr)
                 pbar.update(1)
             results.update({int(n): np.mean(corr_all)})
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
+        logger.info(f'Evaluation ended due to KeyboardInterrupt')
         mmcv.dump(results, file=osp.join(work_dir, file_name))
+        return
+    except AssertionError as e:
+        logger.info(f'Evaluation ended due to {e}')
+        mmcv.dump(results, file=osp.join(work_dir, file_name))
+        return
     mmcv.dump(results, file=osp.join(work_dir, file_name))
 
 

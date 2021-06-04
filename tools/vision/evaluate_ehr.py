@@ -88,8 +88,10 @@ def evaluate_ehr(cfg,
         if not osp.exists(osp.join(heatmap_dir, input_name + '.png')):
             continue
 
-        heatmap = cv2.imread(
-            osp.join(heatmap_dir, input_name + '.png'), cv2.IMREAD_UNCHANGED)
+        heatmap_path = osp.join(heatmap_dir, input_name + '.png')
+        assert osp.exists(heatmap_path)
+        heatmap = cv2.imread(heatmap_path, cv2.IMREAD_UNCHANGED)
+
         # compute the ratio of roi_area / image_size
         roi_mask = np.zeros_like(heatmap)
         if roi_array.ndim == 1:

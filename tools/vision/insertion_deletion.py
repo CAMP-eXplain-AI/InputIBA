@@ -66,6 +66,7 @@ def insertion_deletion(cfg,
                        sigma=5.0,
                        device='cuda:0'):
     mmcv.mkdir_or_exist(work_dir)
+    logger = mmcv.get_logger('iba')
     attr_set = build_dataset(cfg.data['attribution'])
 
     attr_set = get_valid_set(
@@ -93,9 +94,11 @@ def insertion_deletion(cfg,
                     inputs, targets, input_names):
                 input_tensor = input_tensor.to(device)
                 target = target.item()
-                heatmap = cv2.imread(
-                    osp.join(heatmap_dir, input_name + '.png'),
-                    cv2.IMREAD_UNCHANGED)
+
+                heatmap_path = osp.join(heatmap_dir, input_name + '.png')
+                assert osp.exists(heatmap_path), \
+                    f'File {heatmap_path} does not exist or is empty'
+                heatmap = cv2.imread(heatmap_path, cv2.IMREAD_UNCHANGED)
                 heatmap = torch.from_numpy(heatmap).to(input_tensor) / 255.0
 
                 res_single = evaluator.evaluate(heatmap, input_tensor, target)
@@ -104,7 +107,12 @@ def insertion_deletion(cfg,
 
                 results.update(
                     {input_name: dict(ins_auc=ins_auc, del_auc=del_auc)})
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
+        logger.info(f'Evaluation ended due to KeyboardInterrupt')
+        mmcv.dump(results, file=osp.join(work_dir, file_name))
+        return
+    except AssertionError as e:
+        logger.info(f'Evaluation ended due to {e}')
         mmcv.dump(results, file=osp.join(work_dir, file_name))
         return
 

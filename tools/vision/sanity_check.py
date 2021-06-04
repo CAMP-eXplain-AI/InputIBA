@@ -84,9 +84,10 @@ def sanity_check(cfg,
                     inputs, targets, input_names):
                 input_tensor = input_tensor.to(device)
                 target = target.item()
-                heatmap = cv2.imread(
-                    osp.join(heatmap_dir, input_name + '.png'),
-                    cv2.IMREAD_UNCHANGED)
+
+                heatmap_path = osp.join(heatmap_dir, input_name + '.png')
+                assert osp.exists(heatmap_path)
+                heatmap = cv2.imread(heatmap_path, cv2.IMREAD_UNCHANGED)
 
                 ssim_dict = evaluator.evaluate(
                     heatmap=heatmap,
@@ -99,7 +100,7 @@ def sanity_check(cfg,
                     save_heatmaps=save_heatmaps)
                 results.update({input_name: ssim_dict['ssim_all']})
                 gc.collect()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, AssertionError) as e:
         mmcv.dump(results, file=osp.join(work_dir, file_name))
         return
 

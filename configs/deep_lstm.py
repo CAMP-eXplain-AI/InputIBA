@@ -1,6 +1,6 @@
 _base_ = ['_base_/imdb.py']
 
-pretrained = 'pretrained/deep_lstm.pth'
+pretrained = 'pretrained/deep_lstm.pt'
 
 attributor = dict(
     type='NLPAttributor',

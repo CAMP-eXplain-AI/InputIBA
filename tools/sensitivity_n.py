@@ -7,7 +7,7 @@ import mmcv
 from mmcv.runner.utils import set_random_seed
 from iba.models import build_classifiers
 from iba.datasets import build_dataset
-from iba.evaluation import SensitivityN
+from iba.evaluation import VisionSensitivityN
 import cv2
 from tqdm import tqdm
 import numpy as np
@@ -99,7 +99,7 @@ def sensitivity_n(cfg,
         logger.info(f"n_list: [{', '.join(map(str,n_list))}]")
         pbar = tqdm(total=len(n_list) * len(attr_loader))
         for n in n_list:
-            evaluator = SensitivityN(
+            evaluator = VisionSensitivityN(
                 classifier, input_size=(h, w), n=n, num_masks=num_masks)
 
             corr_all = []

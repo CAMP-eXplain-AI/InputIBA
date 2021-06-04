@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import trapezoid
-from .base import BaseEvaluation
+from ..base import BaseEvaluation
 import warnings
 
 

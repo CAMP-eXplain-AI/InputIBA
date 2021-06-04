@@ -7,7 +7,7 @@ import mmcv
 from mmcv.runner.utils import set_random_seed
 from iba.models import build_classifiers
 from iba.datasets import build_dataset
-from iba.evaluation import InsertionDeletion
+from iba.evaluation import VisionInsertionDeletion
 from iba.utils import get_valid_set
 import cv2
 from tqdm import tqdm
@@ -79,7 +79,7 @@ def insertion_deletion(cfg,
     attr_loader = DataLoader(attr_set, **attr_loader_cfg)
 
     classifer = build_classifiers(cfg.attributor['classifier']).to(device)
-    evaluator = InsertionDeletion(
+    evaluator = VisionInsertionDeletion(
         classifer, pixel_batch_size=pixel_batch_size, sigma=sigma)
 
     results = {}

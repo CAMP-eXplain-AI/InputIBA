@@ -3,8 +3,8 @@ import torchvision
 import numpy as np
 from scipy.integrate import trapezoid
 
-from iba.evaluation.base import BaseEvaluation
-from iba.evaluation.nlp.perturber import WordPerturber
+from ..base import BaseEvaluation
+from .perturber import WordPerturber
 
 
 class NLPInsertionDeletion(BaseEvaluation):

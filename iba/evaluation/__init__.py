@@ -1,11 +1,18 @@
-from .sanity_check import SanityCheck
-from .effective_heat_ratios import EffectiveHeatRatios
-from .insertion_deletion import InsertionDeletion
-from .perturber import Perturber, PixelPerturber, GridPerturber
-from .sensitivity_n import SensitivityN
-from .iou import IoU
+from .vision import Degradation, EffectiveHeatRatios, VisionSensitivityN, \
+    SanityCheck, VisionInsertionDeletion
+from .perturber import PixelPerturber, GridPerturber
+from .nlp import NLPSensitivityN, NLPInsertionDeletion, WordPerturber
 
 __all__ = [
-    'SanityCheck', 'EffectiveHeatRatios', 'InsertionDeletion',
-    'PixelPerturber', 'Perturber', 'GridPerturber', 'SensitivityN', 'IoU'
+    'Degradation',
+    'EffectiveHeatRatios',
+    'VisionInsertionDeletion',
+    'SanityCheck',
+    'VisionSensitivityN',
+    'PixelPerturber',
+    'GridPerturber',
+    'NLPInsertionDeletion',
+    'NLPSensitivityN',
+    'WordPerturber',
 ]
+

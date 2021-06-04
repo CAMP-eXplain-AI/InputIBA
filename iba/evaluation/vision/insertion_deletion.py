@@ -3,11 +3,11 @@ import numpy as np
 from scipy.integrate import trapezoid
 from torchvision.transforms import GaussianBlur
 
-from iba.evaluation.base import BaseEvaluation
-from iba.evaluation.perturber import PixelPerturber
+from ..base import BaseEvaluation
+from ..perturber import PixelPerturber
 
 
-class InsertionDeletion(BaseEvaluation):
+class VisionInsertionDeletion(BaseEvaluation):
 
     def __init__(self, classifier, pixel_batch_size=10, sigma=5.):
         self.classifier = classifier

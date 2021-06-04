@@ -1,4 +1,4 @@
-from .base import BaseEvaluation
+from ..base import BaseEvaluation
 import numpy as np
 
 

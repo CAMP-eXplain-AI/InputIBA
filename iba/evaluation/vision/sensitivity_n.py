@@ -1,9 +1,9 @@
 import torch
 import numpy as np
-from iba.evaluation.base import BaseEvaluation
+from ..base import BaseEvaluation
 
 
-class SensitivityN(BaseEvaluation):
+class VisionSensitivityN(BaseEvaluation):
 
     def __init__(self, classifier, input_size, n, num_masks=100):
         self.classifier = classifier

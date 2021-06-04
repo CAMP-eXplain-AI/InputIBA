@@ -17,7 +17,9 @@ def parse_args():
                             'maps')
     parser.add_argument('config', help='configuration file')
     parser.add_argument(
-        '--work-dir', help='working directory', default=os.getcwd())
+        '--work-dir',
+        help='directory to save output files',
+        default=os.getcwd())
     parser.add_argument('--gpu-id', help='gpu id', type=int, default=0)
     parser.add_argument(
         '--pbar',

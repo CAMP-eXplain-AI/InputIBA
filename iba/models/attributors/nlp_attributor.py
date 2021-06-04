@@ -119,7 +119,7 @@ class NLPAttributor(BaseAttributor):
             show=show,
             out_file=out_file)
 
-    def show_input_mask(self, tokenizer=None, show=False, out_file='/content'):
+    def show_input_mask(self, tokenizer=None, show=False, out_file=None):
         mask = self.buffer['input_mask']
         self.show_mask(
             mask,

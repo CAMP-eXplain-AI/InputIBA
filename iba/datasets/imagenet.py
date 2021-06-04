@@ -51,6 +51,7 @@ class ImageNet(BaseDataset):
         with open(ind_to_cls_file, 'r') as f:
             ind_to_cls = json.load(f)
         self.dir_to_ind = {v[0]: int(k) for k, v in ind_to_cls.items()}
+        self.ind_to_dir = {v: k for k, v in self.dir_to_ind.items()}
         self.ind_to_cls = {int(k): v[1] for k, v in ind_to_cls.items()}
         self.cls_to_ind = {v: k for k, v in self.ind_to_cls.items()}
 

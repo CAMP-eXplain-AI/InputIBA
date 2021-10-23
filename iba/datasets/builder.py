@@ -1,7 +1,7 @@
 from mmcv import Registry, build_from_cfg
 import inspect
 import albumentations as A
-from albumentations.pytorch import ToTensor, ToTensorV2
+from albumentations.pytorch import ToTensorV2
 from typing import Union, Dict, List
 
 DATASETS = Registry('datasets')
@@ -22,7 +22,6 @@ def register_albu_transforms():
 
 
 albu_transforms = register_albu_transforms()
-PIPELINES.register_module(module=ToTensor)
 PIPELINES.register_module(module=ToTensorV2)
 
 

@@ -7,12 +7,12 @@ img_size = 224
 estimation_pipeline = [
     dict(type='Resize', height=img_size, width=img_size, always_apply=True),
     dict(type='Normalize', always_apply=True, **img_norm_cfg),
-    dict(type='ToTensor')]
+    dict(type='ToTensorV2')]
 
 attribution_pipeline = [
     dict(type='Resize', height=img_size, width=img_size, always_apply=True),
     dict(type='Normalize', always_apply=True, **img_norm_cfg),
-    dict(type='ToTensor')]
+    dict(type='ToTensorV2')]
 
 
 data = dict(

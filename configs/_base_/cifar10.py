@@ -8,12 +8,12 @@ img_size = 32
 train_pipeline = [
     dict(type='Resize', height=img_size, width=img_size, always_apply=True),
     dict(type='Normalize', always_apply=True, **img_norm_cfg),
-    dict(type='ToTensor')]
+    dict(type='ToTensorV2')]
 
 test_pipeline = [
     dict(type='Resize', height=img_size, width=img_size, always_apply=True),
     dict(type='Normalize', always_apply=True, **img_norm_cfg),
-    dict(type='ToTensor')]
+    dict(type='ToTensorV2')]
 
 data = dict(
     data_loader=dict(

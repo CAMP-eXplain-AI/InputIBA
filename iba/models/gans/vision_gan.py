@@ -110,7 +110,6 @@ class VisionWGAN(BaseWassersteinGAN):
                 z = torch.zeros_like(self.input_tensor)
                 z = z.unsqueeze(0).expand(real_input.shape[0], -1, -1,
                                           -1).clone().normal_().to(self.device)
-
                 # Generate a batch of images
                 fake_input = self.generator(z).detach()
                 # Adversarial loss

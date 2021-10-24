@@ -3,7 +3,7 @@ data_root = 'data/derma_dataset/'
 img_norm_cfg = dict(
     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
-img_size = 512
+img_size = 300
 
 train_pipeline = [
     dict(type='Resize', height=img_size, width=img_size, always_apply=True),

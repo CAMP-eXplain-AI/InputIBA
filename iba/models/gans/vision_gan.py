@@ -1,6 +1,7 @@
 import torch
 from torch.optim import RMSprop
 from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import Dataset
 from .base_gan import BaseWassersteinGAN, _get_gan_log_string
 from .builder import build_generator, build_discriminator, GANS
 from mmcv import get_logger
@@ -43,24 +44,9 @@ class VisionWGAN(BaseWassersteinGAN):
 
     def build_data(self, dataset_size, sub_dataset_size, batch_size):
         # create dataset from feature mask and feature map
-        num_sub_dataset = int(dataset_size / sub_dataset_size)
-        dataset = []
-        for idx_subset in range(num_sub_dataset):
-            sub_dataset = self.feat_map.unsqueeze(0).expand(
-                sub_dataset_size, -1, -1, -1)
-            noise = torch.zeros_like(sub_dataset).normal_()
-            std = random.uniform(0, 5)
-            mean = random.uniform(-2, 2)
-            noise = std * noise + mean
-            sub_dataset = self.feat_mask * sub_dataset + (
-                1 - self.feat_mask) * noise
-            dataset.append(sub_dataset)
-
-        dataset = torch.cat(dataset, dim=0)
-        dataset = dataset.detach()
-        tensor_dataset = TensorDataset(dataset)
+        dataset = VisionSyntheticDataset(self.feature_map, self.feature_mask, dataset_size, sub_dataset_size)
         dataloader = DataLoader(
-            dataset=tensor_dataset,
+            dataset=dataset,
             batch_size=batch_size,
             shuffle=True,
             num_workers=0)
@@ -148,3 +134,38 @@ class VisionWGAN(BaseWassersteinGAN):
 
         del data_loader
         self.generator.clear()
+
+
+class VisionSyntheticDataset(Dataset):
+    """create dataset from feature mask and feature map"""
+
+    def __init__(self, feature_map, feature_mask, dataset_size, sub_dataset_size, seed=202111251527):
+        """
+        Args:
+            feature_map (torch.Tensor): feature map of input
+            feature_mask (torch.Tensor): learned feature mask from IBA
+            dataset_size (int): size of synthetic dataset
+            sub_dataset_size (int): size of subdataset, each subdataset takes different mean and var
+            seed (int): a seed for the random number generator
+        """
+        self.feature_map = feature_map
+        self.feature_mask = feature_mask
+        self.dataset_size = dataset_size
+        self.sub_dataset_size = sub_dataset_size
+        # initialize a fixed set of means and stds
+        num_sub_dataset = int(dataset_size / sub_dataset_size)
+        self.std = [random.uniform(0, 5) for i in range(num_sub_dataset)]
+        self.mean = [random.uniform(-2, 2) for i in range(num_sub_dataset)]
+        self.random_generator_cpu = torch.Generator()
+        self.random_generator_cpu.initial_seed(seed)
+
+    def __len__(self):
+        return self.dataset_size
+
+    def __getitem__(self, idx):
+        # get data from synthetic dataset based on masking scheme
+        idx_sub_dataset = int(idx/self.sub_dataset_size)
+        noise = torch.zeros_like(self.feature_mask).normal_(generator=self.random_generator_cpu)
+        noise = self.std[idx_sub_dataset] * noise + self.mean[idx_sub_dataset]
+        masked_feature = self.feat_mask * self.feature_map + (1 - self.feat_mask) * noise
+        return masked_feature

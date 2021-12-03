@@ -44,7 +44,7 @@ class VisionWGAN(BaseWassersteinGAN):
 
     def build_data(self, dataset_size, sub_dataset_size, batch_size):
         # create dataset from feature mask and feature map
-        dataset = VisionSyntheticDataset(self.feature_map, self.feature_mask, dataset_size, sub_dataset_size)
+        dataset = VisionSyntheticDataset(self.feat_map, self.feat_mask, dataset_size, sub_dataset_size)
         dataloader = DataLoader(
             dataset=dataset,
             batch_size=batch_size,
@@ -88,8 +88,8 @@ class VisionWGAN(BaseWassersteinGAN):
             for i, data in enumerate(data_loader):
 
                 # train discriminator
-                # data is a tuple of one element
-                real_input = data[0]
+                # Deprecated: if dataloader loads TensorDataset, then data is a tuple of one element
+                real_input = data
                 optimizer_D.zero_grad()
 
                 # Sample noise as generator input
@@ -139,7 +139,7 @@ class VisionWGAN(BaseWassersteinGAN):
 class VisionSyntheticDataset(Dataset):
     """create dataset from feature mask and feature map"""
 
-    def __init__(self, feature_map, feature_mask, dataset_size, sub_dataset_size, seed=202111251527):
+    def __init__(self, feature_map, feature_mask, dataset_size, sub_dataset_size):
         """
         Args:
             feature_map (torch.Tensor): feature map of input
@@ -152,12 +152,11 @@ class VisionSyntheticDataset(Dataset):
         self.feature_mask = feature_mask
         self.dataset_size = dataset_size
         self.sub_dataset_size = sub_dataset_size
+
         # initialize a fixed set of means and stds
         num_sub_dataset = int(dataset_size / sub_dataset_size)
         self.std = [random.uniform(0, 5) for i in range(num_sub_dataset)]
         self.mean = [random.uniform(-2, 2) for i in range(num_sub_dataset)]
-        self.random_generator_cpu = torch.Generator()
-        self.random_generator_cpu.initial_seed(seed)
 
     def __len__(self):
         return self.dataset_size
@@ -165,7 +164,7 @@ class VisionSyntheticDataset(Dataset):
     def __getitem__(self, idx):
         # get data from synthetic dataset based on masking scheme
         idx_sub_dataset = int(idx/self.sub_dataset_size)
-        noise = torch.zeros_like(self.feature_mask).normal_(generator=self.random_generator_cpu)
+        noise = torch.zeros_like(self.feature_mask).normal_()
         noise = self.std[idx_sub_dataset] * noise + self.mean[idx_sub_dataset]
-        masked_feature = self.feat_mask * self.feature_map + (1 - self.feat_mask) * noise
-        return masked_feature
+        masked_feature = self.feature_mask * self.feature_map + (1 - self.feature_mask) * noise
+        return masked_feature.detach()

@@ -1,4 +1,4 @@
-albumentations
+albumentations==0.4.6
 captum
 matplotlib
 mmcv

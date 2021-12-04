@@ -1,7 +1,8 @@
-import numpy as np
 import os
 import os.path as osp
+
 import mmcv
+import numpy as np
 import shutil
 from argparse import ArgumentParser
 from tqdm import tqdm

@@ -1,13 +1,15 @@
+import os.path as osp
+
+import cv2
+import mmcv
 import numpy as np
 import torch
-import mmcv
-import os.path as osp
-from tqdm import tqdm
-from iba.evaluation import EffectiveHeatRatios
-from iba.datasets import build_dataset
-from iba.utils import get_valid_set
-import cv2
 from argparse import ArgumentParser
+from tqdm import tqdm
+
+from input_iba.datasets import build_dataset
+from input_iba.evaluation import EffectiveHeatRatios
+from input_iba.utils import get_valid_set
 
 
 def parse_args():

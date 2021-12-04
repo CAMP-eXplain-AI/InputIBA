@@ -1,11 +1,13 @@
-from torch.utils.data import DataLoader
 import os.path as osp
-from argparse import ArgumentParser
+
 import mmcv
-from iba.models import build_classifiers
-from tqdm import tqdm
-from iba.datasets import build_dataset
 import torch
+from argparse import ArgumentParser
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+from input_iba.datasets import build_dataset
+from input_iba.models import build_classifiers
 
 
 def parse_args():

@@ -1,14 +1,15 @@
-import torch
-import mmcv
-import cv2
-from tqdm import tqdm
-from mmcv.runner.utils import set_random_seed
 import os.path as osp
 
-from iba.models import build_classifiers
-from iba.datasets import build_dataset
-from iba.evaluation.nlp.insertion_deletion import NLPInsertionDeletion
+import cv2
+import mmcv
+import torch
 from argparse import ArgumentParser
+from mmcv.runner.utils import set_random_seed
+from tqdm import tqdm
+
+from input_iba.datasets import build_dataset
+from input_iba.evaluation.nlp.insertion_deletion import NLPInsertionDeletion
+from input_iba.models import build_classifiers
 
 
 def parse_args():
@@ -24,7 +25,7 @@ def parse_args():
         type=int,
         default=2000,
         help='Number of samples to check, 0 means checking all the (filtered) '
-             'samples')
+        'samples')
     parser.add_argument('--gpu-id', type=int, default=0, help='GPU id')
     parser.add_argument('--seed', type=int, default=2021, help='Random seed')
     args = parser.parse_args()
@@ -66,7 +67,8 @@ def insertion_deletion(cfg,
             ins_auc = res_single['ins_auc']
             del_auc = res_single['del_auc']
 
-            results.update({input_name: dict(ins_auc=ins_auc, del_auc=del_auc)})
+            results.update(
+                {input_name: dict(ins_auc=ins_auc, del_auc=del_auc)})
             if count >= num_samples:
                 break
     except KeyboardInterrupt as e:

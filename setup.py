@@ -1,7 +1,8 @@
-import pathlib
 import os.path as osp
 import pkg_resources
 from setuptools import find_packages, setup
+
+import pathlib
 
 
 def fetch_requirements():
@@ -23,7 +24,7 @@ def fetch_requirements():
 
 def get_version():
     init_py_path = osp.join(
-        osp.abspath(osp.dirname(__file__)), "iba", "__init__.py")
+        osp.abspath(osp.dirname(__file__)), "input_iba", "__init__.py")
     init_py = open(init_py_path, "r").readlines()
     version_line = [
         l.strip() for l in init_py  # noqa: E741
@@ -36,13 +37,14 @@ def get_version():
 packages = find_packages(exclude=['tests', 'tools'])
 
 setup(
-    name="iba",
+    name="input_iba",
     url="",
     version=get_version(),
     author="Anonymous",
     author_email="anonymous@anonymous.com",
     license='MIT',
-    description="Information Bottlenecks for Attribution (iba)",
+    description=
+    "Fine-grained neural network explanation by identifying input features with predictive information.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     include_package_data=True,

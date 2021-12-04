@@ -1,15 +1,16 @@
-import torch
-import numpy as np
-import mmcv
-import cv2
-from tqdm import tqdm
-from mmcv.runner.utils import set_random_seed
 import os.path as osp
 
-from iba.models import build_classifiers
-from iba.datasets import build_dataset
-from iba.evaluation.nlp.sensitivity_n import NLPSensitivityN
+import cv2
+import mmcv
+import numpy as np
+import torch
 from argparse import ArgumentParser
+from mmcv.runner.utils import set_random_seed
+from tqdm import tqdm
+
+from input_iba.datasets import build_dataset
+from input_iba.evaluation.nlp.sensitivity_n import NLPSensitivityN
+from input_iba.models import build_classifiers
 
 
 def parse_args():

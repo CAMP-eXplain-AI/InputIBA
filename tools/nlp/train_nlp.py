@@ -1,15 +1,17 @@
-from torch.utils.data import DataLoader
 import os
 import os.path as osp
 import warnings
-from argparse import ArgumentParser
-import mmcv
-from mmcv.runner.utils import set_random_seed
-from iba.models import build_attributor
-from tqdm import tqdm
-from iba.datasets import build_dataset, nlp_collate_fn
-import torch
+
 import gc
+import mmcv
+import torch
+from argparse import ArgumentParser
+from mmcv.runner.utils import set_random_seed
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+from input_iba.datasets import build_dataset, nlp_collate_fn
+from input_iba.models import build_attributor
 
 
 def parse_args():

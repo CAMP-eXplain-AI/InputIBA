@@ -17,15 +17,11 @@ attributor = dict(
         input_or_output="output",
         active_neurons_threshold=0.01,
         initial_alpha=5.0),
-    input_iba=dict(
-        type='VisionInputIBA',
-        initial_alpha=5.0,
-        sigma=1.0),
+    input_iba=dict(type='VisionInputIBA', initial_alpha=5.0, sigma=1.0),
     gan=dict(
         type='VisionWGAN',
         generator=dict(type='VisionGenerator'),
-        discriminator=dict(type='VisionDiscriminator'))
-)
+        discriminator=dict(type='VisionDiscriminator')))
 
 estimation_cfg = dict(
     n_samples=1000,
@@ -33,10 +29,7 @@ estimation_cfg = dict(
 )
 
 attribution_cfg = dict(
-    feat_iba=dict(
-        batch_size=10,
-        beta=30,
-        log_every_steps=1),
+    feat_iba=dict(batch_size=10, beta=30, log_every_steps=1),
     gan=dict(
         dataset_size=200,
         sub_dataset_size=20,
@@ -47,14 +40,6 @@ attribution_cfg = dict(
         critic_iter=5,
         verbose=False),
     input_iba=dict(
-        beta=100,
-        opt_steps=60,
-        lr=1.0,
-        batch_size=10,
-        log_every_steps=5),
-    feat_mask=dict(
-        upscale=True,
-        show=False),
-    img_mask=dict(
-        show=False)
-)
+        beta=100, opt_steps=60, lr=1.0, batch_size=10, log_every_steps=5),
+    feat_mask=dict(upscale=True, show=False),
+    img_mask=dict(show=False))

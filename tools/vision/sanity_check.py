@@ -1,16 +1,18 @@
-from torch.utils.data import DataLoader
 import os.path as osp
-from argparse import ArgumentParser
-from copy import deepcopy
-import mmcv
-from mmcv.runner.utils import set_random_seed
-from iba.models import build_attributor
-from iba.datasets import build_dataset
-from iba.evaluation import SanityCheck
-from iba.utils import get_valid_set
+
 import cv2
 import gc
+import mmcv
+from argparse import ArgumentParser
+from copy import deepcopy
+from mmcv.runner.utils import set_random_seed
+from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from input_iba.datasets import build_dataset
+from input_iba.evaluation import SanityCheck
+from input_iba.models import build_attributor
+from input_iba.utils import get_valid_set
 
 
 def parse_args():

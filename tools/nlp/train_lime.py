@@ -1,24 +1,24 @@
-import torch
-from torch.utils.data import DataLoader
-import sys
 import os
 import os.path as osp
-from tqdm import tqdm
-import numpy as np
+
+import io
 import mmcv
-from argparse import ArgumentParser
-from PIL import Image
-
-import iba
-from iba.models import build_classifiers
-
+import numpy as np
+import sys
+import torch
 # define IMDB dataset to return ID
 import torchtext
+from argparse import ArgumentParser
+from PIL import Image
+from torch.utils.data import DataLoader
+from torchtext.data.datasets_utils import (_add_docstring_header,
+                                           _RawTextIterableDataset,
+                                           _wrap_split_argument)
 from torchtext.utils import download_from_url, extract_archive
-from torchtext.data.datasets_utils import _RawTextIterableDataset
-from torchtext.data.datasets_utils import _wrap_split_argument
-from torchtext.data.datasets_utils import _add_docstring_header
-import io
+from tqdm import tqdm
+
+import input_iba
+from input_iba.models import build_classifiers
 
 URL = 'http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz'
 
@@ -67,16 +67,15 @@ cfg = mmcv.Config.fromfile(
     '/content/drive/MyDrive/informationbottleneck_merge/configs/deep_lstm.py')
 dev = torch.device('cuda:0')
 
+import lime
 # load the data
 import torch
 import torchtext
-from torchtext.data.utils import get_tokenizer
 from collections import Counter
-from torchtext.vocab import Vocab
-
-from torch.nn.utils.rnn import pad_sequence
-import lime
 from lime.lime_text import LimeTextExplainer
+from torch.nn.utils.rnn import pad_sequence
+from torchtext.data.utils import get_tokenizer
+from torchtext.vocab import Vocab
 
 vec = torchtext.vocab.GloVe(name='6B', dim=100)
 tokenizer = get_tokenizer('basic_english')

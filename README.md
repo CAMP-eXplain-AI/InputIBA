@@ -1,18 +1,30 @@
 # Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information
+This repository is the official implementation of [our paper](https://arxiv.org/abs/2110.01471). We propose an attribution method to have input-level explanation by leveraging a information-botleneck on latent layer and a GAN to fit distributions. For details of the method please refer to our paper. 
 
-This repository is the official implementation.
+The method results to **fine-grained** attribution map, which is directly optimized on the input, so the attribution has the resolution of input and can provide more details. From the example below, the generated attribution map is directly reflecting regions of interest for NN model's decision, and other similar features (like coins in the image) are ruled out.
 
 <p align="center"> 
     <img alt="Example GIF" width="300" src="resources/demo.gif"><br>
-    Example Image Mask
+    Image Mask
 </p>
 
+Moreover, our method released some assumptions of the previous method, resulting to our method being model-agnostic. We demostrated this model-agnostic ability on both **vision** and **NLP** tasks, e.g. **recurrent neural network and convolutional neural network**. 
+
+Other information can be found from the [project's homepage](https://camp-explain-ai.github.io/InputIBA/).
+
 ---
+## Example Results
+Here is an example of attribution maps produced by various attribution 
+methods. By inspection, we can see that the attribution map of our method 
+is much more fine-grained than the other ones. 
+![Example Result](resources/example_results.jpg)
+
 ## Requirements
 1. Install `torch` and `torchvision` (and `torchtext` for NLP tasks) 
    following the official instructions of [pytorch](https://pytorch.org/get-started/locally/)
 
-2. Install `mmcv` or `mmcv-full` following the official instructions of [mmcv](https://github.com/open-mmlab/mmcv).
+2. Install `mmcv` or `mmcv-full` following the official instructions of [mmcv](https://github.com/open-mmlab/mmcv).  
+Since our code only uses limited features from MMCV, a lite version can be simply installed with `pip install mmcv`
 
 3. Install additional requirements with `pip install -r requirements.txt`.
 
@@ -20,11 +32,17 @@ This repository is the official implementation.
 
 
 ## Run Attribution
-We provide two jupyter notebooks [here](tutorials/vision_attribution.ipynb) 
-and [here](tutorials/nlp_attribution.ipynb) for showing how to run 
+### Jupytor Notebook as hands-on tutorial
+We provide two jupyter notebooks for NLP and Computer Vision task under `tutorials/`, the tutorial notebooks provide a interactive way for showing how to run 
 attribution on single sample.
 
-### Computer Vision Task: Image Classification
+Two jupyter notebooks are [here](tutorials/vision_attribution.ipynb) 
+and [here](tutorials/nlp_attribution.ipynb) .
+
+### Batch-wise attribution generation
+The below scripts works for batch generation of attribution.
+
+#### Computer Vision Task: Image Classification
 1. Download ImageNet validation set. Format the sets to 
    `torchvison.dataset.ImageFolder` style if necessary. Use 
    [this script](tools/generate_small_imagenet.py) to generate two small 
@@ -83,7 +101,7 @@ attribution on single sample.
    attribution maps produced by the IB at feature map level (the original 
    [IBA](https://arxiv.org/abs/2001.00396))
    
-### NLP Task: Sentence Classification
+#### NLP Task: Sentence Classification
 1. We provide a pretrained multi-layer LSTM on IMDb dataset. Download the 
    checkpoint file from 
    [this link](https://drive.google.com/file/d/15BReuKWEuHe7ZDhxKaNLquScKgAiAiLG/view?usp=sharing).
@@ -103,8 +121,6 @@ attribution on single sample.
    the final attribution maps (at word level), while `feat_masks/` contains 
    the attribution maps produced by the IB at feature map level.
 
-### Jupytor Notebook as Tutorial
-The above scripts works for batch generation of attribution. We also provide two jupyter notebooks for NLP and Computer Vision task under `tutorials/`, the tutorial notebooks provide a interactive way to generate attribution for a single sample (image/text).
 
 ## Pre-trained Models
 Like many attribution methods, our method can only be applied in a per-image 
@@ -205,12 +221,6 @@ python tools/nlp/nlp_sensitivity_n.py \
   --num-masks 100
 ```
 2. Check the results in `work_dirs/lstm_imdb/sensitivity_n/`.
-
-## Example Results
-Here is an example of attribution maps produced by various attribution 
-methods. By inspection, we can see that the attribution map of our method 
-is much more fine-grained than the other ones. 
-![Example Result](resources/example_results.jpg)
 
 ## License
 This repository is released under the MIT license.

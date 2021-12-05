@@ -1,5 +1,5 @@
-# Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information
-This repository is the official implementation of [our paper](https://arxiv.org/abs/2110.01471). We propose an attribution method to have input-level explanation by leveraging a information-botleneck on latent layer and a GAN to fit distributions. For details of the method please refer to our paper. 
+# InputIBA: Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information
+This repository is the official implementation of [our paper](https://arxiv.org/abs/2110.01471). We propose an attribution method called **___InputIBA___** to have input-level explanation by leveraging a information-botleneck on latent layer and a GAN to fit distributions. For details of the method please refer to our paper. Other information can be found from the [project's homepage](https://camp-explain-ai.github.io/InputIBA/).
 
 The method results to **fine-grained** attribution map, which is directly optimized on the input, so the attribution has the resolution of input and can provide more details. From the example below, the generated attribution map is directly reflecting regions of interest for NN model's decision, and other similar features (like coins in the image) are ruled out.
 
@@ -10,18 +10,17 @@ The method results to **fine-grained** attribution map, which is directly optimi
 
 Moreover, our method released some assumptions of the previous method, resulting to our method being model-agnostic. We demostrated this model-agnostic ability on both **vision** and **NLP** tasks, e.g. **recurrent neural network and convolutional neural network**. 
 
-Other information can be found from the [project's homepage](https://camp-explain-ai.github.io/InputIBA/).
 
 ---
 ## Example Results
 Here is an example of attribution maps produced by various attribution 
 methods. By inspection, we can see that the attribution map of our method 
-is much more fine-grained than the other ones. 
+is much more fine-grained than other explanation methods. 
 ![Example Result Vision](resources/example_results.jpg)
 
 Another example of identifing informative tokens (words & symbols). 
 Our method has highlighed important features, and the result is more interpretable to humans compare to other methods.
-![Example Result NLP](resources/NLP_example.jpg)
+![Example Result NLP](resources/NLP_example.PNG)
 
 ## Requirements
 1. Install `torch` and `torchvision` (and `torchtext` for NLP tasks) 
@@ -38,10 +37,10 @@ Since our code only uses limited features from MMCV, a lite version can be simpl
 ## Run Attribution
 ### Jupytor Notebook as hands-on tutorial
 We provide two jupyter notebooks for NLP and Computer Vision task under `tutorials/`, the tutorial notebooks provide a interactive way for showing how to run 
-attribution on single sample.
+attribution with InputIBA on single sample.
 
-Two jupyter notebooks are [here](tutorials/vision_attribution.ipynb) 
-and [here](tutorials/nlp_attribution.ipynb) .
+Two jupyter notebooks are [here for vision task](tutorials/vision_attribution.ipynb) 
+and [here for NLP task](tutorials/nlp_attribution.ipynb) .
 
 ### Batch-wise attribution generation
 The below scripts works for batch generation of attribution.
@@ -133,8 +132,8 @@ manner. For each new image, the `Attributor` will train new components
 Thus, there is no need to provide any pre-trained models here.
 
 ## Run Evaluation
-We implemented a handful of evaluation metrics including Sanity Check, Insertion/Deletion, Sensitivity-N, and our own proposed metric called EHR.
-Details of how to run evaluations on attribution methods can be found in Input_iba/evaluation or just click [here](/input_iba/evaluation).
+We implemented a handful of evaluation metrics including **Sanity Check**, **Insertion/Deletion**, **Sensitivity-N**, and our own proposed metric called **EHR (Effective Heat Ratios)**.
+Details of how to run evaluations on attribution methods can be found in `Input_iba/evaluation` or just click [here](/input_iba/evaluation).
 
 ## License
 This repository is released under the MIT license.

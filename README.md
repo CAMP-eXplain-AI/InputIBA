@@ -135,7 +135,7 @@ Thus, there is no need to provide any pre-trained models here.
 
 ## Run Evaluation
 We implemented a handful of evaluation metrics including **Sanity Check**, **Insertion/Deletion**, **Sensitivity-N**, and our own proposed metric called **EHR (Effective Heat Ratios)**.
-Details of how to run evaluations on attribution methods can be found in `Input_iba/evaluation` or just click [here](/input_iba/evaluation).
+Details of how to run evaluations on attribution methods can be found in `input_iba/evaluation` or in this [tutorial](tutorials/evaluation.md).
 
 ## License
 This repository is released under the MIT license.

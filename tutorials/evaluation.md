@@ -1,4 +1,6 @@
 # Run Evaluation
+We assume the `$PWD` is `path/to/InputIBA/` in the following tutorials.
+
 ## Computer Vision: Sanity Check, Insertion Deletion, Sensitivity-N, EHR
 Experiments of this part require an addition json file that records the 
 predicted probability of the ground truth class of each image. We use it to 

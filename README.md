@@ -1,5 +1,7 @@
 # InputIBA: Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information
-This repository is the official implementation of [our paper](https://arxiv.org/abs/2110.01471). We propose an attribution method called **___InputIBA___** to have input-level explanation by leveraging a information-botleneck on latent layer and a GAN to fit distributions. For details of the method please refer to our paper. Other information can be found from the [project's homepage](https://camp-explain-ai.github.io/InputIBA/).
+This repository is the official implementation of [our paper](https://arxiv.org/abs/2110.01471) accepted in NeurIPS 2021. 
+
+We propose an attribution method called **___InputIBA___** to have input-level explanation by leveraging a information-botleneck on latent layer and a GAN to fit distributions. For details of the method please refer to our paper. Other information can be found from the [project's homepage](https://camp-explain-ai.github.io/InputIBA/).
 
 The method results to **fine-grained** attribution map, which is directly optimized on the input, so the attribution has the resolution of input and can provide more details. From the example below, the generated attribution map is directly reflecting regions of interest for NN model's decision, and other similar features (like coins in the image) are ruled out.
 

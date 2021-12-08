@@ -298,18 +298,21 @@
 		relevant feature (the broom), due to the <b>overestimation of mutual information</b> in IBA.
 		</p>
 		<p>
-		We aim to come up with a more reasonable choice for approximation of bottleneck variable such that it is applicable for the input. 
-		We compute the mutual information directly in the input space and avoid the approximation issues inherent in IBA.
+		InputIBA aims to come up with a more reasonable choice for approximation of bottleneck variable such that it is applicable for the input. 
+		In addition, InputIBA computes the mutual information directly in the input space and avoid the approximation issues inherent in IBA.
+		</p>
+		<p>
 		We take advantage of the gaussian distribution approximation of bottleneck being reasonable for deep layers. 
-		Thus we first find a bottleneck variable, \(Z^*\), that corresponds to predictive deep features, by solving the IBA optimization problem on a hidden layer. 
+		Thus, we first find a bottleneck variable, \(Z^*\), that corresponds to predictive deep features, by solving the IBA optimization problem on a hidden layer. 
 		The bottleneck Z∗ restricts the flow of information through the network and keeps deep features with predictive information. 
-		Then, we search for a bottleneck variable \(Z_G\) ”on the input”, that corresponds to deep botthleneck \(Z^*\). 
+		</p>
+		<p>
+		Then, InputIBA use a Wasserstein-GAN to fit a bottleneck variable \(Z_G\) ”on the input”, that corresponds to deep botthleneck \(Z^*\). 
 		This translates to finding a mask on input features that admits input features which correspond to informative deep features. 
-		The final goal is keeping only predictive features of input, therefore, the input bottleneck ZG can be used as prior knowledge for the distribution of input bottleneck ZI.
+		</p>
+		<p>
+		The final goal is keeping only predictive features of input, therefore, the input bottleneck \(Z_G\) can be used as prior knowledge for the distribution of input bottleneck \(Z_I\).
 		We then proceed and solve the optimization by using \(Z_G\) as a prior for \(Z_I\). We refer to this methodology as InputIBA.
-		Find a bottleneck variable Z* (using IBA) that corresponds to predictive deep features
-		Use a Wasserstein-GAN to fit a bottleneck variable \(Z_G\) ”on the input” that corresponds to deep bottleneck \(Z^*\)
-		Proceed and solve the optimization by using \(Z_G\) as a prior for \(Z_G\) 
 		</p>
 	</div>
       <div class="container is-max-desktop">
@@ -322,6 +325,7 @@
                <source src="static/videos/method.mp4"
                        type="video/mp4">
               </video>
+              <h2 class="subtitle has-text-centered">Overview of InputIBA</h2>
             </div>
           </div>
         </div>
@@ -389,7 +393,7 @@
 	year={2021},
 	url={https://openreview.net/forum?id=HglgPZAYhcG}
 }
-}</code></pre>
+</code></pre>
   </div>
 </section>
 <footer class="footer">

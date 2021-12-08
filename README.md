@@ -1,4 +1,4 @@
-# StyleGAN-NADA
+# InputIBA
 
 This is the repository that contains source code for the [InputIBA website](https://camp-explain-ai.github.io/InputIBA/).
 It is based on the code from both the [StyleGAN-NADA website](https://stylegan-nada.github.io) and the [Nerfies website](https://nerfies.github.io). If you reuse this code, please credit them.

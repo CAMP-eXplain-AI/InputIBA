@@ -150,12 +150,20 @@
 </section>
 
 <section class="hero teaser">
+
   <div class="container is-max-desktop">
     <div class="hero-body">
-      <video id="teaser" autoplay controls muted loop height="80%">
-        <source src="static/videos/cross_domain_interp_large.mp4"
-                type="video/mp4">
-      </video>
+          <!-- Paper video. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Video</h2>
+        <div class="publication-video">
+          <iframe src="https://www.youtube.com/embed/zSWdZVtXT7E?rel=0&amp;showinfo=0"
+                  frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+    <!--/ Paper video. -->
       <h2 class="subtitle has-text-centered">
         InputIBA generates saliency maps with input level resolution for CNNs and RNNs.
       </h2>
@@ -273,9 +281,19 @@
             </div>
           </div>
         </div>
-        <p>XXXXXXXXXXX TODO: add Text XXXXXXXXXXXXXXXXXXXXx
-        Do we need to first show the problem with IBA? Then talke about inputIBA?
-        </p>
+        <div class="content has-text-justified">
+		<p>Previously, information-theory-based attribution inserts a information bottleneck in the <b>latent feature</b>. 
+		We see the result of applying information bottleneck on different layers of a VGG16 network (from conv4_1 to conv1_1). 
+		</p>
+		<p>
+		The approximations (averaging across channels) in IBA result in the assignment of information to irrelevant areas of the 
+		image (the trashcan and areas around the image). Upscale using interpolation also causes the attribution map to be blurry and inaccurate.
+		</p>
+		<p>
+		As we move towards earlier layers (conv1_1), the information is distributed equally between features, and less information is assigned to the most
+		relevant feature (the broom), due to the <b>overestimation of mutual information</b> in IBA.
+		</p>
+	</div>
       <div class="container is-max-desktop">
         <!-- Training video. -->
         
@@ -291,6 +309,7 @@
         </div>
         <!--/ Training video. -->
       </div>
+      
     </div>
   </div>
 </section>
@@ -307,14 +326,15 @@
       <!-- Cross domain. -->
       
       <div class="column">
-        <div class="content">
-
-          <p>
-            <span class="nada">InputIBA</span> can generate attribution for different model architectures across domains, thus a general framework for explaining neural network models. <br><br><br>
-          </p>
+        <div class="columns is-centered">
+          <div class="column content">
+            <p>
+              InputIBA can generate attribution for different model architectures across domains, thus a general framework for explaining neural network models.
+            </p>
             <div class="publication-img">
-              <img id="celeb_edits" src="static/images/paper_figs/celeb_domains.jpg"/>
+              <img id="pitt_editing" src="static/images/paper_figs/vision_result.jpg"/>
             </div>
+          </div>
         </div>
       </div>
       <!--/ Cross domain. -->
@@ -331,7 +351,6 @@
               <img id="pitt_editing" src="static/images/paper_figs/NLP_result.PNG"/>
             </div>
           </div>
-
         </div>
       </div>
     </div>

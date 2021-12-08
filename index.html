@@ -157,7 +157,7 @@
                 type="video/mp4">
       </video>
       <h2 class="subtitle has-text-centered">
-        InputIBA produces fine-grained attribution with input-level resolution for both CNNs and RNNs.
+        InputIBA generates saliency maps with input level resolution for CNNs and RNNs.
       </h2>
     </div>
   </div>
@@ -169,79 +169,58 @@
       <div id="results-carousel-face" class="carousel results-carousel">
         <div class="item item-sketch-hq">
           <div class="carousel-content">
-            <img src="static/images/ffhq/sketch_hq.jpg"
-                   alt="Sketch."/>
-            <h2 class="subtitle has-text-centered">Photo → Sketch</h2>
+            <img src="static/images/ffhq/ILSVRC2012_val_00003283_page-0001.jpg"
+                   alt="XXX."/>
+            <h2 class="subtitle has-text-centered">Explanation of "hoopskirt"</h2>
           </div>
         </div>
         <div class="item item-modegliani">
           <div class="carousel-content">
-            <img src="static/images/ffhq/modegliani.jpg"
+            <img src="static/images/ffhq/ILSVRC2012_val_00017353_page-0001.jpg"
                    alt="Modegliani."/>
-            <h2 class="subtitle has-text-centered">Photo → Modegliani Painting</h2>
+            <h2 class="subtitle has-text-centered">Explanation of "squirrel monkey"</h2>
           </div>
         </div>
         <div class="item item-mona-lisa">
           <div class="carousel-content">
-            <img src="static/images/ffhq/mona_lisa.jpg"
+            <img src="static/images/ffhq/ILSVRC2012_val_00027234_page-0001.jpg"
                    alt="Mona Lisa."/>
-            <h2 class="subtitle has-text-centered">Photo → Mona Lisa Painting</h2>
+            <h2 class="subtitle has-text-centered">Explanation of "pencil sharpener"</h2>
           </div>
         </div>
         <div class="item item-pixar">
           <div class="carousel-content">
-            <img src="static/images/ffhq/pixar.jpg"
+            <img src="static/images/ffhq/ILSVRC2012_val_00030411_page-0001.jpg"
                    alt="Pixar."/>
-            <h2 class="subtitle has-text-centered">Photo → Pixar</h2>
+            <h2 class="subtitle has-text-centered">Explanation of "airliner"</h2>
           </div>
         </div>
         <div class="item item-ukiyo-e">
           <div class="carousel-content">
-            <img src="static/images/ffhq/ukiyoe.jpg"
+            <img src="static/images/ffhq/ILSVRC2012_val_00035309_page-0001.jpg"
                    alt="Ukiyo-e."/>
-            <h2 class="subtitle has-text-centered">Photo → Ukiyo-e Painting</h2>
+            <h2 class="subtitle has-text-centered">Explanation of "sports car"</h2>
           </div>
         </div>
         <div class="item item-werewolf">
           <div class="carousel-content">
-            <img src="static/images/ffhq/werewolf.jpg"
+            <img src="static/images/ffhq/ILSVRC2012_val_00039865_page-0001.jpg"
                    alt="Werewolf."/>
-            <h2 class="subtitle has-text-centered">Human → Werewolf</h2>
+            <h2 class="subtitle has-text-centered">Explanation of "great white shark"</h2>
           </div>
         </div>
         <div class="item item-zombie">
           <div class="carousel-content">
-            <img src="static/images/ffhq/zombie.jpg"
+            <img src="static/images/ffhq/ILSVRC2012_val_00046423_page-0001.jpg"
                    alt="Zombie."/>
-            <h2 class="subtitle has-text-centered">Human → Zombie</h2>
+            <h2 class="subtitle has-text-centered">Explanation of "husky"</h2>
           </div>
         </div>
         <div class="item item-neanderthal">
           <div class="carousel-content">
-            <img src="static/images/ffhq/neanderthal.jpg"
+            <img src="static/images/ffhq/ILSVRC2012_val_00049815_page-0001.jpg"
                    alt="Neanderthal."/>
-            <h2 class="subtitle has-text-centered">Human → Neanderthal</h2>
-          </div>
-        </div>
-        <div class="item item-elf">
-          <div class="carousel-content">
-            <img src="static/images/ffhq/elf.jpg"
-                   alt="Elf."/>
-            <h2 class="subtitle has-text-centered">Human → Elf</h2>
-          </div>
-        </div>
-        <div class="item item-zuckerberg">
-          <div class="carousel-content">
-            <img src="static/images/ffhq/zuckerberg.jpg"
-                   alt="Lizard."/>
-            <h2 class="subtitle has-text-centered">Human → Mark Zuckerberg</h2>
-          </div>
-        </div>
-        <div class="item item-raphael">
-          <div class="carousel-content">
-            <img src="static/images/ffhq/raphael.jpg"
-                   alt="Raphael."/>
-            <h2 class="subtitle has-text-centered">Photo → Raphael Painting</h2>
+            <h2 class="subtitle has-text-centered">Explanation of "groenendael"</h2>
           </div>
         </div>
       </div>
@@ -290,11 +269,12 @@
         <div class="columns is-centered has-text-centered">
           <div class="column">
             <div class="publication-img">
-              <img id="architecture" src="static/images/architecture.png"/>
+              <img id="architecture" src="static/images/paper_figs/show_problem.jpg"/>
             </div>
           </div>
         </div>
         <p>XXXXXXXXXXX TODO: add Text XXXXXXXXXXXXXXXXXXXXx
+        Do we need to first show the problem with IBA? Then talke about inputIBA?
         </p>
       <div class="container is-max-desktop">
         <!-- Training video. -->
@@ -303,7 +283,7 @@
           <div class="column is-four-fifths">
             <div class="publication-video-small">
               <video id="training_vid" autoplay controls muted height="100%">
-               <source src="static/videos/training.mp4"
+               <source src="static/videos/method.mp4"
                        type="video/mp4">
               </video>
             </div>
@@ -348,7 +328,7 @@
               We applied InputIBA on a sentimental classification task learned on IMDB dataset. The model is a multi-layer LSTM, a recurrent neural network.
             </p>
             <div class="publication-img">
-              <img id="pitt_editing" src="static/images/paper_figs/brad_edits.jpg"/>
+              <img id="pitt_editing" src="static/images/paper_figs/NLP_result.PNG"/>
             </div>
           </div>
 
@@ -364,13 +344,13 @@
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
     <p>If you find our work useful, please cite our paper:</p>
-    <pre><code>@misc{gal2021stylegannada,
-      title={StyleGAN-NADA: CLIP-Guided Domain Adaptation of Image Generators},
-      author={Rinon Gal and Or Patashnik and Haggai Maron and Gal Chechik and Daniel Cohen-Or},
+    <pre><code>@misc{yang2021inputiba,
+      title={Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information},
+      author={Yang Zhang, Ashkan Khakzar, Yawei Li, Azade Farshad, Seong Tae Kim, Nassir Navab},
       year={2021},
-      eprint={2108.00946},
+      eprint={2110.01471},
       archivePrefix={arXiv},
-      primaryClass={cs.CV}
+      primaryClass={cs.LG}
 }</code></pre>
   </div>
 </section>

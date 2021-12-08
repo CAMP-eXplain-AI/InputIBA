@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="description"
-        content="StyleGAN-NADA enables training of GANs without access to any training data.">
-  <meta name="keywords" content="StyleGAN-NADA, NADA, SG-NADA">
+        content="Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information.">
+  <meta name="keywords" content="Explanation, Interpretability, InputIBA">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StyleGAN-NADA: CLIP-Guided Domain Adaptation of Image Generators</title>
+  <title>Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information</title>
 
 <!--   Global site tag (gtag.js) - Google Analytics-->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-C6C1TW0B90"></script>
@@ -87,29 +87,30 @@
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">StyleGAN-NADA: CLIP-Guided Domain Adaptation of Image Generators</h1>
+          <h1 class="title is-1 publication-title">Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information</h1>
           <div class="is-size-5 publication-authors">
             <span class="author-block">
-              <a href="https://rinongal.github.io/">Rinon Gal</a><sup>1,2</sup>,</span>
+              <a href="https://rinongal.github.io/">Yang Zhang</a><sup>1</sup>,</span>
             <span class="author-block">
-              <a href="https://orpatashnik.github.io/">Or Patashnik</a><sup>1</sup>,</span>
+              <a href="https://orpatashnik.github.io/">Ashkan Khakzar</a><sup>1</sup>,</span>
             <span class="author-block">
-              <a href="https://haggaim.github.io/">Haggai Maron</a><sup>2</sup>,
+              <a href="https://haggaim.github.io/">Yawei Li</a><sup>1</sup>,
             </span>
             <span class="author-block">
-              <a href="https://www.cs.tau.ac.il/~amberman/">Amit Bermano</a><sup>1</sup>,
+              <a href="https://www.cs.tau.ac.il/~amberman/">Azade Farshad</a><sup>1</sup>,
             </span>
             <span class="author-block">
-              <a href="https://research.nvidia.com/person/gal-chechik">Gal Chechik</a><sup>2</sup>,
+              <a href="https://research.nvidia.com/person/gal-chechik">Seong Tae Kim</a><sup>3</sup>,
             </span>
             <span class="author-block">
-              <a href="https://www.cs.tau.ac.il/~dcor/">Daniel Cohen-Or</a><sup>1</sup>,
+              <a href="https://www.cs.tau.ac.il/~dcor/">Nassir Navab</a><sup>1,2</sup>,
             </span>
           </div>
 
           <div class="is-size-5 publication-authors">
-            <span class="author-block"><sup>1</sup>Tel Aviv University,</span>
-            <span class="author-block"><sup>2</sup>NVIDIA</span>
+            <span class="author-block"><sup>1</sup>Technical University of Munich,</span>
+            <span class="author-block"><sup>2</sup>Johns Hopkins University</span>
+            <span class="author-block"><sup>3</sup>Kyung Hee University</span>
           </div>
 
           <div class="column has-text-centered">
@@ -125,7 +126,7 @@
 <!--                </a>-->
 <!--              </span>-->
               <span class="link-block">
-                <a href="https://arxiv.org/abs/2108.00946"
+                <a href="https://arxiv.org/abs/2110.01471"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="ai ai-arxiv"></i>
@@ -145,7 +146,7 @@
 <!--              </span>-->
               <!-- Code Link. -->
               <span class="link-block">
-                <a href="https://github.com/rinongal/StyleGAN-nada"
+                <a href="https://github.com/CAMP-eXplain-AI/InputIBA"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="fab fa-github"></i>
@@ -161,7 +162,7 @@
     </div>
   </div>
 </section>
-
+<!-- 
 <section class="hero teaser">
   <div class="container is-max-desktop">
     <div class="hero-body">
@@ -175,7 +176,8 @@
     </div>
   </div>
 </section>
-
+-->
+<!-- 
 <section class="hero is-light is-small">
   <div class="hero-body">
     <div class="container">
@@ -516,10 +518,10 @@
     </div>
   </div>
 </section>
-
-<section class="section">
+-->
+<!--
+<section class="section Abstract">
   <div class="container is-max-desktop">
-    <!-- Abstract. -->
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
         <h2 class="title is-3">Abstract</h2>
@@ -545,7 +547,6 @@
         </div>
       </div>
     </div>
-    <!--/ Abstract. -->
   </div>
 </section>
 
@@ -553,6 +554,7 @@
   <div class="container is-max-desktop">
     <div class="hero-body">
         <!--/ Architecture. -->
+        <!--
         <div class="section-title">
           <h2 class="title is-3 is-centered">How does it work?</h2>
         </div>
@@ -569,6 +571,7 @@
         </p>
       <div class="container is-max-desktop">
         <!-- Training video. -->
+        <!--
         <div class="columns is-centered has-text-centered">
           <div class="column is-four-fifths">
             <div class="publication-video-small">
@@ -584,7 +587,7 @@
     </div>
   </div>
 </section>
-
+<!--
 <section class="section">
   <div class="container is-max-desktop">
 
@@ -595,6 +598,7 @@
     <div class="columns is-centered">
 
       <!-- Cross domain. -->
+      <!--
       <div class="column">
         <div class="content">
 
@@ -609,6 +613,7 @@
       <!--/ Cross domain. -->
 
       <!-- New domain editing. -->
+      <!--
       <div class="column">
         <div class="columns is-centered">
           <div class="column content">
@@ -626,7 +631,7 @@
     <!--/ New domain editing. -->
   </div>
 </section>
-
+<!--
 <section class="section">
   <div class="container is-max-desktop">
 
@@ -637,6 +642,7 @@
     <div class="columns is-centered">
 
       <!-- Synth img. -->
+      <!--
       <div class="column">
         <div class="content">
             <div class="publication-img">
@@ -647,6 +653,7 @@
       <!--/ Synth img. -->
 
       <!-- Synth video. -->
+      <!--
       <div class="column">
         <div class="columns is-centered">
           <div class="column content">
@@ -669,7 +676,7 @@
   </div>
 </section>
 
-
+<!--
 <section class="section" id="BibTeX">
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>

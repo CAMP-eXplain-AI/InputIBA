@@ -24,6 +24,10 @@
   <script src="./static/js/bulma-carousel.min.js"></script>
   <script src="./static/js/bulma-slider.min.js"></script>
   <script src="./static/js/index.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
 </head>
 <body>
 
@@ -293,6 +297,20 @@
 		As we move towards earlier layers (conv1_1), the information is distributed equally between features, and less information is assigned to the most
 		relevant feature (the broom), due to the <b>overestimation of mutual information</b> in IBA.
 		</p>
+		<p>
+		We aim to come up with a more reasonable choice for approximation of bottleneck variable such that it is applicable for the input. 
+		We compute the mutual information directly in the input space and avoid the approximation issues inherent in IBA.
+		We take advantage of the gaussian distribution approximation of bottleneck being reasonable for deep layers. 
+		Thus we first find a bottleneck variable, \(Z^*\), that corresponds to predictive deep features, by solving the IBA optimization problem on a hidden layer. 
+		The bottleneck Z∗ restricts the flow of information through the network and keeps deep features with predictive information. 
+		Then, we search for a bottleneck variable \(Z_G\) ”on the input”, that corresponds to deep botthleneck \(Z^*\). 
+		This translates to finding a mask on input features that admits input features which correspond to informative deep features. 
+		The final goal is keeping only predictive features of input, therefore, the input bottleneck ZG can be used as prior knowledge for the distribution of input bottleneck ZI.
+		We then proceed and solve the optimization by using \(Z_G\) as a prior for \(Z_I\). We refer to this methodology as InputIBA.
+		Find a bottleneck variable Z* (using IBA) that corresponds to predictive deep features
+		Use a Wasserstein-GAN to fit a bottleneck variable \(Z_G\) ”on the input” that corresponds to deep bottleneck \(Z^*\)
+		Proceed and solve the optimization by using \(Z_G\) as a prior for \(Z_G\) 
+		</p>
 	</div>
       <div class="container is-max-desktop">
         <!-- Training video. -->
@@ -363,13 +381,14 @@
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
     <p>If you find our work useful, please cite our paper:</p>
-    <pre><code>@misc{yang2021inputiba,
-      title={Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information},
-      author={Yang Zhang, Ashkan Khakzar, Yawei Li, Azade Farshad, Seong Tae Kim, Nassir Navab},
-      year={2021},
-      eprint={2110.01471},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+    <pre><code>@inproceedings{
+	zhang2021finegrained,
+	title={Fine-Grained Neural Network Explanation by Identifying Input Features with Predictive Information},
+	author={Yang Zhang and Ashkan Khakzar and Yawei Li and Azade Farshad and Seong Tae Kim and Nassir Navab},
+	booktitle={Thirty-Fifth Conference on Neural Information Processing Systems},
+	year={2021},
+	url={https://openreview.net/forum?id=HglgPZAYhcG}
+}
 }</code></pre>
   </div>
 </section>
